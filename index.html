@@ -764,7 +764,6 @@
   ];
   const SENT_COLLECTION = 'mandarinRunnerSentences';
   let SENTENCES = DEFAULT_SENTENCES.slice();
-
   async function loadCloudSentences(){
     if(!firebaseReady) return;
     try{
@@ -777,9 +776,25 @@
       );
       if(rows.length > 0) SENTENCES = rows;
     }catch(e){ console.warn('無法讀取雲端句子庫，使用內建句子。', e); }
+    rebuildWordPools();
   }
-  const DECOY_TRAD = ["他","她","貓","狗","水","茶","書","車","山","海","花","門","不","也","都","很","對","錯","大","小","多","少","上","下","左","右"];
-  const DECOY_SIMP = ["他","她","猫","狗","水","茶","书","车","山","海","花","门","不","也","都","很","对","错","大","小","多","少","上","下","左","右"];
+  const FALLBACK_DECOY_TRAD = ["他","她","貓","狗","水","茶","書","車","山","海","花","門","不","也","都","很","對","錯","大","小","多","少","上","下","左","右"];
+  const FALLBACK_DECOY_SIMP = ["他","她","猫","狗","水","茶","书","车","山","海","花","门","不","也","都","很","对","错","大","小","多","少","上","下","左","右"];
+
+  // 干擾字（decoy）改為直接從整個題庫的所有詞語裡隨機抽取，排除當前這句話用到的詞。
+  // 只有在題庫詞語太少（例如題庫只有一句話）導致抽不出詞時，才會退回使用下面的備用清單。
+  let ALL_WORDS_TRAD = [];
+  let ALL_WORDS_SIMP = [];
+  function rebuildWordPools(){
+    const tradSet = new Set();
+    const simpSet = new Set();
+    SENTENCES.forEach(s=>{
+      (s.trad||[]).forEach(w=>tradSet.add(w));
+      (s.simp||[]).forEach(w=>simpSet.add(w));
+    });
+    ALL_WORDS_TRAD = Array.from(tradSet);
+    ALL_WORDS_SIMP = Array.from(simpSet);
+  }
 
   const DIFF = {
     facil:   { speed:95,  interval:2000, cap:220, inc:4 },
@@ -845,7 +860,11 @@
   function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
   function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
   function getTokens(s){ return useSimplified ? s.simp : s.trad; }
-  function getDecoyPool(){ return useSimplified ? DECOY_SIMP : DECOY_TRAD; }
+  function getDecoyPool(){
+    const pool = useSimplified ? ALL_WORDS_SIMP : ALL_WORDS_TRAD;
+    return pool.length ? pool : (useSimplified ? FALLBACK_DECOY_SIMP : FALLBACK_DECOY_TRAD);
+  }
+  rebuildWordPools();
 
   // ================= LANE SETUP (used for coin spawn rows & difficulty, not player position) =================
   function setLaneCount(n){
@@ -968,6 +987,7 @@
     }
     const decoyCount = Math.max(1, laneCount-2);
     const pool = getDecoyPool().filter(c=>!tokens.includes(c));
+    if(pool.length === 0) return;
     const freeLanes = [];
     for(let i=0;i<laneCount;i++) if(!lanesUsed.has(i)) freeLanes.push(i);
     for(let k=0; k<decoyCount && freeLanes.length>0; k++){
@@ -1226,3 +1246,4 @@
 </script>
 </body>
 </html>
+ㄒ
