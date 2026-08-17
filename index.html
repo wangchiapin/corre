@@ -265,8 +265,10 @@
     font-weight:900;
     font-size:23px;
     color:var(--text);
+    white-space:nowrap;
     z-index:2;
   }
+  .coin.small{ font-size:13.5px; letter-spacing:-0.5px; }
   .coin.pop-good{ animation:popGood .3s ease forwards; }
   .coin.pop-bad{ animation:popBad .35s ease forwards; }
   @keyframes popGood{ to{ transform: translateY(-50%) scale(1.7); opacity:0; box-shadow:0 0 30px rgba(57,255,136,0.9); } }
@@ -1000,7 +1002,7 @@
 
   function makeCoin(text, laneIdx){
     const el = document.createElement('div');
-    el.className = 'coin';
+    el.className = 'coin' + (text.length >= 3 ? ' small' : '');
     el.textContent = text;
     el.style.left = trackW + 'px';
     el.style.top = laneY[laneIdx] + '%';
@@ -1246,4 +1248,3 @@
 </script>
 </body>
 </html>
-ㄒ
