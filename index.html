@@ -268,7 +268,7 @@
     white-space:nowrap;
     z-index:2;
   }
-  .coin.small{ font-size:13.5px; letter-spacing:-0.5px; }
+  .coin.wide{ width:96px; }
   .coin.pop-good{ animation:popGood .3s ease forwards; }
   .coin.pop-bad{ animation:popBad .35s ease forwards; }
   @keyframes popGood{ to{ transform: translateY(-50%) scale(1.7); opacity:0; box-shadow:0 0 30px rgba(57,255,136,0.9); } }
@@ -1002,12 +1002,12 @@
 
   function makeCoin(text, laneIdx){
     const el = document.createElement('div');
-    el.className = 'coin' + (text.length >= 3 ? ' small' : '');
+    el.className = 'coin' + (text.length >= 3 ? ' wide' : '');
     el.textContent = text;
     el.style.left = trackW + 'px';
     el.style.top = laneY[laneIdx] + '%';
     trackEl.appendChild(el);
-    coins.push({ el, x: trackW, lane: laneIdx, text, resolved:false });
+    coins.push({ el, x: trackW, lane: laneIdx, text, resolved:false, width: text.length >= 3 ? 96 : 60 });
   }
 
   function floatText(x,y,txt,color){
@@ -1123,7 +1123,6 @@
     }
 
     const yTol = (100/laneCount) * 0.55;
-    const xTol = 34;
     for(let i=coins.length-1;i>=0;i--){
       const c = coins[i];
       if(c.resolved){
@@ -1133,6 +1132,7 @@
       c.x -= speed*dt;
       c.el.style.left = c.x + 'px';
       const coinY = laneY[c.lane];
+      const xTol = (c.width||60)/2 + 4;
       if(Math.abs(coinY - playerY) < yTol && Math.abs(c.x - playerX) < xTol){
         resolveCoin(c);
         continue;
