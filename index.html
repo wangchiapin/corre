@@ -548,6 +548,7 @@
 
 <!-- Firebase (compat SDK) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
@@ -564,14 +565,27 @@
   };
   const LB_COLLECTION = 'mandarinRunnerScores';
   let db = null, firebaseReady = false;
-  try{
-    if(firebaseConfig.apiKey !== "YOUR_API_KEY" && window.firebase){
-      firebase.initializeApp(firebaseConfig);
-      db = firebase.firestore();
-      firebaseReady = true;
-    }
-  }catch(e){ console.warn('Firebase no configurado:', e); }
+ try {
+  if (firebaseConfig.apiKey !== "YOUR_API_KEY" && window.firebase) {
+    firebase.initializeApp(firebaseConfig);
+    
+    // ↓↓↓ 這兩行被你不小心刪掉了，必須加回來 ↓↓↓
+    db = firebase.firestore();
+    firebaseReady = true;
+    // ↑↑↑ 補回結束 ↑↑↑
 
+    // 下面是你原本新增的匿名登入，保持這樣即可
+    firebase.auth().signInAnonymously()
+      .then(() => {
+        console.log("匿名登入成功！");
+      })
+      .catch((error) => {
+        console.error("匿名登入失敗:", error);
+      });
+  }
+} catch(e) { 
+  console.warn('Firebase no configurado:', e); 
+}
   async function submitScore(entry){
     if(!firebaseReady) return;
     try{
