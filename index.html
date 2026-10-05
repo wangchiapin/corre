@@ -23,7 +23,9 @@
     --text-dim:#7fa3ac;
     --line: rgba(0,255,242,0.28);
   }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+  /* iPhone 上，被設成「不能選取」的輸入框可能打不了字，所以輸入框要例外 */
+  input,textarea{-webkit-user-select:text;user-select:text;}
   html,body{margin:0;height:100%;background:#000;}
   body{
     display:flex;align-items:center;justify-content:center;
@@ -34,7 +36,8 @@
     position:relative;
     width:100%;
     max-width:520px;
-    height:100vh;
+    height:100vh;   /* 舊瀏覽器 */
+    height:100dvh;  /* 手機瀏覽器：會跟著網址列的高度變化，下方內容不會被蓋住 */
     max-height:900px;
     background:var(--bg);
     overflow:hidden;
@@ -211,6 +214,7 @@
     flex:1;
     z-index:1;
     overflow:hidden;
+    touch-action:none;   /* 在遊戲區域拖動手指時，不要觸發頁面捲動或縮放 */
     background:
       linear-gradient(180deg, rgba(181,55,242,0.06), transparent 30%, transparent 70%, rgba(0,255,242,0.05)),
       var(--bg);
@@ -268,7 +272,6 @@
     white-space:nowrap;
     z-index:2;
   }
-  .coin.wide{ width:96px; }
   .coin.pop-good{ animation:popGood .3s ease forwards; }
   .coin.pop-bad{ animation:popBad .35s ease forwards; }
   @keyframes popGood{ to{ transform: translateY(-50%) scale(1.7); opacity:0; box-shadow:0 0 30px rgba(57,255,136,0.9); } }
@@ -310,38 +313,6 @@
     100%{opacity:0; transform:translate(-50%,-50%) scale(0.95);}
   }
 
-  /* ---------- CONTROLS (D-PAD, free 4-direction movement) ---------- */
-  #controls{
-    position:relative;z-index:2;
-    display:flex;
-    justify-content:center;
-    padding:10px 14px 14px;
-    border-top:1.5px solid var(--line);
-    background:linear-gradient(0deg, rgba(0,255,242,0.05), transparent);
-  }
-  .dpad{
-    display:grid;
-    grid-template-columns:48px 48px 48px;
-    grid-template-rows:44px 44px 44px;
-    gap:6px;
-  }
-  .dpad-btn{
-    border-radius:10px;
-    border:1.5px solid var(--line);
-    background:rgba(0,255,242,0.04);
-    color:var(--text);
-    font-size:16px;
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;
-    touch-action:none;
-  }
-  .dpad-btn:active, .dpad-btn.held{ background:rgba(255,47,208,0.22); border-color:var(--magenta); box-shadow:0 0 10px rgba(255,47,208,0.4); color:var(--magenta); }
-  .dpad-up{ grid-column:2; grid-row:1; }
-  .dpad-left{ grid-column:1; grid-row:2; }
-  .dpad-center{ grid-column:2; grid-row:2; border:none; background:none; }
-  .dpad-right{ grid-column:3; grid-row:2; }
-  .dpad-down{ grid-column:2; grid-row:3; }
-
   /* ---------- OVERLAYS ---------- */
   .overlay{
     position:absolute; inset:0; z-index:10;
@@ -362,6 +333,7 @@
     text-shadow:0 0 8px var(--cyan), 0 0 22px rgba(0,255,242,0.5), 2px 0 var(--magenta);
   }
   .subtitle{ margin:0 0 6px; color:var(--text-dim); font-size:13.5px; max-width:300px; }
+  .drag-hint{ margin:0 0 4px; color:var(--cyan); font-size:12.5px; max-width:300px; line-height:1.45; }
   .overlay p{ margin:0; color:var(--text-dim); font-size:14px; line-height:1.5; max-width:320px; }
 
   .field{ width:100%; max-width:300px; text-align:left; margin-top:4px; }
@@ -482,22 +454,13 @@
     </div>
   </div>
 
-  <div id="controls">
-    <div class="dpad">
-      <div class="dpad-btn dpad-up" id="btnUp">▲</div>
-      <div class="dpad-btn dpad-left" id="btnLeft">◀</div>
-      <div class="dpad-btn dpad-center"></div>
-      <div class="dpad-btn dpad-right" id="btnRight">▶</div>
-      <div class="dpad-btn dpad-down" id="btnDown">▼</div>
-    </div>
-  </div>
-
   <div class="celebrate" id="celebrate"><span>¡Excelente!</span></div>
 
   <!-- START / SETUP -->
   <div class="overlay" id="startOverlay">
     <h1>跑吧！漢字</h1>
     <p class="subtitle">¡Corre y come las palabras en el orden correcto de la frase! Cada cierto tiempo aparece un nivel jefe: escucha la frase en vez de leerla.</p>
+    <p class="drag-hint">👆 Arrastra el dedo por la pantalla para moverte. En computadora: flechas o WASD, o arrastra con el ratón.</p>
 
     <div class="field">
       <label>Tu nombre</label>
@@ -548,7 +511,6 @@
 
 <!-- Firebase (compat SDK) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
@@ -565,27 +527,17 @@
   };
   const LB_COLLECTION = 'mandarinRunnerScores';
   let db = null, firebaseReady = false;
- try {
-  if (firebaseConfig.apiKey !== "YOUR_API_KEY" && window.firebase) {
-    firebase.initializeApp(firebaseConfig);
-    
-    // ↓↓↓ 這兩行被你不小心刪掉了，必須加回來 ↓↓↓
-    db = firebase.firestore();
-    firebaseReady = true;
-    // ↑↑↑ 補回結束 ↑↑↑
-
-    // 下面是你原本新增的匿名登入，保持這樣即可
-    firebase.auth().signInAnonymously()
-      .then(() => {
-        console.log("匿名登入成功！");
-      })
-      .catch((error) => {
-        console.error("匿名登入失敗:", error);
-      });
+  // 題庫與排行榜都是公開讀取，玩家不需要登入，所以這裡只初始化資料庫。
+  try{
+    if(window.firebase){
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      firebaseReady = true;
+    }
+  }catch(e){
+    console.warn('Firebase no disponible:', e);
   }
-} catch(e) { 
-  console.warn('Firebase no configurado:', e); 
-}
+
   async function submitScore(entry){
     if(!firebaseReady) return;
     try{
@@ -628,8 +580,8 @@
         <span class="lb-rank">${i+1}</span>
         <span class="lb-name">${escapeHtml(r.name||'—')}</span>
         <span class="lb-diff">${DIFF_LABEL[r.difficulty]||''}</span>
-        <span class="lb-sent">${r.sentences||0}句</span>
-        <span class="lb-score">${r.score}</span>
+        <span class="lb-sent">${escapeHtml(r.sentences||0)}句</span>
+        <span class="lb-score">${escapeHtml(r.score)}</span>
       </div>`).join('');
   }
 
@@ -658,6 +610,10 @@
            voicesList.find(v=>v.lang && v.lang.toLowerCase().startsWith('zh')) ||
            null;
   }
+  // 每次念字都有一個編號；只有「最新那一次」念完時，才把背景音樂調回來。
+  // 這樣前一次被打斷或比較早結束的語音，不會在新的語音還在念的時候就把音樂調大聲。
+  let speakSeq = 0;
+  let duckRestoreTimer = null;
   function speak(text, interrupt){
     if(!('speechSynthesis' in window) || !text) return;
     try{
@@ -667,11 +623,13 @@
       u.rate = 0.92;
       const v = pickVoice();
       if(v) u.voice = v;
+      const mySeq = ++speakSeq;
       duckMusic(true);
-      const restore = ()=> duckMusic(false);
+      const restore = ()=>{ if(mySeq === speakSeq) duckMusic(false); };
       u.onend = restore;
       u.onerror = restore;
-      setTimeout(restore, Math.max(1100, text.length*280)); // fallback in case onend never fires
+      clearTimeout(duckRestoreTimer);
+      duckRestoreTimer = setTimeout(restore, Math.max(1100, text.length*280)); // fallback in case onend never fires
       speechSynthesis.speak(u);
     }catch(e){}
   }
@@ -689,6 +647,7 @@
     if(musicStarted || !musicOn) return;
     musicStarted = true;
     const ctx = ensureAudioCtx();
+    if(ctx.state === 'suspended' && ctx.resume){ ctx.resume().catch(()=>{}); }
     musicGain = ctx.createGain();
     musicGain.gain.value = 0;
     musicGain.connect(ctx.destination);
@@ -712,7 +671,7 @@
     const scale = [220, 261.63, 293.66, 329.63, 392, 440];
     let step = 0;
     musicArpInterval = setInterval(()=>{
-      if(!musicOn || !musicStarted) return;
+      if(!musicOn || !musicStarted || !musicGain) return;
       const freq = scale[step % scale.length] * ((step % 8) < 4 ? 1 : 2);
       step++;
       const o = ctx.createOscillator(); o.type = 'square';
@@ -726,10 +685,32 @@
     }, 260);
   }
 
-  let duckTimeout = null;
+  // 真正把音樂停掉：關掉每 0.26 秒一次的計時器、停止所有振盪器、斷開音量節點。
+  // （以前只是把音量調成 0，聲音產生器和計時器其實還在背景一直運算。）
+  function stopMusic(){
+    if(!musicStarted) return;
+    musicStarted = false;
+    clearInterval(musicArpInterval);
+    musicArpInterval = null;
+    const gainNode = musicGain;
+    const nodes = musicNodes;
+    musicGain = null;
+    musicNodes = [];
+    try{
+      if(gainNode && actx){
+        gainNode.gain.cancelScheduledValues(actx.currentTime);
+        gainNode.gain.setValueAtTime(gainNode.gain.value, actx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0, actx.currentTime + 0.2);
+      }
+    }catch(e){}
+    setTimeout(()=>{
+      nodes.forEach(n=>{ try{ n.stop(); }catch(e){} try{ n.disconnect(); }catch(e){} });
+      try{ if(gainNode) gainNode.disconnect(); }catch(e){}
+    }, 300);
+  }
+
   function duckMusic(down){
     if(!musicGain || !actx) return;
-    clearTimeout(duckTimeout);
     const target = down ? MUSIC_VOL_DUCK : (musicOn ? MUSIC_VOL : 0);
     musicGain.gain.cancelScheduledValues(actx.currentTime);
     musicGain.gain.linearRampToValueAtTime(target, actx.currentTime + 0.15);
@@ -744,8 +725,8 @@
   function toggleMusic(){
     musicOn = !musicOn;
     musicToggleEl.classList.toggle('on', musicOn);
-    if(musicOn && !musicStarted){ startMusic(); }
-    else{ setMusicVolume(); }
+    if(musicOn){ startMusic(); setMusicVolume(); }
+    else{ stopMusic(); }
   }
 
   // ================= SFX (short chimes) =================
@@ -771,34 +752,92 @@
   // ================= GAME DATA =================
   // 內建預設句子：當雲端題庫還沒設定、還沒有句子、或讀取失敗時使用，確保遊戲一定能玩。
   const DEFAULT_SENTENCES = [
-    { trad:["我","喜歡","吃","蘋果"], simp:["我","喜欢","吃","苹果"], pinyin:["wǒ","xǐhuān","chī","píngguǒ"], es:"Me gusta comer manzanas." },
-    { trad:["你","叫","什麼","名字"], simp:["你","叫","什么","名字"], pinyin:["nǐ","jiào","shénme","míngzi"], es:"¿Cómo te llamas?" },
-    { trad:["今天","天氣","很","好"], simp:["今天","天气","很","好"], pinyin:["jīntiān","tiānqì","hěn","hǎo"], es:"Hoy el clima está muy bueno." },
-    { trad:["這個","顏色","是","紅色"], simp:["这个","颜色","是","红色"], pinyin:["zhège","yánsè","shì","hóngsè"], es:"Este color es rojo." },
-    { trad:["我","喜歡","學","中文"], simp:["我","喜欢","学","中文"], pinyin:["wǒ","xǐhuān","xué","zhōngwén"], es:"Me gusta aprender chino." },
-    { trad:["謝謝","你","的","幫忙"], simp:["谢谢","你","的","帮忙"], pinyin:["xièxie","nǐ","de","bāngmáng"], es:"Gracias por tu ayuda." }
+    { trad:["我","喜歡","吃","蘋果"], simp:["我","喜欢","吃","苹果"], pinyin:["wǒ","xǐ huān","chī","píng guǒ"], es:"Me gusta comer manzanas." },
+    { trad:["你","叫","什麼","名字"], simp:["你","叫","什么","名字"], pinyin:["nǐ","jiào","shén me","míng zi"], es:"¿Cómo te llamas?" },
+    { trad:["今天","天氣","很","好"], simp:["今天","天气","很","好"], pinyin:["jīn tiān","tiān qì","hěn","hǎo"], es:"Hoy el clima está muy bueno." },
+    { trad:["這個","顏色","是","紅色"], simp:["这个","颜色","是","红色"], pinyin:["zhè ge","yán sè","shì","hóng sè"], es:"Este color es rojo." },
+    { trad:["我","喜歡","學","中文"], simp:["我","喜欢","学","中文"], pinyin:["wǒ","xǐ huān","xué","zhōng wén"], es:"Me gusta aprender chino." },
+    { trad:["謝謝","你","的","幫忙"], simp:["谢谢","你","的","帮忙"], pinyin:["xiè xie","nǐ","de","bāng máng"], es:"Gracias por tu ayuda." }
   ];
+  DEFAULT_SENTENCES.forEach((s,i)=>{ s.id = 'default-' + i; });
   const SENT_COLLECTION = 'mandarinRunnerSentences';
   let SENTENCES = DEFAULT_SENTENCES.slice();
+
+  // ---- 分批隨機讀取題庫 ----
+  // 每次只從 Firebase 讀 BATCH_SIZE 句（隨機抽），玩到剩下不多時才背景再抽下一批，
+  // 這樣題庫再大，每個玩家每次開遊戲也只會用掉幾十次讀取額度。
+  // 每一句在管理工具存檔時都會有一個 rand（0~1 的隨機數字）欄位，抽題就靠它。
+  const BATCH_SIZE = 25;
+  const REFILL_WHEN_LEFT = 5;     // 還沒玩過的句子少於或等於這個數字時，再抽下一批
+  let usingCloud = false;         // 目前使用的是雲端題庫（不是內建句子）
+  let noMoreCloud = false;        // 雲端題庫已經全部讀完了，不用再抽
+  let fetchingMore = false;
+  let usedIds = new Set();        // 這一輪已經出過的句子
+
+  function isValidSentence(r){
+    return Array.isArray(r.trad) && r.trad.length>0 &&
+      Array.isArray(r.simp) && r.simp.length===r.trad.length &&
+      Array.isArray(r.pinyin) && r.pinyin.length===r.trad.length &&
+      typeof r.es === 'string' && r.es;
+  }
+
+  async function fetchRandomBatch(){
+    const col = db.collection(SENT_COLLECTION);
+    const r = Math.random();
+    let docs = [];
+    const snap1 = await col.where('rand','>=',r).orderBy('rand').limit(BATCH_SIZE).get();
+    docs = snap1.docs;
+    if(docs.length < BATCH_SIZE){
+      // 抽到尾巴了，從頭補滿
+      const snap2 = await col.where('rand','<',r).orderBy('rand').limit(BATCH_SIZE - docs.length).get();
+      docs = docs.concat(snap2.docs);
+    }
+    if(docs.length === 0){
+      // 舊句子還沒有 rand 欄位時的備援：直接取前幾句
+      const snap3 = await col.limit(BATCH_SIZE).get();
+      docs = snap3.docs;
+    }
+    return {
+      rawCount: docs.length,
+      rows: docs.map(d=>Object.assign({ id: d.id }, d.data())).filter(isValidSentence)
+    };
+  }
+
   async function loadCloudSentences(){
-    if(!firebaseReady) return;
-    try{
-      const snap = await db.collection(SENT_COLLECTION).get();
-      const rows = snap.docs.map(d=>d.data()).filter(r=>
-        Array.isArray(r.trad) && r.trad.length>0 &&
-        Array.isArray(r.simp) && r.simp.length===r.trad.length &&
-        Array.isArray(r.pinyin) && r.pinyin.length===r.trad.length &&
-        typeof r.es === 'string' && r.es
-      );
-      if(rows.length > 0) SENTENCES = rows;
-    }catch(e){ console.warn('無法讀取雲端句子庫，使用內建句子。', e); }
+    if(firebaseReady){
+      try{
+        const batch = await fetchRandomBatch();
+        if(batch.rows.length > 0){
+          SENTENCES = batch.rows;
+          usingCloud = true;
+          if(batch.rawCount < BATCH_SIZE) noMoreCloud = true;   // 整個題庫都讀進來了
+        }
+      }catch(e){ console.warn('無法讀取雲端句子庫，使用內建句子。', e); }
+    }
     rebuildWordPools();
+  }
+
+  async function fetchMoreSentences(){
+    if(!usingCloud || noMoreCloud || fetchingMore || !firebaseReady) return;
+    fetchingMore = true;
+    try{
+      const batch = await fetchRandomBatch();
+      const have = new Set(SENTENCES.map(s=>s.id));
+      const fresh = batch.rows.filter(r=>!have.has(r.id));
+      if(fresh.length > 0){
+        SENTENCES = SENTENCES.concat(fresh);
+        rebuildWordPools();
+      }
+      // 抽到的新句子很少，代表題庫差不多都載入了，這次遊戲不再重複去讀（省讀取次數）
+      if(fresh.length < 5) noMoreCloud = true;
+    }catch(e){ console.warn('無法讀取更多句子。', e); }
+    finally{ fetchingMore = false; }
   }
   const FALLBACK_DECOY_TRAD = ["他","她","貓","狗","水","茶","書","車","山","海","花","門","不","也","都","很","對","錯","大","小","多","少","上","下","左","右"];
   const FALLBACK_DECOY_SIMP = ["他","她","猫","狗","水","茶","书","车","山","海","花","门","不","也","都","很","对","错","大","小","多","少","上","下","左","右"];
 
-  // 干擾字（decoy）改為直接從整個題庫的所有詞語裡隨機抽取，排除當前這句話用到的詞。
-  // 只有在題庫詞語太少（例如題庫只有一句話）導致抽不出詞時，才會退回使用下面的備用清單。
+  // 干擾字（decoy）直接從已經載入的句子裡的所有詞語隨機抽取，排除當前這句話用到的詞。
+  // 如果可抽的詞太少（例如題庫只有一句話），會自動補上下面的備用清單，確保畫面上一定有干擾字。
   let ALL_WORDS_TRAD = [];
   let ALL_WORDS_SIMP = [];
   function rebuildWordPools(){
@@ -844,6 +883,7 @@
   let trackH = 0;
   let coins = [];
   let lastTime = 0;
+  let nextSentenceTimer = null;   // 過關後「等 2.6 秒再出下一句」的計時器（結束或重新開始時要取消）
 
   // free 4-directional player movement
   const PLAYER_SPEED_X = 260; // px/s
@@ -876,9 +916,14 @@
   function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
   function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
   function getTokens(s){ return useSimplified ? s.simp : s.trad; }
-  function getDecoyPool(){
-    const pool = useSimplified ? ALL_WORDS_SIMP : ALL_WORDS_TRAD;
-    return pool.length ? pool : (useSimplified ? FALLBACK_DECOY_SIMP : FALLBACK_DECOY_TRAD);
+  function getDecoyPool(tokens){
+    const base = useSimplified ? ALL_WORDS_SIMP : ALL_WORDS_TRAD;
+    const fallback = useSimplified ? FALLBACK_DECOY_SIMP : FALLBACK_DECOY_TRAD;
+    let pool = base.filter(c=>!tokens.includes(c));
+    if(pool.length < 4){
+      pool = pool.concat(fallback.filter(c=>!tokens.includes(c) && !pool.includes(c)));
+    }
+    return pool;
   }
   rebuildWordPools();
 
@@ -912,6 +957,26 @@
     playerEl.style.top = playerY + '%';
     playerEl.classList.remove('facing-left');
   }
+  function clampPlayer(){
+    const maxX = Math.max(60, trackW * 0.72);
+    playerX = Math.max(24, Math.min(maxX, playerX));
+    playerY = Math.max(8, Math.min(92, playerY));
+  }
+  function applyPlayerPosition(dx){
+    playerEl.style.left = playerX + 'px';
+    playerEl.style.top = playerY + '%';
+    if(dx < 0) playerEl.classList.add('facing-left');
+    else if(dx > 0) playerEl.classList.remove('facing-left');
+  }
+  // 手指／滑鼠拖動：dxPx、dyPx 是畫面上的像素位移
+  function movePlayerBy(dxPx, dyPx){
+    if(!trackH) measure();
+    playerX += dxPx;
+    playerY += trackH ? (dyPx / trackH) * 100 : 0;
+    clampPlayer();
+    applyPlayerPosition(dxPx);
+  }
+  // 鍵盤（電腦版）：按住方向鍵或 WASD
   function updatePlayerMovement(dt){
     let dx = 0, dy = 0;
     if(held.up) dy -= 1;
@@ -922,13 +987,8 @@
     const len = Math.hypot(dx, dy) || 1;
     playerX += (dx/len) * PLAYER_SPEED_X * dt;
     playerY += (dy/len) * PLAYER_SPEED_Y * dt;
-    const maxX = Math.max(60, trackW * 0.72);
-    playerX = Math.max(24, Math.min(maxX, playerX));
-    playerY = Math.max(8, Math.min(92, playerY));
-    playerEl.style.left = playerX + 'px';
-    playerEl.style.top = playerY + '%';
-    if(dx < 0) playerEl.classList.add('facing-left');
-    else if(dx > 0) playerEl.classList.remove('facing-left');
+    clampPlayer();
+    applyPlayerPosition(dx);
   }
 
   // ================= RENDER =================
@@ -945,11 +1005,22 @@
     heartsEl.innerHTML = s;
   }
 
-  function loadSentence(excludeIdx){
-    let idx;
-    do{ idx = Math.floor(Math.random()*SENTENCES.length); }while(SENTENCES.length>1 && idx===excludeIdx);
-    sentence = SENTENCES[idx];
-    sentence._idx = idx;
+  // 從「這一輪還沒出過」的句子裡隨機挑一句；全部出過一輪後重新開始。
+  function pickNextSentence(excludeId){
+    let unused = SENTENCES.filter(s=>!usedIds.has(s.id));
+    if(unused.length === 0){ usedIds = new Set(); unused = SENTENCES.slice(); }
+    let candidates = unused.filter(s=>s.id !== excludeId);
+    if(candidates.length === 0) candidates = unused;
+    return candidates[Math.floor(Math.random()*candidates.length)];
+  }
+
+  function loadSentence(excludeId){
+    sentence = pickNextSentence(excludeId);
+    usedIds.add(sentence.id);
+    // 還沒玩過的句子快用完了，就在背景再抽下一批
+    if(usingCloud && !noMoreCloud && SENTENCES.filter(s=>!usedIds.has(s.id)).length <= REFILL_WHEN_LEFT){
+      fetchMoreSentences();
+    }
     targetIndex = 0;
     bag = [];
     isBoss = sentencesDone > 0 && sentencesDone % BOSS_EVERY === 0;
@@ -963,14 +1034,26 @@
 
   function renderBanner(){
     const tokens = getTokens(sentence);
-    sentTrackEl.innerHTML = '';
+    sentTrackEl.textContent = '';
     tokens.forEach((tok,i)=>{
       const stamped = i < targetIndex;
       const slot = document.createElement('div');
       slot.className = 'slot' + (stamped ? ' stamped' : '') + (i === targetIndex ? ' next' : '');
       const showChar = stamped || !isBoss;
-      slot.innerHTML = `<div class="hz">${showChar ? tok : '？'}</div><div class="py">${(showChar && showPinyin) ? sentence.pinyin[i] : ''}</div>` +
-        (stamped ? `<div class="stamp-mark"></div>` : '');
+      // 一律用 textContent（純文字）顯示，句子裡就算有特殊符號也不會被當成程式執行
+      const hz = document.createElement('div');
+      hz.className = 'hz';
+      hz.textContent = showChar ? tok : '？';
+      const py = document.createElement('div');
+      py.className = 'py';
+      py.textContent = (showChar && showPinyin) ? (sentence.pinyin[i] || '') : '';
+      slot.appendChild(hz);
+      slot.appendChild(py);
+      if(stamped){
+        const mark = document.createElement('div');
+        mark.className = 'stamp-mark';
+        slot.appendChild(mark);
+      }
       sentTrackEl.appendChild(slot);
     });
     progressLabel.textContent = `${targetIndex}/${tokens.length}`;
@@ -1002,7 +1085,7 @@
       makeCoin(tok, l);
     }
     const decoyCount = Math.max(1, laneCount-2);
-    const pool = getDecoyPool().filter(c=>!tokens.includes(c));
+    const pool = getDecoyPool(tokens);
     if(pool.length === 0) return;
     const freeLanes = [];
     for(let i=0;i<laneCount;i++) if(!lanesUsed.has(i)) freeLanes.push(i);
@@ -1014,14 +1097,25 @@
     }
   }
 
+  // 金幣的寬度依字數自動計算：1～2 個字 60px、3 個字 96px，再長就每個字再加寬；
+  // 6 個字以上字體再縮小一點，文字不會超出圓框。
+  function coinSize(text){
+    const n = [...text].length;
+    const fontPx = n >= 6 ? 18 : 23;
+    const w = n <= 2 ? 60 : n * (fontPx + 1) + 24;
+    return { w, fontPx };
+  }
   function makeCoin(text, laneIdx){
     const el = document.createElement('div');
-    el.className = 'coin' + (text.length >= 3 ? ' wide' : '');
+    el.className = 'coin';
+    const size = coinSize(text);
+    el.style.width = size.w + 'px';
+    if(size.fontPx !== 23) el.style.fontSize = size.fontPx + 'px';
     el.textContent = text;
     el.style.left = trackW + 'px';
     el.style.top = laneY[laneIdx] + '%';
     trackEl.appendChild(el);
-    coins.push({ el, x: trackW, lane: laneIdx, text, resolved:false, width: text.length >= 3 ? 96 : 60 });
+    coins.push({ el, x: trackW, lane: laneIdx, text, resolved:false, width: size.w });
   }
 
   function floatText(x,y,txt,color){
@@ -1102,8 +1196,9 @@
 
     coins.forEach(c=>c.el.remove());
     coins = [];
-    setTimeout(()=>{
-      loadSentence(sentence._idx);
+    clearTimeout(nextSentenceTimer);
+    nextSentenceTimer = setTimeout(()=>{
+      loadSentence(sentence.id);
       running = true;
       lastTime = performance.now();
       requestAnimationFrame(loop);
@@ -1111,13 +1206,18 @@
   }
 
   function endGame(){
+    if(!overOverlay.classList.contains('hidden')) return;   // 已經結束了，不要重複處理
     running = false;
+    clearTimeout(nextSentenceTimer);   // 如果剛好在「過關等待」中，取消它，避免結束畫面底下遊戲自己重新開始
+    stopMusic();
     finalScoreEl.textContent = score;
     finalSentencesEl.textContent = sentencesDone;
     overOverlay.classList.remove('hidden');
+    // 先等分數存好，再讀一次排行榜（以前會讀兩次，第一次還沒有這局的分數）
+    const lbEl = document.getElementById('lbListOver');
+    lbEl.innerHTML = '<p class="lb-msg">Cargando…</p>';
     submitScore({ name: playerName, score, sentences: sentencesDone, difficulty: diffKey, script: useSimplified?'simp':'trad' })
-      .then(()=> refreshLeaderboard(document.getElementById('lbListOver')));
-    refreshLeaderboard(document.getElementById('lbListOver'));
+      .then(()=> refreshLeaderboard(lbEl));
   }
 
   // ================= LOOP =================
@@ -1146,12 +1246,16 @@
       c.x -= speed*dt;
       c.el.style.left = c.x + 'px';
       const coinY = laneY[c.lane];
-      const xTol = (c.width||60)/2 + 4;
-      if(Math.abs(coinY - playerY) < yTol && Math.abs(c.x - playerX) < xTol){
+      const cw = c.width || 60;
+      const cx = c.x + cw/2;            // 金幣的中心點（c.x 是左邊緣），寬金幣才不會太早被吃到
+      const xTol = cw/2 + 10;
+      if(Math.abs(coinY - playerY) < yTol && Math.abs(cx - playerX) < xTol){
         resolveCoin(c);
+        // 過關或遊戲結束後，同一幀裡的其他金幣就不再判定
+        if(!running) break;
         continue;
       }
-      if(c.x < -60){
+      if(c.x < -cw){
         c.el.remove();
         coins.splice(i,1);
       }
@@ -1160,30 +1264,50 @@
   }
 
   // ================= INPUT =================
-  function bindHoldButton(el, dir){
-    const setHeld = (v)=>{ held[dir] = v; el.classList.toggle('held', v); };
-    el.addEventListener('pointerdown', e=>{ e.preventDefault(); setHeld(true); });
-    el.addEventListener('pointerup', ()=>setHeld(false));
-    el.addEventListener('pointerleave', ()=>setHeld(false));
-    el.addEventListener('pointercancel', ()=>setHeld(false));
-  }
-  bindHoldButton(document.getElementById('btnUp'), 'up');
-  bindHoldButton(document.getElementById('btnDown'), 'down');
-  bindHoldButton(document.getElementById('btnLeft'), 'left');
-  bindHoldButton(document.getElementById('btnRight'), 'right');
+  // ---- 手指（或滑鼠）拖動 ----
+  // 在遊戲區域的任何地方按住拖動，角色就往同一個方向移動，手指不用壓在角色上。
+  const DRAG_GAIN = 1.5;   // 手指移動 1 單位，角色移動幾單位；覺得太快或太慢就改這個數字
+  let dragPointerId = null, dragLastX = 0, dragLastY = 0;
+  trackEl.addEventListener('pointerdown', e=>{
+    if(!running || dragPointerId !== null) return;
+    dragPointerId = e.pointerId;
+    dragLastX = e.clientX;
+    dragLastY = e.clientY;
+    try{ trackEl.setPointerCapture(e.pointerId); }catch(_){}
+    e.preventDefault();
+  });
+  trackEl.addEventListener('pointermove', e=>{
+    if(e.pointerId !== dragPointerId || !running) return;
+    const dx = (e.clientX - dragLastX) * DRAG_GAIN;
+    const dy = (e.clientY - dragLastY) * DRAG_GAIN;
+    dragLastX = e.clientX;
+    dragLastY = e.clientY;
+    movePlayerBy(dx, dy);
+    e.preventDefault();
+  });
+  const endDrag = e=>{ if(e.pointerId === dragPointerId) dragPointerId = null; };
+  trackEl.addEventListener('pointerup', endDrag);
+  trackEl.addEventListener('pointercancel', endDrag);
+  trackEl.addEventListener('lostpointercapture', endDrag);
 
+  // ---- 鍵盤（電腦版）：方向鍵或 WASD ----
+  const KEY_DIR = { ArrowUp:'up', w:'up', ArrowDown:'down', s:'down', ArrowLeft:'left', a:'left', ArrowRight:'right', d:'right' };
+  function dirOfKey(e){
+    const k = e.key && e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    return KEY_DIR[k];
+  }
   window.addEventListener('keydown', (e)=>{
     if(!running) return;
-    if(e.key==='ArrowUp'||e.key==='w') held.up = true;
-    if(e.key==='ArrowDown'||e.key==='s') held.down = true;
-    if(e.key==='ArrowLeft'||e.key==='a') held.left = true;
-    if(e.key==='ArrowRight'||e.key==='d') held.right = true;
+    const dir = dirOfKey(e);
+    if(dir){ held[dir] = true; e.preventDefault(); }
   });
   window.addEventListener('keyup', (e)=>{
-    if(e.key==='ArrowUp'||e.key==='w') held.up = false;
-    if(e.key==='ArrowDown'||e.key==='s') held.down = false;
-    if(e.key==='ArrowLeft'||e.key==='a') held.left = false;
-    if(e.key==='ArrowRight'||e.key==='d') held.right = false;
+    const dir = dirOfKey(e);
+    if(dir) held[dir] = false;
+  });
+  window.addEventListener('blur', ()=>{
+    held.up = held.down = held.left = held.right = false;
+    dragPointerId = null;
   });
 
   pinyinToggle.addEventListener('click', ()=>{
@@ -1226,6 +1350,11 @@
 
     if(musicOn){ startMusic(); setMusicVolume(); }
 
+    clearTimeout(nextSentenceTimer);
+    usedIds = new Set();
+    dragPointerId = null;
+    held.up = held.down = held.left = held.right = false;
+
     const d = DIFF[diffKey];
     score = 0; lives = 3; maxLives = 3; sentencesDone = 0;
     speed = d.speed; spawnInterval = d.interval; spawnTimer = 0;
@@ -1235,7 +1364,7 @@
     setLaneCount(3);
     measure();
     resetPlayerPosition();
-    loadSentence(-1);
+    loadSentence(null);
     running = true;
     lastTime = performance.now();
     requestAnimationFrame(loop);
