@@ -427,6 +427,7 @@
       <div class="score-wrap"><span class="lbl">PTS</span><span class="val" id="score">0</span></div>
       <div class="icon-btn" id="pinyinToggle">拼音</div>
       <div class="icon-btn" id="musicToggle">🎵</div>
+      <div class="icon-btn" id="pauseBtn" title="Pausa (P)">⏸</div>
     </div>
   </header>
 
@@ -498,6 +499,13 @@
     <div class="lb-heading">🏆 Mejores puntuaciones</div>
     <div class="lb-list" id="lbListOver"><p class="lb-msg">Cargando…</p></div>
     <button class="primary-btn" id="restartBtn">Jugar de nuevo</button>
+  </div>
+
+  <!-- PAUSA -->
+  <div class="overlay hidden" id="pauseOverlay">
+    <h1>Pausa</h1>
+    <button class="primary-btn" id="resumeBtn">Continuar</button>
+    <button class="primary-btn" id="quitBtn" style="background:transparent;color:var(--text-dim);border:1.5px solid var(--line);box-shadow:none;">Terminar partida</button>
   </div>
 
   <!-- LEADERBOARD -->
@@ -671,7 +679,7 @@
     const scale = [220, 261.63, 293.66, 329.63, 392, 440];
     let step = 0;
     musicArpInterval = setInterval(()=>{
-      if(!musicOn || !musicStarted || !musicGain) return;
+      if(!musicOn || !musicStarted || !musicGain || paused) return;
       const freq = scale[step % scale.length] * ((step % 8) < 4 ? 1 : 2);
       step++;
       const o = ctx.createOscillator(); o.type = 'square';
@@ -875,6 +883,8 @@
   let isBoss = false;
   let bossTimer = 0;
   let running = false;
+  let rafId = 0;
+  let paused = false;   // 暫停中（running 也會是 false，迴圈停止）
   let speed = 135;
   let spawnTimer = 0;
   let spawnInterval = 1500;
@@ -902,6 +912,8 @@
   const progressLabel = document.getElementById('progressLabel');
   const startOverlay = document.getElementById('startOverlay');
   const overOverlay = document.getElementById('overOverlay');
+  const pauseOverlay = document.getElementById('pauseOverlay');
+  const pauseBtn = document.getElementById('pauseBtn');
   const lbOverlay = document.getElementById('lbOverlay');
   const finalScoreEl = document.getElementById('finalScore');
   const finalSentencesEl = document.getElementById('finalSentences');
@@ -1208,6 +1220,9 @@
   function endGame(){
     if(!overOverlay.classList.contains('hidden')) return;   // 已經結束了，不要重複處理
     running = false;
+    paused = false;
+    pauseOverlay.classList.add('hidden');
+    try{ if(actx && actx.state === 'suspended') actx.resume(); }catch(e){}
     clearTimeout(nextSentenceTimer);   // 如果剛好在「過關等待」中，取消它，避免結束畫面底下遊戲自己重新開始
     stopMusic();
     finalScoreEl.textContent = score;
@@ -1260,7 +1275,7 @@
         coins.splice(i,1);
       }
     }
-    requestAnimationFrame(loop);
+    rafId = requestAnimationFrame(loop);
   }
 
   // ================= INPUT =================
@@ -1305,6 +1320,39 @@
     const dir = dirOfKey(e);
     if(dir) held[dir] = false;
   });
+  // ---- 暫停 ----
+  // 只在「正在跑」的時候能暫停（過關慶祝的 2.6 秒、開始與結束畫面不能）。
+  function pauseGame(){
+    if(!running || paused) return;
+    paused = true;
+    running = false;
+    cancelAnimationFrame(rafId);
+    held.up = held.down = held.left = held.right = false;
+    dragPointerId = null;
+    if('speechSynthesis' in window) speechSynthesis.cancel();
+    try{ if(actx && actx.state === 'running') actx.suspend(); }catch(e){}
+    pauseOverlay.classList.remove('hidden');
+  }
+  function resumeGame(){
+    if(!paused) return;
+    paused = false;
+    pauseOverlay.classList.add('hidden');
+    try{ if(actx && actx.state === 'suspended') actx.resume(); }catch(e){}
+    running = true;
+    lastTime = performance.now();
+    rafId = requestAnimationFrame(loop);
+  }
+  pauseBtn.addEventListener('click', ()=> paused ? resumeGame() : pauseGame());
+  document.getElementById('resumeBtn').addEventListener('click', resumeGame);
+  document.getElementById('quitBtn').addEventListener('click', ()=>{ paused = false; endGame(); });
+  window.addEventListener('keydown', e=>{
+    if(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if(e.key === 'p' || e.key === 'P' || e.key === 'Escape'){
+      if(paused) resumeGame(); else pauseGame();
+    }
+  });
+  document.addEventListener('visibilitychange', ()=>{ if(document.hidden) pauseGame(); });
+
   window.addEventListener('blur', ()=>{
     held.up = held.down = held.left = held.right = false;
     dragPointerId = null;
@@ -1351,6 +1399,8 @@
     if(musicOn){ startMusic(); setMusicVolume(); }
 
     clearTimeout(nextSentenceTimer);
+    paused = false;
+    pauseOverlay.classList.add('hidden');
     usedIds = new Set();
     dragPointerId = null;
     held.up = held.down = held.left = held.right = false;
