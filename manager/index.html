@@ -171,6 +171,18 @@
         </div>
         <div class="status" id="saveStatus"></div>
       </section>
+
+      <section>
+        <h2>批次匯入</h2>
+        <p class="hint">一行一句：<b>詞 詞 詞 | 西班牙文</b>（用 | 分隔）。沒有寫西班牙文的那行會自動翻譯。拼音與簡體會自動產生，題庫裡已經有的句子會自動略過。</p>
+        <textarea id="bulkInput" style="min-height:140px;" placeholder="我 喜歡 吃 蘋果 | Me gusta comer manzanas"></textarea>
+        <div class="row">
+          <button class="btn btn-secondary" id="bulkPreviewBtn">檢查並預覽</button>
+          <button class="btn btn-primary" id="bulkImportBtn" hidden>確認匯入</button>
+        </div>
+        <div class="status" id="bulkStatus"></div>
+        <div id="bulkPreview"></div>
+      </section>
     </div>
 
     <!-- ===== 右欄：目前題庫 ===== -->
@@ -329,10 +341,12 @@
     '同事': 'tóng shì', '冰塊': 'bīng kuài', '加料': 'jiā liào', '找您': 'zhǎo nín',
     '會不會': 'huì bú huì', '算啊': 'suàn a', '了啦': 'le la', '做得': 'zuò de', '時候': 'shí hou', '記得': 'jì de',
     '蘋果': 'píng guǒ', '名字': 'míng zi', '這個': 'zhè ge',
-    '垃圾': 'lè sè', '星期': 'xīng qí'
+    '垃圾': 'lè sè', '星期': 'xīng qí',
+    '睡覺': 'shuì jiào', '公車': 'gōng chē', '公車站': 'gōng chē zhàn', '休息': 'xiū xí', '衣服': 'yī fú',
+    '意思': 'yì si', '媽媽': 'mā ma', '對不起': 'duì bu qǐ', '有空': 'yǒu kòng', '便宜': 'pián yí'
   };
   // 整格只有這一個字時才套用（避免影響「和平」「暖和」這類詞）
-  const TW_WHOLE_CELL = { '和': 'hàn' };
+  const TW_WHOLE_CELL = { '和': 'hàn', '了': 'le' };
 
   if(window.pinyinPro && typeof pinyinPro.customPinyin === 'function'){
     pinyinPro.customPinyin(TW_PINYIN);
@@ -373,6 +387,36 @@
   }
 
   // ================= 產生 =================
+  // 「一」「不」單獨成一格時，函式庫看不到後面的字，變調要自己補：
+  // 後面是第四聲 → 不 bú / 一 yí；其他聲調 → 不 bù / 一 yì；後面是數字或句尾 → 不 bù / 一 yī
+  function toneOf(py){
+    const m = (py || '').split(' ')[0];
+    if(/[āēīōūǖ]/.test(m)) return 1;
+    if(/[áéíóúǘ]/.test(m)) return 2;
+    if(/[ǎěǐǒǔǚ]/.test(m)) return 3;
+    if(/[àèìòùǜ]/.test(m)) return 4;
+    return 0;
+  }
+  function fixYiBu(trad, pinyinArr){
+    return pinyinArr.map((py,i)=>{
+      const t = trad[i], next = pinyinArr[i+1], nextTrad = trad[i+1];
+      if(t !== '不' && t !== '一') return py;
+      if(!next) return py;
+      const nt = toneOf(next);
+      if(t === '不') return nt === 4 ? 'bú' : 'bù';
+      if(isDigits(nextTrad)) return py;
+      if(nt === 4) return 'yí';
+      if(nt >= 1) return 'yì';
+      return 'yì';
+    });
+  }
+  function makeTokens(raw){
+    const trad = raw.trim().split(/\s+/).filter(Boolean);
+    const simp = trad.map(t => toSimplified(t));
+    const pinyin = fixYiBu(trad, trad.map((t,i) => toPinyinTW(t, simp[i])));
+    return { trad, simp, pinyin };
+  }
+
   async function runGenerate(){
     const raw = sentInput.value.trim();
     if(!raw){ setStatus(genStatus,'請先輸入句子。','err'); return; }
@@ -383,7 +427,7 @@
     setStatus(genStatus,'產生中…');
     try{
       const simp = trad.map(t => toSimplified(t));
-      const pinyinArr = trad.map((t,i) => toPinyinTW(t, simp[i]));
+      const pinyinArr = fixYiBu(trad, trad.map((t,i) => toPinyinTW(t, simp[i])));
 
       let es = esInputTop.value.trim();
       let autoTranslated = false;
@@ -644,6 +688,88 @@
     }
   }
   backfillBtn.addEventListener('click', backfillRand);
+
+  // ================= 批次匯入 =================
+  const bulkInput = $('bulkInput'), bulkPreviewBtn = $('bulkPreviewBtn'), bulkImportBtn = $('bulkImportBtn');
+  const bulkStatus = $('bulkStatus'), bulkPreview = $('bulkPreview');
+  let bulkReady = [];   // 預覽通過、等待確認匯入的句子
+
+  async function bulkCheck(){
+    bulkReady = [];
+    bulkImportBtn.hidden = true;
+    bulkPreview.textContent = '';
+    const lines = bulkInput.value.split('\n').map(l=>l.trim()).filter(Boolean);
+    if(lines.length === 0){ setStatus(bulkStatus,'請先貼上要匯入的句子。','err'); return; }
+    bulkPreviewBtn.disabled = true;
+    setStatus(bulkStatus,'處理中…');
+    const existing = new Set(allDocs.map(d => keyOf(d.data.trad)));
+    const seen = new Set();
+    let ok = 0, skip = 0, bad = 0, translated = 0;
+    try{
+      for(let i=0;i<lines.length;i++){
+        const [left, ...rest] = lines[i].split('|');
+        let es = rest.join('|').trim();
+        const tk = makeTokens(left);
+        const card = mk('div','sent-card');
+        const info = mk('div','');
+        let note = '';
+        if(tk.trad.length === 0){ continue; }
+        const key = keyOf(tk.trad);
+        if(existing.has(key) || seen.has(key)){ note = '已存在，略過'; skip++; }
+        else{
+          if(!es){
+            setStatus(bulkStatus,`翻譯中… (${i+1}/${lines.length})`);
+            try{ es = await translateZhToEs(tk.simp.join('')); translated++; note = '（自動翻譯，請檢查）'; }
+            catch(e){ note = '翻譯失敗，略過'; bad++; }
+          }
+          if(es){ seen.add(key); bulkReady.push({ ...tk, es }); ok++; }
+        }
+        info.appendChild(mk('div','hz', tk.trad.join(' · ')));
+        info.appendChild(mk('div','', tk.pinyin.join(' ')));
+        info.appendChild(mk('div','', es || ''));
+        if(note) info.appendChild(mk('div','', note));
+        card.appendChild(info);
+        if(note.includes('略過')) card.style.opacity = '.5';
+        bulkPreview.appendChild(card);
+      }
+      setStatus(bulkStatus,`可匯入 ${ok} 句，已存在略過 ${skip} 句` + (bad?`，失敗 ${bad} 句`:'') + (translated?`，其中 ${translated} 句是自動翻譯`:'') + '。請檢查下方拼音，沒問題再按「確認匯入」。','ok');
+      bulkImportBtn.hidden = bulkReady.length === 0;
+    }catch(e){
+      console.error(e);
+      setStatus(bulkStatus, e.message || '處理失敗。','err');
+    }finally{
+      bulkPreviewBtn.disabled = false;
+    }
+  }
+  async function bulkImport(){
+    if(!requireLogin(bulkStatus)) return;
+    if(bulkReady.length === 0) return;
+    if(!confirm(`要把這 ${bulkReady.length} 句匯入題庫嗎？`)) return;
+    bulkImportBtn.disabled = true;
+    setStatus(bulkStatus,'匯入中…');
+    try{
+      for(let i=0;i<bulkReady.length;i+=200){
+        const batch = db.batch();
+        bulkReady.slice(i,i+200).forEach(r=>{
+          const ref = db.collection(SENT_COLLECTION).doc();
+          batch.set(ref, { trad:r.trad, simp:r.simp, pinyin:r.pinyin, es:r.es, rand:Math.random(), createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        });
+        await batch.commit();
+      }
+      const n = bulkReady.length;
+      bulkReady = []; bulkImportBtn.hidden = true; bulkInput.value = ''; bulkPreview.textContent = '';
+      setStatus(bulkStatus,`已匯入 ${n} 句！`,'ok');
+      refreshList();
+    }catch(e){
+      console.error(e);
+      setStatus(bulkStatus,'匯入失敗：'+explainError(e),'err');
+    }finally{
+      bulkImportBtn.disabled = false;
+    }
+  }
+  bulkPreviewBtn.addEventListener('click', bulkCheck);
+  bulkImportBtn.addEventListener('click', bulkImport);
+  bulkInput.addEventListener('input', ()=>{ bulkReady = []; bulkImportBtn.hidden = true; });
 
   // ================= 清理排行榜（只留前 100 名） =================
   const SCORE_COLLECTION = 'mandarinRunnerScores';
