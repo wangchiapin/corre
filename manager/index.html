@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每天一分鐘 · 句子管理工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+TC:wght@500;700;900&family=Work+Sans:wght@400;500;600;700&family=Zilla+Slab:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F1E6C9; --paper-dark:#E3D3A5; --ink:#26201A; --ink-soft:#5b5040;
+    --seal:#AE3628; --seal-dark:#7E241A; --jade:#4C7A68; --jade-dark:#345548;
+    --gold:#BD9430; --line: rgba(38,32,26,0.18);
+  }
+  *{box-sizing:border-box;}
+  [hidden]{display:none !important;}
+  html,body{margin:0;background:#111;font-family:'Work Sans',sans-serif;}
+
+  #page{ max-width:1180px; margin:0 auto; min-height:100vh; background:var(--paper); }
+
+  header{
+    padding:22px 24px 16px;border-bottom:2px solid var(--line);
+    background:linear-gradient(180deg,var(--paper-dark),var(--paper));
+  }
+  .brand{font-family:'Ma Shan Zheng',cursive;font-size:30px;color:var(--seal);margin:0;}
+  .sub{margin:4px 0 0;color:var(--ink-soft);font-size:13.5px;}
+  .badge{
+    display:inline-block;margin-top:8px;padding:3px 10px;border-radius:12px;
+    background:var(--jade);color:#fdf6e3;font-size:11px;font-weight:700;letter-spacing:.3px;
+  }
+  .authbar{
+    margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    font-size:12.5px;color:var(--ink-soft);
+  }
+  .authbar .who{font-weight:600;color:var(--ink);}
+  .authbar .who.ok{color:var(--jade-dark);}
+  .authbar .authmsg{color:var(--seal);font-style:italic;}
+
+  /* ---------- TWO COLUMN LAYOUT ---------- */
+  #layout{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    align-items:start;
+  }
+  #colLeft{ border-right:2px solid var(--line); }
+  #colRight{
+    position:sticky; top:0;
+    max-height:100vh; overflow-y:auto;
+    padding-bottom:60px;
+  }
+  @media (max-width: 860px){
+    #layout{ grid-template-columns:1fr; }
+    #colLeft{ border-right:none; }
+    #colRight{ position:static; max-height:none; border-top:2px solid var(--line); }
+  }
+
+  section{padding:20px 24px;border-bottom:1.5px solid var(--line);}
+  h2{font-family:'Zilla Slab',serif;font-size:16px;color:var(--ink);margin:0 0 6px;}
+  .hint{font-size:12px;color:var(--ink-soft);margin:0 0 10px;}
+
+  textarea, input[type=text]{
+    width:100%;font-family:'Noto Serif TC',serif;font-size:17px;color:var(--ink);
+    border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;background:#fffdf7;
+    resize:vertical;
+  }
+  textarea{min-height:56px;}
+  #esInputTop{font-family:'Work Sans';font-size:14px;min-height:44px;margin-top:14px;}
+  .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .btn{
+    padding:10px 20px;border-radius:24px;border:none;cursor:pointer;
+    font-family:'Work Sans';font-weight:700;font-size:13.5px;letter-spacing:.3px;
+  }
+  .btn-small{padding:6px 14px;font-size:12px;}
+  .btn-primary{background:var(--seal);color:#fdf6e3;box-shadow:0 3px 0 var(--seal-dark);}
+  .btn-primary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--seal-dark);}
+  .btn-secondary{background:var(--paper-dark);color:var(--ink);border:1.5px solid var(--line);}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+  .status{font-size:12.5px;color:var(--ink-soft);font-style:italic;margin-top:8px;min-height:16px;}
+  .status.err{color:var(--seal);}
+  .status.ok{color:var(--jade-dark);}
+
+  #editBanner{
+    margin:0 0 12px;padding:8px 12px;border-radius:8px;
+    background:#fff3d6;border:1.5px solid var(--gold);color:var(--ink);font-size:12.5px;
+  }
+
+  #tokenTable{margin-top:14px;display:flex;flex-direction:column;gap:6px;}
+  .token-row{
+    display:grid;grid-template-columns:22px 1fr 1fr 1fr 28px;gap:6px;align-items:center;
+  }
+  .token-row .idx{font-family:'Zilla Slab',serif;font-size:12px;color:var(--ink-soft);text-align:center;}
+  .token-row input{
+    font-size:14px;padding:7px 8px;border-radius:6px;border:1.5px solid var(--line);background:#fffdf7;
+  }
+  .token-row input.trad,.token-row input.simp{font-family:'Noto Serif TC',serif;font-size:15px;}
+  .token-row .rm{
+    width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);background:var(--paper-dark);
+    color:var(--seal);cursor:pointer;font-size:13px;line-height:1;
+  }
+  .col-labels{display:grid;grid-template-columns:22px 1fr 1fr 1fr 28px;gap:6px;font-size:10.5px;color:var(--ink-soft);letter-spacing:.5px;margin-top:12px;}
+
+  #esInput{margin-top:10px;min-height:44px;font-family:'Work Sans';font-size:14px;}
+
+  .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 4px;}
+  #sentenceList{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+  .sent-card{
+    border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:#fffdf7;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+  }
+  .sent-card .hz{font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;color:var(--ink);}
+  .sent-card .py{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .sent-card .es{font-size:12.5px;color:var(--jade-dark);font-style:italic;margin-top:3px;}
+  .card-actions{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
+  .sent-card .del,.sent-card .edit{
+    background:none;border:none;cursor:pointer;font-size:18px;padding:2px 6px;
+  }
+  .sent-card .del{color:var(--seal);}
+  .sent-card .edit{color:var(--jade-dark);}
+  .empty-msg{font-size:13px;color:var(--ink-soft);font-style:italic;}
+</style>
+</head>
+<body>
+<div id="page">
+  <header>
+    <p class="brand">每天一分鐘 · 句子管理工具</p>
+    <p class="sub">輸入句子（詞語間用空白分開）與西班牙文翻譯，自動幫你產生簡體字與台灣讀音拼音 — 檢查沒問題後儲存，遊戲下次開啟就會讀到。</p>
+    <span class="badge">✓ 完全免費・不需要金鑰・不需要信用卡</span>
+    <div class="authbar">
+      <span class="who" id="authStatus">尚未登入（只能查看題庫，不能新增、修改或刪除）</span>
+      <button class="btn btn-secondary btn-small" id="loginBtn">使用 Google 登入</button>
+      <button class="btn btn-secondary btn-small" id="logoutBtn" hidden>登出</button>
+      <button class="btn btn-secondary btn-small" id="pruneBtn" hidden title="只保留分數最高的 100 筆，其餘刪除（第 100 名同分的會全部保留）">清理排行榜（只留前 100 名）</button>
+      <span class="authmsg" id="authMsg"></span>
+    </div>
+    <div class="status" id="pruneStatus"></div>
+  </header>
+
+  <div id="layout">
+    <!-- ===== 左欄：建立題目 ===== -->
+    <div id="colLeft">
+      <section>
+        <h2>① 輸入句子</h2>
+        <p class="hint">繁體中文，「詞」與「詞」之間請用空白分開（例如：喜歡、蘋果 算一個詞，不要拆成單字）。<br>例如：<b>我 喜歡 吃 蘋果</b></p>
+        <textarea id="sentInput" placeholder="我 喜歡 吃 蘋果"></textarea>
+
+        <h2 style="margin-top:14px;">西班牙文翻譯（選填）</h2>
+        <p class="hint">留空的話會自動翻譯；已經自己填的話會直接使用你填的版本。</p>
+        <textarea id="esInputTop" placeholder="留空 = 自動翻譯，或直接輸入你自己的翻譯"></textarea>
+
+        <div class="row">
+          <button class="btn btn-primary" id="genBtn">⚙️ 自動產生簡體 / 拼音 / 翻譯</button>
+        </div>
+        <div class="status" id="genStatus"></div>
+      </section>
+
+      <section id="previewSection" style="display:none;">
+        <div id="editBanner" hidden>✏️ 正在編輯已存的句子。改完按「儲存修改」會覆蓋原本那一句。</div>
+        <h2>② 檢查與微調</h2>
+        <p class="hint">簡體字與拼音是自動轉換的（依台灣讀音，一／不會自動變調），多音字或特殊唸法請自行核對修改，儲存的是你最後改好的版本。</p>
+        <div class="col-labels"><span></span><span>繁體</span><span>簡體</span><span>拼音(台灣)</span><span></span></div>
+        <div id="tokenTable"></div>
+        <div class="row">
+          <button class="btn btn-secondary" id="addTokenBtn">+ 新增一格</button>
+        </div>
+        <h2 style="margin-top:16px;">西班牙文翻譯</h2>
+        <textarea id="esInput"></textarea>
+        <div class="row">
+          <button class="btn btn-primary" id="saveBtn">💾 儲存到題庫</button>
+          <button class="btn btn-secondary" id="cancelEditBtn" hidden>取消編輯</button>
+        </div>
+        <div class="status" id="saveStatus"></div>
+      </section>
+    </div>
+
+    <!-- ===== 右欄：目前題庫 ===== -->
+    <div id="colRight">
+      <section>
+        <h2>目前題庫 <span id="countLabel"></span></h2>
+        <div class="toolbar">
+          <button class="btn btn-secondary btn-small" id="backfillBtn" hidden>補齊舊句子的隨機欄位</button>
+          <span class="status" id="backfillStatus" style="margin-top:0;"></span>
+        </div>
+        <div class="status" id="listStatus"></div>
+        <div id="sentenceList"><p class="empty-msg">載入中…</p></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- 免費、不需金鑰的繁簡轉換與拼音函式庫（版本固定，避免之後更新造成讀音變動） -->
+<script src="https://cdn.jsdelivr.net/npm/opencc-js@1.4.1/dist/umd/full.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.20.0/dist/index.js"></script>
+
+<!-- Firebase (compat SDK) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+(function(){
+  'use strict';
+
+  // ================= FIREBASE SETUP =================
+  const firebaseConfig = {
+    apiKey: "AIzaSyA0jxyA3ZqWcFfsN1nu5Zol33QSxwrgq68",
+    authDomain: "corre-d16da.firebaseapp.com",
+    projectId: "corre-d16da",
+    storageBucket: "corre-d16da.firebasestorage.app",
+    messagingSenderId: "734685362204",
+    appId: "1:734685362204:web:fec4c0f9f39b1730dfc7d9",
+    measurementId: "G-DYDQJ03SJZ"
+  };
+  const SENT_COLLECTION = 'mandarinRunnerSentences';
+  let db = null, auth = null, firebaseReady = false;
+  try{
+    if(window.firebase){
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      auth = firebase.auth();
+      firebaseReady = true;
+    }
+  }catch(e){ console.warn('Firebase 初始化失敗:', e); }
+
+  // ================= DOM =================
+  const $ = id => document.getElementById(id);
+  const sentInput = $('sentInput');
+  const esInputTop = $('esInputTop');
+  const genBtn = $('genBtn');
+  const genStatus = $('genStatus');
+  const previewSection = $('previewSection');
+  const tokenTable = $('tokenTable');
+  const addTokenBtn = $('addTokenBtn');
+  const esInput = $('esInput');
+  const saveBtn = $('saveBtn');
+  const cancelEditBtn = $('cancelEditBtn');
+  const editBanner = $('editBanner');
+  const saveStatus = $('saveStatus');
+  const sentenceList = $('sentenceList');
+  const countLabel = $('countLabel');
+  const listStatus = $('listStatus');
+  const backfillBtn = $('backfillBtn');
+  const backfillStatus = $('backfillStatus');
+  const authStatus = $('authStatus');
+  const authMsg = $('authMsg');
+  const loginBtn = $('loginBtn');
+  const logoutBtn = $('logoutBtn');
+  const pruneBtn = $('pruneBtn');
+  const pruneStatus = $('pruneStatus');
+
+  function setStatus(el, msg, cls){
+    el.textContent = msg || '';
+    el.className = 'status' + (cls ? ' '+cls : '');
+  }
+  function mk(tag, cls, text){
+    const el = document.createElement(tag);
+    if(cls) el.className = cls;
+    if(text != null) el.textContent = text;
+    return el;
+  }
+  function explainError(e){
+    const code = e && e.code;
+    if(code === 'permission-denied') return '沒有權限：請確認已用管理者的 Google 帳號登入。';
+    if(code === 'unavailable') return '網路連線有問題，請稍後再試。';
+    return (e && e.message) || '發生未知的錯誤。';
+  }
+
+  // ================= GOOGLE 登入 =================
+  // 只有「用 Google 登入、有 email」才算管理者登入。
+  // （同一個網站底下的舊遊戲以前會留下「匿名登入」的紀錄，那種不算。）
+  function isRealUser(user){ return !!(user && !user.isAnonymous && user.email); }
+  function renderAuth(user){
+    if(isRealUser(user)){
+      authStatus.textContent = '已登入：' + (user.email || user.displayName || '');
+      authStatus.className = 'who ok';
+      loginBtn.hidden = true;
+      logoutBtn.hidden = false;
+      pruneBtn.hidden = false;
+    }else{
+      authStatus.textContent = '尚未登入（只能查看題庫，不能新增、修改或刪除）';
+      authStatus.className = 'who';
+      loginBtn.hidden = false;
+      logoutBtn.hidden = true;
+      pruneBtn.hidden = true;
+    }
+  }
+  async function login(){
+    if(!auth){ authMsg.textContent = 'Firebase 尚未載入完成，請重新整理頁面。'; return; }
+    authMsg.textContent = '';
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try{
+      await auth.signInWithPopup(provider);
+    }catch(e){
+      const code = e && e.code;
+      if(code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment'){
+        auth.signInWithRedirect(provider);
+        return;
+      }
+      if(code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
+      if(code === 'auth/unauthorized-domain'){
+        authMsg.textContent = '這個網址還沒加入 Firebase 的「已授權網域」，請到 Authentication → Settings 新增。';
+        return;
+      }
+      authMsg.textContent = '登入失敗：' + ((e && e.message) || code || '');
+    }
+  }
+  loginBtn.addEventListener('click', login);
+  logoutBtn.addEventListener('click', ()=>{ if(auth) auth.signOut(); });
+  if(auth){
+    auth.getRedirectResult().catch(e=>{ authMsg.textContent = '登入失敗：' + ((e && e.message) || ''); });
+    auth.onAuthStateChanged(user=>{ renderAuth(user); });
+  }
+  function requireLogin(statusEl){
+    if(auth && isRealUser(auth.currentUser)) return true;
+    setStatus(statusEl, '請先用上方的「使用 Google 登入」登入管理者帳號。', 'err');
+    return false;
+  }
+
+  // ================= 繁簡轉換與拼音（台灣讀音） =================
+  // 讀音以教育部《重編國語辭典修訂本》為準。pinyin-pro 預設是大陸讀音，
+  // 所以這裡先放一份「台灣讀音例外表」。發現哪個詞讀錯了，把它加進這張表就好。
+  // 做法：'詞': '拼音（每個字之間空一格，輕聲不標調）'
+  const TW_PINYIN = {
+    '還是': 'hái shì', '還有': 'hái yǒu', '還要': 'hái yào', '還沒': 'hái méi', '還差': 'hái chà',
+    '嗎': 'ma', '誰': 'shéi', '幾': 'jǐ', '喔': 'ō', '唷': 'yō', '耶': 'ye', '啦': 'la', '囉': 'luo',
+    '什麼': 'shén me', '謝謝': 'xiè xie', '麻煩': 'má fan', '我們': 'wǒ men', '你們': 'nǐ men',
+    '東西': 'dōng xi', '朋友': 'péng yǒu', '覺得': 'jué de', '著': 'zhe', '只': 'zhǐ',
+    '著急': 'zháo jí',
+    '同事': 'tóng shì', '冰塊': 'bīng kuài', '加料': 'jiā liào', '找您': 'zhǎo nín',
+    '會不會': 'huì bú huì', '算啊': 'suàn a', '了啦': 'le la', '做得': 'zuò de', '時候': 'shí hou', '記得': 'jì de',
+    '蘋果': 'píng guǒ', '名字': 'míng zi', '這個': 'zhè ge',
+    '垃圾': 'lè sè', '星期': 'xīng qí'
+  };
+  // 整格只有這一個字時才套用（避免影響「和平」「暖和」這類詞）
+  const TW_WHOLE_CELL = { '和': 'hàn' };
+
+  if(window.pinyinPro && typeof pinyinPro.customPinyin === 'function'){
+    pinyinPro.customPinyin(TW_PINYIN);
+  }
+
+  let simplifiedConverter = null;
+  function ensureConverter(){
+    if(!simplifiedConverter){
+      if(!window.OpenCC){ throw new Error('繁簡轉換函式庫尚未載入完成，請稍等一下再試一次。'); }
+      simplifiedConverter = OpenCC.Converter({ from: 'tw', to: 'cn' });
+    }
+    return simplifiedConverter;
+  }
+  function toSimplified(text){
+    return ensureConverter()(text);
+  }
+  const isDigits = s => /^[零一二三四五六七八九]+$/.test(s);
+  const HAS_HAN = /[㐀-鿿]/;
+  function toPinyinTW(trad, simp){
+    if(!window.pinyinPro){ throw new Error('拼音函式庫尚未載入完成，請稍等一下再試一次。'); }
+    if(Object.prototype.hasOwnProperty.call(TW_WHOLE_CELL, trad)) return TW_WHOLE_CELL[trad];
+    const opt = { toneType: 'symbol', toneSandhi: !isDigits(trad) };
+    let py = pinyinPro.pinyin(trad, opt);
+    // 極少數冷僻繁體字函式庫不認得，會原樣輸出漢字；這時改用簡體字再算一次
+    if(HAS_HAN.test(py)) py = pinyinPro.pinyin(simp, opt);
+    return py;
+  }
+  async function translateZhToEs(text){
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=zh-CN|es`;
+    const resp = await fetch(url);
+    if(!resp.ok) throw new Error('翻譯服務暫時無法使用，請自行輸入翻譯。');
+    const data = await resp.json();
+    const translated = data && data.responseData && data.responseData.translatedText;
+    if(!translated || /MYMEMORY WARNING/i.test(translated)){
+      throw new Error('翻譯額度暫時用完或失敗，請自行輸入翻譯。');
+    }
+    return translated;
+  }
+
+  // ================= 產生 =================
+  async function runGenerate(){
+    const raw = sentInput.value.trim();
+    if(!raw){ setStatus(genStatus,'請先輸入句子。','err'); return; }
+    const trad = raw.split(/\s+/).filter(Boolean);
+    if(trad.length === 0){ setStatus(genStatus,'請先輸入句子。','err'); return; }
+
+    genBtn.disabled = true;
+    setStatus(genStatus,'產生中…');
+    try{
+      const simp = trad.map(t => toSimplified(t));
+      const pinyinArr = trad.map((t,i) => toPinyinTW(t, simp[i]));
+
+      let es = esInputTop.value.trim();
+      let autoTranslated = false;
+      if(!es){
+        setStatus(genStatus,'簡體與拼音完成，翻譯中…');
+        es = await translateZhToEs(simp.join(''));
+        esInputTop.value = es;
+        autoTranslated = true;
+      }
+
+      renderTokenRows({ trad, simp, pinyin: pinyinArr });
+      esInput.value = es;
+      previewSection.style.display = 'block';
+      setStatus(genStatus, autoTranslated
+        ? '已自動產生，翻譯是機器翻的，請務必檢查是否通順正確！'
+        : '已自動產生，請檢查下方簡體與拼音是否正確。', 'ok');
+    }catch(e){
+      console.error(e);
+      setStatus(genStatus, e.message || '產生失敗，請再試一次。', 'err');
+    }finally{
+      genBtn.disabled = false;
+    }
+  }
+  genBtn.addEventListener('click', runGenerate);
+  addTokenBtn.addEventListener('click', ()=>addTokenRow('','',''));
+
+  function renderTokenRows(data){
+    tokenTable.textContent = '';
+    const n = Math.max(data.trad.length, data.simp.length, data.pinyin.length);
+    for(let i=0;i<n;i++){
+      addTokenRow(data.trad[i]||'', data.simp[i]||'', data.pinyin[i]||'');
+    }
+  }
+  function addTokenRow(trad, simp, pinyin){
+    const row = mk('div','token-row');
+    row.appendChild(mk('span','idx'));
+    [['trad',trad],['simp',simp],['pinyin',pinyin]].forEach(([cls,val])=>{
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = cls;
+      inp.value = val;
+      row.appendChild(inp);
+    });
+    const rm = mk('button','rm','×');
+    rm.title = '刪除';
+    rm.addEventListener('click', ()=>{ row.remove(); reindexRows(); });
+    row.appendChild(rm);
+    tokenTable.appendChild(row);
+    reindexRows();
+  }
+  function reindexRows(){
+    tokenTable.querySelectorAll('.token-row').forEach((row,i)=>{
+      row.querySelector('.idx').textContent = i+1;
+    });
+  }
+  function collectTokens(){
+    const rows = [...tokenTable.querySelectorAll('.token-row')];
+    return {
+      trad: rows.map(r=>r.querySelector('.trad').value.trim()).filter(Boolean),
+      simp: rows.map(r=>r.querySelector('.simp').value.trim()).filter(Boolean),
+      pinyin: rows.map(r=>r.querySelector('.pinyin').value.trim()).filter(Boolean)
+    };
+  }
+
+  // ================= 題庫資料（列表與重複檢查共用） =================
+  let allDocs = [];          // [{ id, data }]
+  let editingId = null;      // 正在編輯的文件 id（null = 新增）
+  const keyOf = trad => (trad || []).join('');
+  const createdMs = d => (d.data.createdAt && typeof d.data.createdAt.toMillis === 'function') ? d.data.createdAt.toMillis() : 0;
+
+  function clearForm(){
+    editingId = null;
+    sentInput.value = ''; esInputTop.value = ''; esInput.value = '';
+    tokenTable.textContent = '';
+    previewSection.style.display = 'none';
+    editBanner.hidden = true;
+    cancelEditBtn.hidden = true;
+    saveBtn.textContent = '💾 儲存到題庫';
+    setStatus(genStatus,'','');
+  }
+
+  // ================= 儲存（新增 / 覆蓋 / 編輯） =================
+  async function saveSentence(){
+    const tokens = collectTokens();
+    const es = esInput.value.trim();
+    if(tokens.trad.length===0 || tokens.simp.length===0 || tokens.pinyin.length===0){
+      setStatus(saveStatus,'繁體／簡體／拼音都不能是空的。','err'); return;
+    }
+    if(tokens.trad.length !== tokens.simp.length || tokens.trad.length !== tokens.pinyin.length){
+      setStatus(saveStatus,'繁體、簡體、拼音的格數必須一樣多，請檢查。','err'); return;
+    }
+    if(!es){ setStatus(saveStatus,'請填寫西班牙文翻譯。','err'); return; }
+    if(!firebaseReady){ setStatus(saveStatus,'Firebase 尚未載入完成，請重新整理頁面。','err'); return; }
+    if(!requireLogin(saveStatus)) return;
+
+    // 重複檢查：繁體字完全相同的句子
+    const key = keyOf(tokens.trad);
+    const dup = allDocs.find(d => keyOf(d.data.trad) === key && d.id !== editingId);
+    let targetId = editingId;
+    if(dup){
+      if(editingId){
+        setStatus(saveStatus,'題庫裡已經有另一筆相同的句子了，請先確認。','err');
+        return;
+      }
+      if(!confirm('題庫裡已經有這一句了。\n要用現在的內容覆蓋它嗎？（按「取消」就不儲存）')) return;
+      targetId = dup.id;
+    }
+
+    saveBtn.disabled = true;
+    setStatus(saveStatus,'儲存中…');
+    try{
+      const payload = { trad: tokens.trad, simp: tokens.simp, pinyin: tokens.pinyin, es };
+      if(targetId){
+        const existing = allDocs.find(d => d.id === targetId);
+        // 舊句子如果還沒有隨機欄位，順便補上（遊戲抽題要用）
+        if(!existing || typeof existing.data.rand !== 'number') payload.rand = Math.random();
+        await db.collection(SENT_COLLECTION).doc(targetId).update(payload);
+      }else{
+        await db.collection(SENT_COLLECTION).add({
+          ...payload,
+          rand: Math.random(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      const wasEditing = !!editingId;
+      clearForm();
+      setStatus(saveStatus, wasEditing || dup ? '已更新！遊戲下次開啟就會讀到修改後的版本。' : '已儲存！遊戲下次開啟就會讀到這句話。','ok');
+      refreshList();
+    }catch(e){
+      console.error(e);
+      setStatus(saveStatus,'儲存失敗：'+explainError(e),'err');
+    }finally{
+      saveBtn.disabled = false;
+    }
+  }
+  saveBtn.addEventListener('click', saveSentence);
+  cancelEditBtn.addEventListener('click', ()=>{
+    clearForm();
+    setStatus(saveStatus,'已取消編輯。','');
+  });
+
+  // ================= 列表 / 編輯 / 刪除 =================
+  function startEdit(doc){
+    const d = doc.data;
+    editingId = doc.id;
+    sentInput.value = (d.trad || []).join(' ');
+    esInputTop.value = d.es || '';
+    renderTokenRows({ trad: d.trad || [], simp: d.simp || [], pinyin: d.pinyin || [] });
+    esInput.value = d.es || '';
+    previewSection.style.display = 'block';
+    editBanner.hidden = false;
+    cancelEditBtn.hidden = false;
+    saveBtn.textContent = '💾 儲存修改';
+    setStatus(saveStatus,'','');
+    setStatus(genStatus,'編輯中：可以直接改下方欄位，也可以改上面的句子後重新按「自動產生」。','');
+    previewSection.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  async function deleteDoc(doc){
+    setStatus(listStatus,'','');
+    if(!requireLogin(listStatus)) return;
+    if(!confirm('確定要刪除這句話嗎？')) return;
+    try{
+      await db.collection(SENT_COLLECTION).doc(doc.id).delete();
+      if(editingId === doc.id) clearForm();
+      refreshList();
+    }catch(e){
+      console.error(e);
+      setStatus(listStatus,'刪除失敗：'+explainError(e),'err');
+    }
+  }
+
+  function renderList(){
+    sentenceList.textContent = '';
+    if(allDocs.length === 0){
+      sentenceList.appendChild(mk('p','empty-msg','還沒有句子，先在左邊新增第一句吧！'));
+      return;
+    }
+    allDocs.forEach(doc=>{
+      const d = doc.data;
+      const card = mk('div','sent-card');
+      const info = mk('div');
+      info.appendChild(mk('div','hz',(d.trad||[]).join(' · ')));
+      info.appendChild(mk('div','py',(d.pinyin||[]).join('  ')));
+      info.appendChild(mk('div','es',d.es||''));
+      const actions = mk('div','card-actions');
+      const edit = mk('button','edit','✏️'); edit.title = '編輯';
+      edit.addEventListener('click', ()=>startEdit(doc));
+      const del = mk('button','del','🗑'); del.title = '刪除';
+      del.addEventListener('click', ()=>deleteDoc(doc));
+      actions.appendChild(edit);
+      actions.appendChild(del);
+      card.appendChild(info);
+      card.appendChild(actions);
+      sentenceList.appendChild(card);
+    });
+  }
+
+  function updateBackfillUi(){
+    const missing = allDocs.filter(d => typeof d.data.rand !== 'number').length;
+    if(missing > 0){
+      backfillBtn.hidden = false;
+      backfillBtn.textContent = `補齊舊句子的隨機欄位（${missing} 句）`;
+      setStatus(backfillStatus, '這些句子還沒有隨機欄位，遊戲抽不到它們。', 'err');
+    }else{
+      backfillBtn.hidden = true;
+      setStatus(backfillStatus, allDocs.length ? '所有句子都已經有隨機欄位。' : '', 'ok');
+    }
+  }
+
+  async function refreshList(){
+    if(!firebaseReady){
+      sentenceList.textContent = '';
+      sentenceList.appendChild(mk('p','empty-msg','Firebase 尚未載入完成，請重新整理頁面。'));
+      countLabel.textContent = '';
+      return;
+    }
+    sentenceList.textContent = '';
+    sentenceList.appendChild(mk('p','empty-msg','載入中…'));
+    try{
+      const snap = await db.collection(SENT_COLLECTION).get();
+      allDocs = snap.docs.map(d => ({ id: d.id, data: d.data() }));
+      // 新的在上面；沒有建立時間的舊句子排在最後面，但一樣會顯示
+      allDocs.sort((a,b)=> createdMs(b) - createdMs(a));
+      countLabel.textContent = `（共 ${allDocs.length} 句）`;
+      renderList();
+      updateBackfillUi();
+    }catch(e){
+      console.error(e);
+      sentenceList.textContent = '';
+      sentenceList.appendChild(mk('p','empty-msg','讀取失敗，請檢查 Firebase 設定與資料庫規則。'));
+    }
+  }
+
+  // ================= 補齊舊句子的隨機欄位 =================
+  async function backfillRand(){
+    setStatus(backfillStatus,'','');
+    if(!requireLogin(backfillStatus)) return;
+    const missing = allDocs.filter(d => typeof d.data.rand !== 'number');
+    if(missing.length === 0){ setStatus(backfillStatus,'所有句子都已經有隨機欄位。','ok'); return; }
+    backfillBtn.disabled = true;
+    setStatus(backfillStatus,'處理中…');
+    try{
+      for(let i=0;i<missing.length;i+=400){
+        const batch = db.batch();
+        missing.slice(i,i+400).forEach(d=>{
+          batch.update(db.collection(SENT_COLLECTION).doc(d.id), { rand: Math.random() });
+        });
+        await batch.commit();
+      }
+      await refreshList();
+      setStatus(backfillStatus,`已補齊 ${missing.length} 句。`,'ok');
+    }catch(e){
+      console.error(e);
+      setStatus(backfillStatus,'補齊失敗：'+explainError(e),'err');
+    }finally{
+      backfillBtn.disabled = false;
+    }
+  }
+  backfillBtn.addEventListener('click', backfillRand);
+
+  // ================= 清理排行榜（只留前 100 名） =================
+  const SCORE_COLLECTION = 'mandarinRunnerScores';
+  const KEEP_TOP = 100;
+  async function pruneScores(){
+    setStatus(pruneStatus,'','');
+    if(!requireLogin(pruneStatus)) return;
+    pruneBtn.disabled = true;
+    setStatus(pruneStatus,'讀取中…');
+    try{
+      const snap = await db.collection(SCORE_COLLECTION).orderBy('score','desc').get();
+      const total = snap.size;
+      if(total <= KEEP_TOP){
+        setStatus(pruneStatus,`目前共 ${total} 筆，沒有超過 ${KEEP_TOP} 筆，不需要清理。`,'ok');
+        return;
+      }
+      const cutoff = snap.docs[KEEP_TOP-1].data().score;           // 第 100 名的分數
+      const toDelete = snap.docs.filter(d => d.data().score < cutoff);   // 只刪「比第 100 名低」的
+      if(toDelete.length === 0){
+        setStatus(pruneStatus,`目前共 ${total} 筆，但第 100 名以後的分數都與第 100 名相同，全部保留。`,'ok');
+        return;
+      }
+      if(!confirm(`目前共 ${total} 筆。\n這次會刪除 ${toDelete.length} 筆（分數低於 ${cutoff} 的），保留 ${total - toDelete.length} 筆。\n\n確定要刪除嗎？`)){
+        setStatus(pruneStatus,'已取消，沒有刪除任何資料。','');
+        return;
+      }
+      setStatus(pruneStatus,'刪除中…');
+      for(let i=0;i<toDelete.length;i+=400){
+        const batch = db.batch();
+        toDelete.slice(i,i+400).forEach(d=> batch.delete(d.ref));
+        await batch.commit();
+      }
+      setStatus(pruneStatus,`已刪除 ${toDelete.length} 筆，剩下 ${total - toDelete.length} 筆。`,'ok');
+    }catch(e){
+      console.error(e);
+      setStatus(pruneStatus,'清理失敗：'+explainError(e),'err');
+    }finally{
+      pruneBtn.disabled = false;
+    }
+  }
+  pruneBtn.addEventListener('click', pruneScores);
+
+  refreshList();
+})();
+</script>
+</body>
+</html>
