@@ -427,13 +427,13 @@
       <div class="score-wrap"><span class="lbl">PTS</span><span class="val" id="score">0</span></div>
       <div class="icon-btn" id="pinyinToggle">拼音</div>
       <div class="icon-btn" id="musicToggle">🎵</div>
-      <div class="icon-btn" id="pauseBtn" title="Pausa (P)">⏸</div>
+      <div class="icon-btn" id="pauseBtn" data-i18n-title="pauseTitle" title="Pausa (P)">⏸</div>
     </div>
   </header>
 
   <div id="banner-wrap">
-    <div class="banner-label"><span>Cómelos en orden</span><span id="progressLabel">0/0</span></div>
-    <div class="boss-banner" id="bossBanner"><span class="spk">🔊</span><span>大魔王關卡 · ¡Escucha con atención!</span></div>
+    <div class="banner-label"><span data-i18n="order">Cómelos en orden</span><span id="progressLabel">0/0</span></div>
+    <div class="boss-banner" id="bossBanner"><span class="spk">🔊</span><span>大魔王關卡 · <span data-i18n="boss">¡Escucha con atención!</span></span></div>
     <div id="sentence-track"></div>
     <div class="es-line" id="esLine"></div>
   </div>
@@ -451,68 +451,76 @@
     </div>
     <div class="order-toast" id="orderToast">
       <div class="main">按照順序來唷！</div>
-      <div class="sub">¡Sigue el orden de la frase!</div>
+      <div class="sub" data-i18n="toast">¡Sigue el orden de la frase!</div>
     </div>
   </div>
 
-  <div class="celebrate" id="celebrate"><span>¡Excelente!</span></div>
+  <div class="celebrate" id="celebrate"><span data-i18n="excellent">¡Excelente!</span></div>
 
   <!-- START / SETUP -->
   <div class="overlay" id="startOverlay">
     <h1>跑吧！漢字</h1>
-    <p class="subtitle">¡Corre y come las palabras en el orden correcto de la frase! Cada cierto tiempo aparece un nivel jefe: escucha la frase en vez de leerla.</p>
-    <p class="drag-hint">👆 Arrastra el dedo por la pantalla para moverte. En computadora: flechas o WASD, o arrastra con el ratón.</p>
+    <p class="subtitle" data-i18n="subtitle">¡Corre y come las palabras en el orden correcto de la frase! Cada cierto tiempo aparece un nivel jefe: escucha la frase en vez de leerla.</p>
+    <p class="drag-hint" data-i18n="dragHint">👆 Arrastra el dedo por la pantalla para moverte. En computadora: flechas o WASD, o arrastra con el ratón.</p>
 
     <div class="field">
-      <label>Tu nombre</label>
-      <input type="text" id="nameInput" maxlength="16" placeholder="Jugador">
+      <label data-i18n="langLabel">Idioma de las traducciones</label>
+      <div class="toggle-group" id="langGroup">
+        <button class="toggle-btn active" data-value="es">Español</button>
+        <button class="toggle-btn" data-value="en">English</button>
+      </div>
     </div>
 
     <div class="field">
-      <label>Tipo de caracteres</label>
+      <label data-i18n="name">Tu nombre</label>
+      <input type="text" id="nameInput" maxlength="16" placeholder="Jugador" data-i18n-ph="namePh">
+    </div>
+
+    <div class="field">
+      <label data-i18n="script">Tipo de caracteres</label>
       <div class="toggle-group" id="scriptGroup">
-        <button class="toggle-btn active" data-value="trad">繁體 Tradicional</button>
-        <button class="toggle-btn" data-value="simp">簡體 Simplificado</button>
+        <button class="toggle-btn active" data-value="trad">繁體 <span data-i18n="trad">Tradicional</span></button>
+        <button class="toggle-btn" data-value="simp">簡體 <span data-i18n="simp">Simplificado</span></button>
       </div>
     </div>
 
     <div class="field">
-      <label>Dificultad (velocidad)</label>
+      <label data-i18n="diff">Dificultad (velocidad)</label>
       <div class="toggle-group" id="diffGroup">
-        <button class="toggle-btn" data-value="facil">Fácil</button>
-        <button class="toggle-btn active" data-value="normal">Normal</button>
-        <button class="toggle-btn" data-value="dificil">Difícil</button>
+        <button class="toggle-btn" data-value="facil" data-i18n="facil">Fácil</button>
+        <button class="toggle-btn active" data-value="normal" data-i18n="normal">Normal</button>
+        <button class="toggle-btn" data-value="dificil" data-i18n="dificil">Difícil</button>
       </div>
     </div>
 
-    <button class="primary-btn" id="startBtn">Empezar</button>
-    <button class="link-btn" id="showLbBtn">🏆 Ver clasificación</button>
+    <button class="primary-btn" id="startBtn" data-i18n="start">Empezar</button>
+    <button class="link-btn" id="showLbBtn">🏆 <span data-i18n="viewLb">Ver clasificación</span></button>
   </div>
 
   <!-- GAME OVER -->
   <div class="overlay hidden" id="overOverlay">
-    <h1>Fin del juego</h1>
+    <h1 data-i18n="over">Fin del juego</h1>
     <div class="stat-row">
-      <div><b id="finalScore">0</b>Puntos</div>
-      <div><b id="finalSentences">0</b>Frases</div>
+      <div><b id="finalScore">0</b><span data-i18n="points">Puntos</span></div>
+      <div><b id="finalSentences">0</b><span data-i18n="sentences">Frases</span></div>
     </div>
-    <div class="lb-heading">🏆 Mejores puntuaciones</div>
+    <div class="lb-heading">🏆 <span data-i18n="best">Mejores puntuaciones</span></div>
     <div class="lb-list" id="lbListOver"><p class="lb-msg">Cargando…</p></div>
-    <button class="primary-btn" id="restartBtn">Jugar de nuevo</button>
+    <button class="primary-btn" id="restartBtn" data-i18n="again">Jugar de nuevo</button>
   </div>
 
   <!-- PAUSA -->
   <div class="overlay hidden" id="pauseOverlay">
-    <h1>Pausa</h1>
-    <button class="primary-btn" id="resumeBtn">Continuar</button>
-    <button class="primary-btn" id="quitBtn" style="background:transparent;color:var(--text-dim);border:1.5px solid var(--line);box-shadow:none;">Terminar partida</button>
+    <h1 data-i18n="pause">Pausa</h1>
+    <button class="primary-btn" id="resumeBtn" data-i18n="resume">Continuar</button>
+    <button class="primary-btn" id="quitBtn" style="background:transparent;color:var(--text-dim);border:1.5px solid var(--line);box-shadow:none;" data-i18n="quit">Terminar partida</button>
   </div>
 
   <!-- LEADERBOARD -->
   <div class="overlay hidden" id="lbOverlay">
-    <h1>Clasificación</h1>
+    <h1 data-i18n="lbTitle">Clasificación</h1>
     <div class="lb-list" id="lbListMain"><p class="lb-msg">Cargando…</p></div>
-    <button class="primary-btn" id="lbCloseBtn">Cerrar</button>
+    <button class="primary-btn" id="lbCloseBtn" data-i18n="close">Cerrar</button>
   </div>
 
 </div>
@@ -572,29 +580,67 @@
     return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  const DIFF_LABEL = { facil:'Fácil', normal:'Normal', dificil:'Difícil' };
+  // ================= 語言（預設西班牙文，可切換英文） =================
+  const I18N = {
+    es:{
+      order:'Cómelos en orden', boss:'¡Escucha con atención!', toast:'¡Sigue el orden de la frase!', excellent:'¡Excelente!',
+      subtitle:'¡Corre y come las palabras en el orden correcto de la frase! Cada cierto tiempo aparece un nivel jefe: escucha la frase en vez de leerla.',
+      dragHint:'👆 Arrastra el dedo por la pantalla para moverte. En computadora: flechas o WASD, o arrastra con el ratón.',
+      langLabel:'Idioma de las traducciones', name:'Tu nombre', namePh:'Jugador', script:'Tipo de caracteres', trad:'Tradicional', simp:'Simplificado',
+      diff:'Dificultad (velocidad)', facil:'Fácil', normal:'Normal', dificil:'Difícil', start:'Empezar', loadingSent:'Cargando frases…',
+      viewLb:'Ver clasificación', over:'Fin del juego', points:'Puntos', sentences:'Frases', best:'Mejores puntuaciones', again:'Jugar de nuevo',
+      pause:'Pausa', pauseTitle:'Pausa (P)', resume:'Continuar', quit:'Terminar partida', lbTitle:'Clasificación', close:'Cerrar',
+      loading:'Cargando…', noScores:'Todavía no hay puntuaciones. ¡Sé el primero!',
+      noFirebase:'Configura Firebase en el código para activar la clasificación en línea.', bossDefeated:'+1 ♥ ¡Jefe derrotado!', defaultName:'Jugador'
+    },
+    en:{
+      order:'Eat them in order', boss:'Listen carefully!', toast:'Follow the order of the sentence!', excellent:'Excellent!',
+      subtitle:'Run and eat the words in the correct order of the sentence! Every so often a boss level appears: listen to the sentence instead of reading it.',
+      dragHint:'👆 Drag your finger across the screen to move. On a computer: arrow keys or WASD, or drag with the mouse.',
+      langLabel:'Language of the translations', name:'Your name', namePh:'Player', script:'Character type', trad:'Traditional', simp:'Simplified',
+      diff:'Difficulty (speed)', facil:'Easy', normal:'Normal', dificil:'Hard', start:'Start', loadingSent:'Loading sentences…',
+      viewLb:'View leaderboard', over:'Game over', points:'Points', sentences:'Sentences', best:'Top scores', again:'Play again',
+      pause:'Pause', pauseTitle:'Pause (P)', resume:'Resume', quit:'End game', lbTitle:'Leaderboard', close:'Close',
+      loading:'Loading…', noScores:'No scores yet. Be the first!',
+      noFirebase:'Set up Firebase in the code to enable the online leaderboard.', bossDefeated:'+1 ♥ Boss defeated!', defaultName:'Player'
+    }
+  };
+  let lang = 'es';
+  try{ if(localStorage.getItem('correLang') === 'en') lang = 'en'; }catch(e){}
+  const t = key => I18N[lang][key];
+  // 句子的翻譯：選英文時用 en；這句還沒有英文翻譯就先顯示西班牙文，不會是空白
+  const translationOf = s => (lang === 'en' && s.en) ? s.en : s.es;
+  function applyLang(){
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPh); });
+    document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title = t(el.dataset.i18nTitle); });
+    document.title = '每天一分鐘 · ' + (lang === 'en' ? 'Run for the Characters' : 'Corre por los caracteres');
+  }
+
+  const diffLabel = k => ({ facil:t('facil'), normal:t('normal'), dificil:t('dificil') }[k] || '');
 
   function renderLeaderboard(containerEl, rows){
     if(rows===null){
-      containerEl.innerHTML = '<p class="lb-msg">Configura Firebase en el código para activar la clasificación en línea.</p>';
+      containerEl.innerHTML = '<p class="lb-msg">' + t('noFirebase') + '</p>';
       return;
     }
     if(rows.length===0){
-      containerEl.innerHTML = '<p class="lb-msg">Todavía no hay puntuaciones. ¡Sé el primero!</p>';
+      containerEl.innerHTML = '<p class="lb-msg">' + t('noScores') + '</p>';
       return;
     }
     containerEl.innerHTML = rows.map((r,i)=>`
       <div class="lb-row">
         <span class="lb-rank">${i+1}</span>
         <span class="lb-name">${escapeHtml(r.name||'—')}</span>
-        <span class="lb-diff">${DIFF_LABEL[r.difficulty]||''}</span>
+        <span class="lb-diff">${diffLabel(r.difficulty)}</span>
         <span class="lb-sent">${escapeHtml(r.sentences||0)}句</span>
         <span class="lb-score">${escapeHtml(r.score)}</span>
       </div>`).join('');
   }
 
   async function refreshLeaderboard(containerEl){
-    containerEl.innerHTML = '<p class="lb-msg">Cargando…</p>';
+    containerEl.innerHTML = '<p class="lb-msg">' + t('loading') + '</p>';
     const rows = await fetchTop(10);
     renderLeaderboard(containerEl, rows);
   }
@@ -760,12 +806,12 @@
   // ================= GAME DATA =================
   // 內建預設句子：當雲端題庫還沒設定、還沒有句子、或讀取失敗時使用，確保遊戲一定能玩。
   const DEFAULT_SENTENCES = [
-    { trad:["我","喜歡","吃","蘋果"], simp:["我","喜欢","吃","苹果"], pinyin:["wǒ","xǐ huān","chī","píng guǒ"], es:"Me gusta comer manzanas." },
-    { trad:["你","叫","什麼","名字"], simp:["你","叫","什么","名字"], pinyin:["nǐ","jiào","shén me","míng zi"], es:"¿Cómo te llamas?" },
-    { trad:["今天","天氣","很","好"], simp:["今天","天气","很","好"], pinyin:["jīn tiān","tiān qì","hěn","hǎo"], es:"Hoy el clima está muy bueno." },
-    { trad:["這個","顏色","是","紅色"], simp:["这个","颜色","是","红色"], pinyin:["zhè ge","yán sè","shì","hóng sè"], es:"Este color es rojo." },
-    { trad:["我","喜歡","學","中文"], simp:["我","喜欢","学","中文"], pinyin:["wǒ","xǐ huān","xué","zhōng wén"], es:"Me gusta aprender chino." },
-    { trad:["謝謝","你","的","幫忙"], simp:["谢谢","你","的","帮忙"], pinyin:["xiè xie","nǐ","de","bāng máng"], es:"Gracias por tu ayuda." }
+    { trad:["我","喜歡","吃","蘋果"], simp:["我","喜欢","吃","苹果"], pinyin:["wǒ","xǐ huān","chī","píng guǒ"], es:"Me gusta comer manzanas.", en:"I like eating apples." },
+    { trad:["你","叫","什麼","名字"], simp:["你","叫","什么","名字"], pinyin:["nǐ","jiào","shén me","míng zi"], es:"¿Cómo te llamas?", en:"What is your name?" },
+    { trad:["今天","天氣","很","好"], simp:["今天","天气","很","好"], pinyin:["jīn tiān","tiān qì","hěn","hǎo"], es:"Hoy el clima está muy bueno.", en:"The weather is very nice today." },
+    { trad:["這個","顏色","是","紅色"], simp:["这个","颜色","是","红色"], pinyin:["zhè ge","yán sè","shì","hóng sè"], es:"Este color es rojo.", en:"This color is red." },
+    { trad:["我","喜歡","學","中文"], simp:["我","喜欢","学","中文"], pinyin:["wǒ","xǐ huān","xué","zhōng wén"], es:"Me gusta aprender chino.", en:"I like learning Chinese." },
+    { trad:["謝謝","你","的","幫忙"], simp:["谢谢","你","的","帮忙"], pinyin:["xiè xie","nǐ","de","bāng máng"], es:"Gracias por tu ayuda.", en:"Thank you for your help." }
   ];
   DEFAULT_SENTENCES.forEach((s,i)=>{ s.id = 'default-' + i; });
   const SENT_COLLECTION = 'mandarinRunnerSentences';
@@ -1192,7 +1238,7 @@
     const wasBoss = isBoss;
     bannerWrapEl.classList.remove('boss-mode');
     bossBannerEl.style.display = 'none';
-    esLineEl.textContent = sentence.es;
+    esLineEl.textContent = translationOf(sentence);
     celebrateEl.classList.remove('show'); void celebrateEl.offsetWidth; celebrateEl.classList.add('show');
     sfxWin();
 
@@ -1201,7 +1247,7 @@
       lives = Math.min(maxLives, lives + 1);
       renderHearts();
       setTimeout(()=>{
-        floatText(trackW/2, 46, '+1 ♥ ¡Jefe derrotado!', '#39ff88');
+        floatText(trackW/2, 46, t('bossDefeated'), '#39ff88');
         sfxBonus();
       }, 250);
     }
@@ -1230,7 +1276,7 @@
     overOverlay.classList.remove('hidden');
     // 先等分數存好，再讀一次排行榜（以前會讀兩次，第一次還沒有這局的分數）
     const lbEl = document.getElementById('lbListOver');
-    lbEl.innerHTML = '<p class="lb-msg">Cargando…</p>';
+    lbEl.innerHTML = '<p class="lb-msg">' + t('loading') + '</p>';
     submitScore({ name: playerName, score, sentences: sentencesDone, difficulty: diffKey, script: useSimplified?'simp':'trad' })
       .then(()=> refreshLeaderboard(lbEl));
   }
@@ -1380,6 +1426,16 @@
   }
   wireToggleGroup(document.getElementById('scriptGroup'), v=>{ useSimplified = (v==='simp'); });
   wireToggleGroup(document.getElementById('diffGroup'), v=>{ diffKey = v; });
+  // 語言：選了就記住，下次開遊戲會是同一個語言
+  const langGroup = document.getElementById('langGroup');
+  langGroup.querySelectorAll('.toggle-btn').forEach(b=>b.classList.toggle('active', b.dataset.value === lang));
+  wireToggleGroup(langGroup, v=>{
+    lang = (v === 'en') ? 'en' : 'es';
+    try{ localStorage.setItem('correLang', lang); }catch(e){}
+    applyLang();
+    if(startBtn.disabled) startBtn.textContent = t('loadingSent');
+  });
+  applyLang();
 
   document.getElementById('showLbBtn').addEventListener('click', ()=>{
     lbOverlay.classList.remove('hidden');
@@ -1391,7 +1447,7 @@
 
   // ================= START / RESTART =================
   function startGame(){
-    playerName = (nameInput.value || '').trim() || 'Jugador';
+    playerName = (nameInput.value || '').trim() || t('defaultName');
     startOverlay.classList.add('hidden');
     overOverlay.classList.add('hidden');
     lbOverlay.classList.add('hidden');
@@ -1432,10 +1488,10 @@
 
   // load the shared sentence bank before allowing play to start
   startBtn.disabled = true;
-  startBtn.textContent = 'Cargando frases…';
+  startBtn.textContent = t('loadingSent');
   loadCloudSentences().finally(()=>{
     startBtn.disabled = false;
-    startBtn.textContent = 'Empezar';
+    startBtn.textContent = t('start');
   });
 })();
 </script>
