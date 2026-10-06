@@ -298,7 +298,7 @@
   }
   async function login(){
     if(!auth){ authMsg.textContent = 'Firebase 尚未載入完成，請重新整理頁面。'; return; }
-    authMsg.textContent = '';
+    authMsg.textContent = '登入視窗開啟中…';
     const provider = new firebase.auth.GoogleAuthProvider();
     try{
       await auth.signInWithPopup(provider);
@@ -308,7 +308,10 @@
         auth.signInWithRedirect(provider);
         return;
       }
-      if(code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
+      if(code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request'){
+        authMsg.textContent = '登入視窗被關閉了，沒有完成登入。如果沒有看到視窗跳出來，請改用 Chrome 或 Safari 直接開啟這個網址（不要在 App 或內嵌瀏覽器裡開），並允許彈出視窗。';
+        return;
+      }
       if(code === 'auth/unauthorized-domain'){
         authMsg.textContent = '這個網址還沒加入 Firebase 的「已授權網域」，請到 Authentication → Settings 新增。';
         return;
