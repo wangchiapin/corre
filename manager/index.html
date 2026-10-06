@@ -64,7 +64,7 @@
     resize:vertical;
   }
   textarea{min-height:56px;}
-  #esInputTop{font-family:'Work Sans';font-size:14px;min-height:44px;margin-top:14px;}
+  #esInputTop,#enInputTop{font-family:'Work Sans';font-size:14px;min-height:44px;margin-top:14px;}
   .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
   .btn{
     padding:10px 20px;border-radius:24px;border:none;cursor:pointer;
@@ -100,7 +100,7 @@
   }
   .col-labels{display:grid;grid-template-columns:22px 1fr 1fr 1fr 28px;gap:6px;font-size:10.5px;color:var(--ink-soft);letter-spacing:.5px;margin-top:12px;}
 
-  #esInput{margin-top:10px;min-height:44px;font-family:'Work Sans';font-size:14px;}
+  #esInput,#enInput{margin-top:10px;min-height:44px;font-family:'Work Sans';font-size:14px;}
 
   .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 4px;}
   #sentenceList{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
@@ -110,6 +110,7 @@
   }
   .sent-card .hz{font-family:'Noto Serif TC',serif;font-weight:700;font-size:16px;color:var(--ink);}
   .sent-card .py{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .sent-card .en{font-size:12.5px;color:var(--ink-soft);font-style:italic;margin-top:2px;}
   .sent-card .es{font-size:12.5px;color:var(--jade-dark);font-style:italic;margin-top:3px;}
   .card-actions{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
   .sent-card .del,.sent-card .edit{
@@ -147,6 +148,9 @@
         <h2 style="margin-top:14px;">西班牙文翻譯（選填）</h2>
         <p class="hint">留空的話會自動翻譯；已經自己填的話會直接使用你填的版本。</p>
         <textarea id="esInputTop" placeholder="留空 = 自動翻譯，或直接輸入你自己的翻譯"></textarea>
+        <h2 style="margin-top:14px;">英文翻譯（選填）</h2>
+        <p class="hint">遊戲選英文時會顯示這一欄；留空也會自動翻譯，沒有英文的句子在英文模式會先顯示西班牙文。</p>
+        <textarea id="enInputTop" placeholder="Leave empty = automatic translation, or type your own"></textarea>
 
         <div class="row">
           <button class="btn btn-primary" id="genBtn">⚙️ 自動產生簡體 / 拼音 / 翻譯</button>
@@ -165,6 +169,8 @@
         </div>
         <h2 style="margin-top:16px;">西班牙文翻譯</h2>
         <textarea id="esInput"></textarea>
+        <h2 style="margin-top:12px;">英文翻譯</h2>
+        <textarea id="enInput"></textarea>
         <div class="row">
           <button class="btn btn-primary" id="saveBtn">💾 儲存到題庫</button>
           <button class="btn btn-secondary" id="cancelEditBtn" hidden>取消編輯</button>
@@ -174,8 +180,8 @@
 
       <section>
         <h2>批次匯入</h2>
-        <p class="hint">一行一句：<b>詞 詞 詞 | 西班牙文</b>（用 | 分隔）。沒有寫西班牙文的那行會自動翻譯。拼音與簡體會自動產生，題庫裡已經有的句子會自動略過。</p>
-        <textarea id="bulkInput" style="min-height:140px;" placeholder="我 喜歡 吃 蘋果 | Me gusta comer manzanas"></textarea>
+        <p class="hint">一行一句：<b>詞 詞 詞 | 西班牙文 | 英文</b>（用 | 分隔）。沒寫的翻譯會自動翻譯。拼音與簡體會自動產生。題庫裡已經有的句子會略過；但如果那句還沒有英文、而你這行有寫英文，會幫它補上英文。</p>
+        <textarea id="bulkInput" style="min-height:140px;" placeholder="我 喜歡 吃 蘋果 | Me gusta comer manzanas. | I like eating apples."></textarea>
         <div class="row">
           <button class="btn btn-secondary" id="bulkPreviewBtn">檢查並預覽</button>
           <button class="btn btn-primary" id="bulkImportBtn" hidden>確認匯入</button>
@@ -244,6 +250,8 @@
   const tokenTable = $('tokenTable');
   const addTokenBtn = $('addTokenBtn');
   const esInput = $('esInput');
+  const enInputTop = $('enInputTop');
+  const enInput = $('enInput');
   const saveBtn = $('saveBtn');
   const cancelEditBtn = $('cancelEditBtn');
   const editBanner = $('editBanner');
@@ -377,8 +385,9 @@
     if(HAS_HAN.test(py)) py = pinyinPro.pinyin(simp, opt);
     return py;
   }
-  async function translateZhToEs(text){
-    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=zh-CN|es`;
+  const translateZhToEs = text => translateZh(text, 'es');
+  async function translateZh(text, target){
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=zh-CN|${target}`;
     const resp = await fetch(url);
     if(!resp.ok) throw new Error('翻譯服務暫時無法使用，請自行輸入翻譯。');
     const data = await resp.json();
@@ -441,11 +450,20 @@
         autoTranslated = true;
       }
 
+      let en = enInputTop.value.trim();
+      let enFailed = false;
+      if(!en){
+        setStatus(genStatus,'翻譯英文中…');
+        try{ en = await translateZh(simp.join(''), 'en'); enInputTop.value = en; autoTranslated = true; }
+        catch(e){ enFailed = true; }
+      }
+
       renderTokenRows({ trad, simp, pinyin: pinyinArr });
       esInput.value = es;
+      enInput.value = en;
       previewSection.style.display = 'block';
       setStatus(genStatus, autoTranslated
-        ? '已自動產生，翻譯是機器翻的，請務必檢查是否通順正確！'
+        ? ('已自動產生，翻譯是機器翻的，請務必檢查是否通順正確！' + (enFailed ? '（英文翻譯失敗，請自行輸入或留空。）' : ''))
         : '已自動產生，請檢查下方簡體與拼音是否正確。', 'ok');
     }catch(e){
       console.error(e);
@@ -503,7 +521,7 @@
 
   function clearForm(){
     editingId = null;
-    sentInput.value = ''; esInputTop.value = ''; esInput.value = '';
+    sentInput.value = ''; esInputTop.value = ''; esInput.value = ''; enInputTop.value = ''; enInput.value = '';
     tokenTable.textContent = '';
     previewSection.style.display = 'none';
     editBanner.hidden = true;
@@ -516,6 +534,7 @@
   async function saveSentence(){
     const tokens = collectTokens();
     const es = esInput.value.trim();
+    const en = enInput.value.trim();
     if(tokens.trad.length===0 || tokens.simp.length===0 || tokens.pinyin.length===0){
       setStatus(saveStatus,'繁體／簡體／拼音都不能是空的。','err'); return;
     }
@@ -542,7 +561,7 @@
     saveBtn.disabled = true;
     setStatus(saveStatus,'儲存中…');
     try{
-      const payload = { trad: tokens.trad, simp: tokens.simp, pinyin: tokens.pinyin, es };
+      const payload = { trad: tokens.trad, simp: tokens.simp, pinyin: tokens.pinyin, es, en };
       if(targetId){
         const existing = allDocs.find(d => d.id === targetId);
         // 舊句子如果還沒有隨機欄位，順便補上（遊戲抽題要用）
@@ -578,8 +597,10 @@
     editingId = doc.id;
     sentInput.value = (d.trad || []).join(' ');
     esInputTop.value = d.es || '';
+    enInputTop.value = d.en || '';
     renderTokenRows({ trad: d.trad || [], simp: d.simp || [], pinyin: d.pinyin || [] });
     esInput.value = d.es || '';
+    enInput.value = d.en || '';
     previewSection.style.display = 'block';
     editBanner.hidden = false;
     cancelEditBtn.hidden = false;
@@ -616,6 +637,7 @@
       info.appendChild(mk('div','hz',(d.trad||[]).join(' · ')));
       info.appendChild(mk('div','py',(d.pinyin||[]).join('  ')));
       info.appendChild(mk('div','es',d.es||''));
+      info.appendChild(mk('div','en', d.en || '（尚無英文）'));
       const actions = mk('div','card-actions');
       const edit = mk('button','edit','✏️'); edit.title = '編輯';
       edit.addEventListener('click', ()=>startEdit(doc));
@@ -695,48 +717,59 @@
   // ================= 批次匯入 =================
   const bulkInput = $('bulkInput'), bulkPreviewBtn = $('bulkPreviewBtn'), bulkImportBtn = $('bulkImportBtn');
   const bulkStatus = $('bulkStatus'), bulkPreview = $('bulkPreview');
-  let bulkReady = [];   // 預覽通過、等待確認匯入的句子
+  let bulkReady = [];   // 預覽通過、等待確認新增的句子
+  let bulkEnFill = [];  // 已存在但還沒有英文、等待補上英文的句子
 
   async function bulkCheck(){
-    bulkReady = [];
+    bulkReady = []; bulkEnFill = [];
     bulkImportBtn.hidden = true;
     bulkPreview.textContent = '';
     const lines = bulkInput.value.split('\n').map(l=>l.trim()).filter(Boolean);
     if(lines.length === 0){ setStatus(bulkStatus,'請先貼上要匯入的句子。','err'); return; }
     bulkPreviewBtn.disabled = true;
     setStatus(bulkStatus,'處理中…');
-    const existing = new Set(allDocs.map(d => keyOf(d.data.trad)));
+    const existing = new Map(allDocs.map(d => [keyOf(d.data.trad), d]));
     const seen = new Set();
-    let ok = 0, skip = 0, bad = 0, translated = 0;
+    let ok = 0, skip = 0, bad = 0, translated = 0, filled = 0;
     try{
       for(let i=0;i<lines.length;i++){
-        const [left, ...rest] = lines[i].split('|');
-        let es = rest.join('|').trim();
-        const tk = makeTokens(left);
+        const parts = lines[i].split('|');
+        const tk = makeTokens(parts[0]);
+        let es = (parts[1] || '').trim();
+        let en = (parts[2] || '').trim();
+        if(tk.trad.length === 0){ continue; }
         const card = mk('div','sent-card');
         const info = mk('div','');
         let note = '';
-        if(tk.trad.length === 0){ continue; }
         const key = keyOf(tk.trad);
-        if(existing.has(key) || seen.has(key)){ note = '已存在，略過'; skip++; }
+        const old = existing.get(key);
+        if(old){
+          if(en && !old.data.en && !seen.has(key)){ bulkEnFill.push({ id: old.id, en }); seen.add(key); note = '已存在，補上英文'; filled++; }
+          else{ note = '已存在，略過'; skip++; }
+        }else if(seen.has(key)){ note = '重複，略過'; skip++; }
         else{
           if(!es){
             setStatus(bulkStatus,`翻譯中… (${i+1}/${lines.length})`);
-            try{ es = await translateZhToEs(tk.simp.join('')); translated++; note = '（自動翻譯，請檢查）'; }
+            try{ es = await translateZh(tk.simp.join(''), 'es'); translated++; note = '（西文為自動翻譯，請檢查）'; }
             catch(e){ note = '翻譯失敗，略過'; bad++; }
           }
-          if(es){ seen.add(key); bulkReady.push({ ...tk, es }); ok++; }
+          if(es && !en){
+            try{ en = await translateZh(tk.simp.join(''), 'en'); translated++; note += ' （英文為自動翻譯，請檢查）'; }
+            catch(e){ en = ''; note += ' （英文翻譯失敗，先留空）'; }
+          }
+          if(es){ seen.add(key); bulkReady.push({ ...tk, es, en }); ok++; }
         }
         info.appendChild(mk('div','hz', tk.trad.join(' · ')));
         info.appendChild(mk('div','', tk.pinyin.join(' ')));
         info.appendChild(mk('div','', es || ''));
+        info.appendChild(mk('div','en', en || ''));
         if(note) info.appendChild(mk('div','', note));
         card.appendChild(info);
         if(note.includes('略過')) card.style.opacity = '.5';
         bulkPreview.appendChild(card);
       }
-      setStatus(bulkStatus,`可匯入 ${ok} 句，已存在略過 ${skip} 句` + (bad?`，失敗 ${bad} 句`:'') + (translated?`，其中 ${translated} 句是自動翻譯`:'') + '。請檢查下方拼音，沒問題再按「確認匯入」。','ok');
-      bulkImportBtn.hidden = bulkReady.length === 0;
+      setStatus(bulkStatus,`可新增 ${ok} 句` + (filled?`，補英文 ${filled} 句`:'') + `，略過 ${skip} 句` + (bad?`，失敗 ${bad} 句`:'') + (translated?`，其中 ${translated} 筆翻譯是自動翻譯`:'') + '。請檢查下方拼音與翻譯，沒問題再按「確認匯入」。','ok');
+      bulkImportBtn.hidden = (bulkReady.length + bulkEnFill.length) === 0;
     }catch(e){
       console.error(e);
       setStatus(bulkStatus, e.message || '處理失敗。','err');
@@ -746,22 +779,29 @@
   }
   async function bulkImport(){
     if(!requireLogin(bulkStatus)) return;
-    if(bulkReady.length === 0) return;
-    if(!confirm(`要把這 ${bulkReady.length} 句匯入題庫嗎？`)) return;
+    const total = bulkReady.length + bulkEnFill.length;
+    if(total === 0) return;
+    if(!confirm(`要新增 ${bulkReady.length} 句` + (bulkEnFill.length ? `、並替 ${bulkEnFill.length} 句既有句子補上英文` : '') + ' 嗎？')) return;
     bulkImportBtn.disabled = true;
     setStatus(bulkStatus,'匯入中…');
     try{
-      for(let i=0;i<bulkReady.length;i+=200){
+      const ops = [];
+      bulkReady.forEach(r=>{
+        const ref = db.collection(SENT_COLLECTION).doc();
+        ops.push(b => b.set(ref, { trad:r.trad, simp:r.simp, pinyin:r.pinyin, es:r.es, en:r.en || '', rand:Math.random(), createdAt: firebase.firestore.FieldValue.serverTimestamp() }));
+      });
+      bulkEnFill.forEach(f=>{
+        const ref = db.collection(SENT_COLLECTION).doc(f.id);
+        ops.push(b => b.update(ref, { en: f.en }));
+      });
+      for(let i=0;i<ops.length;i+=200){
         const batch = db.batch();
-        bulkReady.slice(i,i+200).forEach(r=>{
-          const ref = db.collection(SENT_COLLECTION).doc();
-          batch.set(ref, { trad:r.trad, simp:r.simp, pinyin:r.pinyin, es:r.es, rand:Math.random(), createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        });
+        ops.slice(i,i+200).forEach(op => op(batch));
         await batch.commit();
       }
-      const n = bulkReady.length;
-      bulkReady = []; bulkImportBtn.hidden = true; bulkInput.value = ''; bulkPreview.textContent = '';
-      setStatus(bulkStatus,`已匯入 ${n} 句！`,'ok');
+      const nNew = bulkReady.length, nFill = bulkEnFill.length;
+      bulkReady = []; bulkEnFill = []; bulkImportBtn.hidden = true; bulkInput.value = ''; bulkPreview.textContent = '';
+      setStatus(bulkStatus,`已新增 ${nNew} 句` + (nFill?`、補上英文 ${nFill} 句`:'') + '！','ok');
       refreshList();
     }catch(e){
       console.error(e);
@@ -772,7 +812,7 @@
   }
   bulkPreviewBtn.addEventListener('click', bulkCheck);
   bulkImportBtn.addEventListener('click', bulkImport);
-  bulkInput.addEventListener('input', ()=>{ bulkReady = []; bulkImportBtn.hidden = true; });
+  bulkInput.addEventListener('input', ()=>{ bulkReady = []; bulkEnFill = []; bulkImportBtn.hidden = true; });
 
   // ================= 清理排行榜（只留前 100 名） =================
   const SCORE_COLLECTION = 'mandarinRunnerScores';
