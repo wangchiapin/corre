@@ -592,6 +592,8 @@
   const DEBUG = QS.has('debug');
   const NO_SPEECH = QS.has('nospeech');
   const NO_MUSIC = QS.has('nomusic');
+  //   ?safeaudio=1 音訊部分完全使用最原始的寫法（用來比對「是不是新版音訊程式造成的」）
+  const SAFE_AUDIO = QS.has('safeaudio');
   const dbgLog = [];
   function dbg(label){
     if(!DEBUG) return;
@@ -733,7 +735,8 @@
     if(!actx){
       actx = new (window.AudioContext||window.webkitAudioContext)();
       // 被系統中斷（語音、來電、切換 App）而不是我們自己暫停時，稍後自動叫醒
-      actx.onstatechange = ()=>{ if(actx.state !== 'running') setTimeout(ensureMusicRunning, 300); };
+      if(!SAFE_AUDIO) actx.onstatechange = ()=>{ if(actx.state !== 'running') setTimeout(ensureMusicRunning, 300); };
+      if(DEBUG) actx.addEventListener('statechange', ()=> dbg('audio-state:' + actx.state));
     }
     return actx;
   }
@@ -741,7 +744,7 @@
   // 而且不會自己恢復，背景音樂就會整個消失。只要音樂「應該在播」、遊戲也沒暫停，就試著叫醒它。
   function ensureMusicRunning(){
     try{
-      if(!actx || !musicOn || !musicStarted || paused) return;
+      if(SAFE_AUDIO || !actx || !musicOn || !musicStarted || paused) return;
       if(actx.state !== 'running' && actx.resume) actx.resume().catch(()=>{});
     }catch(e){}
   }
@@ -790,8 +793,31 @@
   let duckRestoreTimer = null;
   let speakStartTimer = null;
   // showIndicator：是 Boss 的整句朗讀時，讓 🔊 跟著「真的在播放」跳動
+  // 最原始的念字寫法（?safeaudio=1 時使用），用來比對新版是不是造成沒聲音
+  function legacySpeak(text, interrupt){
+    try{
+      if(interrupt !== false) speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'zh-TW';
+      u.rate = 0.92;
+      const v = voicesList.find(v=>v.lang==='zh-TW') ||
+                voicesList.find(v=>v.lang && v.lang.toLowerCase().startsWith('zh')) || null;
+      if(v) u.voice = v;
+      const mySeq = ++speakSeq;
+      dbg('speak(safe):' + text.slice(0,4));
+      duckMusic(true);
+      const restore = ()=>{ if(mySeq === speakSeq) duckMusic(false); };
+      u.onstart = ()=> dbg('speech-start');
+      u.onend = ()=>{ dbg('speech-end'); restore(); };
+      u.onerror = (e)=>{ dbg('speech-error:' + (e && e.error)); restore(); };
+      clearTimeout(duckRestoreTimer);
+      duckRestoreTimer = setTimeout(restore, Math.max(1100, text.length*280));
+      speechSynthesis.speak(u);
+    }catch(e){}
+  }
   function speak(text, interrupt, showIndicator){
     if(NO_SPEECH || !('speechSynthesis' in window) || !text) return;
+    if(SAFE_AUDIO){ legacySpeak(text, interrupt); return; }
     try{
       const mySeq = ++speakSeq;
       dbg('speak:' + text.slice(0,4));
@@ -811,8 +837,9 @@
           speechState = 'ok';
           if(showIndicator && mySeq === speakSeq) bossBannerEl.classList.add('speaking');
         };
-        u.onend = ()=>{ if(showIndicator) bossBannerEl.classList.remove('speaking'); restore(); };
+        u.onend = ()=>{ dbg('speech-end'); if(showIndicator) bossBannerEl.classList.remove('speaking'); restore(); };
         u.onerror = (e)=>{
+          dbg('speech-error:' + (e && e.error));
           if(showIndicator) bossBannerEl.classList.remove('speaking');
           restore();
           // 被取消／被新語音打斷、或「還沒被允許發聲」都不算失敗；只有明確回報不可用才降級
@@ -845,7 +872,7 @@
   // 只有約 -42 dBFS，比音效小 17dB 以上），所以手機版改用「低音整體上移一個八度、琶音放大、整體加大」的混音。
   // 桌機維持原本的混音不變。
   const IS_TOUCH = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-  const MIX = IS_TOUCH
+  const MIX = (IS_TOUCH && !SAFE_AUDIO)
     ? { vol:0.10,  duck:0.025, padF:110, cut:900, padGain:0.45, lfo:450, arp:0.35 }
     : { vol:0.05,  duck:0.006, padF:55,  cut:420, padGain:0.55, lfo:260, arp:0.10 };
   const MUSIC_VOL = MIX.vol;
@@ -865,7 +892,7 @@
     musicGain.gain.value = 0;
     musicGain.connect(ctx.destination);
     // 淡入：先明確固定起點再漸變（部分 Safari 對「沒有起點的漸變」處理不一致）
-    musicGain.gain.setValueAtTime(0, ctx.currentTime);
+    if(!SAFE_AUDIO) musicGain.gain.setValueAtTime(0, ctx.currentTime);
     musicGain.gain.linearRampToValueAtTime(MUSIC_VOL, ctx.currentTime + 2.2);
 
     // low detuned pad through a slow-sweeping filter
@@ -931,13 +958,15 @@
     const target = down ? MUSIC_VOL_DUCK : (musicOn ? MUSIC_VOL : 0);
     // setTargetAtTime 不需要知道目前音量也能平順地往目標靠近，各家瀏覽器行為一致
     musicGain.gain.cancelScheduledValues(actx.currentTime);
-    musicGain.gain.setTargetAtTime(target, actx.currentTime, 0.05);
+    if(SAFE_AUDIO) musicGain.gain.linearRampToValueAtTime(target, actx.currentTime + 0.15);
+    else musicGain.gain.setTargetAtTime(target, actx.currentTime, 0.05);
   }
 
   function setMusicVolume(){
     if(!musicGain || !actx) return;
     musicGain.gain.cancelScheduledValues(actx.currentTime);
-    musicGain.gain.setTargetAtTime(musicOn ? MUSIC_VOL : 0, actx.currentTime, 0.08);
+    if(SAFE_AUDIO) musicGain.gain.linearRampToValueAtTime(musicOn ? MUSIC_VOL : 0, actx.currentTime + 0.25);
+    else musicGain.gain.setTargetAtTime(musicOn ? MUSIC_VOL : 0, actx.currentTime, 0.08);
   }
 
   function toggleMusic(){
@@ -1718,6 +1747,18 @@
     el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99;background:rgba(0,0,0,.85);color:#9ff;' +
       'font:10px/1.35 monospace;padding:4px 6px;pointer-events:none;white-space:pre-wrap;max-height:36vh;overflow:hidden;';
     document.body.appendChild(el);
+    // 測試按鈕：不用開始遊戲，直接測試「叮」聲和語音
+    const bar = document.createElement('div');
+    bar.style.cssText = 'position:fixed;right:6px;top:6px;z-index:99;display:flex;gap:6px;';
+    [['🔔 叮', ()=>{ try{ ensureAudioCtx(); if(actx.state !== 'running') actx.resume().catch(()=>{}); }catch(e){} beep(880, 0.25, 'triangle'); dbg('audio-state:' + (actx && actx.state)); }],
+     ['🗣 語音', ()=>{ speak('你好，今天天氣很好'); }]].forEach(([label, fn])=>{
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = label;
+      b.style.cssText = 'font:12px sans-serif;padding:6px 10px;border-radius:14px;border:1px solid #0ff;background:#022;color:#0ff;';
+      b.addEventListener('click', fn);
+      bar.appendChild(b);
+    });
+    document.body.appendChild(bar);
     const lags = [];
     let last = performance.now(), worst = 0, frames = 0, winStart = last, lastShow = 0;
     const t0 = last;
@@ -1737,9 +1778,11 @@
         el.textContent =
           'audio:' + (actx ? actx.state : '-') +
           '  gain:' + (musicGain ? musicGain.gain.value.toFixed(3) : '-') +
-          '  music:' + (musicOn ? 'on' : 'off') + (IS_TOUCH ? '(touch mix)' : '') +
+          '  music:' + (musicOn ? 'on' : 'off') + ((IS_TOUCH && !SAFE_AUDIO) ? '(touch mix)' : '') +
           '  speech:' + speechState + '  speaking:' + speaking +
-          '  fps:' + fps + '  worst:' + Math.round(worst) + 'ms\n' +
+          '  fps:' + fps + '  worst:' + Math.round(worst) + 'ms' + (SAFE_AUDIO ? '  [safeaudio]' : '') + '\n' +
+          '語音/音訊事件: ' + (dbgLog.filter(e => /^(speech|audio|speak)/.test(e[1])).slice(-6)
+              .map(e => ((e[0]-t0)/1000).toFixed(1) + 's ' + e[1]).join('  ') || '(尚無)') + '\n' +
           (lags.length ? lags.join('\n') : '(尚無卡頓)');
       }
       requestAnimationFrame(mon);
