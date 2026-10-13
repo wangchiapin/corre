@@ -14,5 +14,8 @@
 - **學生連結：** `https://wangchiapin.github.io/corre/?bank=<連結碼>`。速度、字體、Boss 關由老師設定，學生不能改；不上傳排行榜，結束時可下載成績圖片。
 - **資料在中心專案 `subscription-48d3c`**（不是 corre-d16da）：`teacher_banks/{uid}`（位置表）、`shared_banks/{連結碼}`（句庫）。老師登入、`site_members`、`site_plans` 與色數消消樂共用，訂閱開通與管理都在 `cadadiaunosminutos-share-zone` 的 `stats.html`。
 - **額度：** 免費 1 個句庫、每庫 50 句；訂閱（月訂、年訂、試用）最多 5 個句庫、每庫 80 句；每句最多 20 個漢字。訂閱到期後，只有第 1 個庫（50 句以內）的連結繼續有效。
+- **注音：** 全站可用。遊戲 HUD 的按鈕在「拼音／注音／拼+注／關」間切換（教師連結由老師在句庫設定指定顯示方式，學生只能開關）。注音由拼音即時轉換（`ZY` 轉換器，已用 pypinyin 比對常用讀音）。
+- **QR code（免費）：** 每個句庫可產生 QR 圖片，可下載或用手機分享（`teacher/qrcode.js` = qrcode-generator 1.4.4，MIT）。
+- **學習單 PDF（訂閱版）：** 選翻譯語言（西／英）、是否顯示拼音／注音、是否加「排列句子」練習（含答案頁）。在瀏覽器用 canvas 畫成 A4 圖片頁再包成 PDF，不需後端。
 - **Firestore 規則：** 新增的規則內容見 `teacher/firestore.rules.txt`，要貼到中心專案 `subscription-48d3c` 的規則裡（這個 repo 不會自動部署）。
 

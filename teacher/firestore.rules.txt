@@ -3,7 +3,7 @@
     // 依賴既有函式：signedIn() / realUser() / isAdmin() / subActive(uid)
     // 資料：
     //   teacher_banks/{uid}  → { slots: { "0": sid, "1": sid, ... "4": sid }, updatedAt }
-    //   shared_banks/{sid}   → { owner, slot(0-4), name, speed, script, boss, sentences[], pro, updatedAt }
+    //   shared_banks/{sid}   → { owner, slot(0-4), name, speed, script, boss, phonetic(選填), sentences[], pro, updatedAt }
     // 規則：
     //   - 位置 0 = 免費庫（最多 50 句）；位置 1–4 = 訂閱庫；任何庫超過 50 句也算訂閱
     //   - 每庫最多 80 句；訂閱到期後 pro 庫無法被學生讀取，也無法被老師修改（只能刪除）
@@ -35,7 +35,7 @@
     match /shared_banks/{id} {
       function okBank() {
         let d = request.resource.data;
-        return d.keys().hasOnly(['owner','slot','name','speed','script','boss','sentences','pro','updatedAt'])
+        return d.keys().hasOnly(['owner','slot','name','speed','script','boss','phonetic','sentences','pro','updatedAt'])
           && d.keys().hasAll(['owner','slot','name','speed','script','boss','sentences','pro','updatedAt'])
           && d.owner == request.auth.uid
           && d.slot is int && d.slot >= 0 && d.slot <= 4
@@ -43,6 +43,7 @@
           && d.speed in ['facil','normal','dificil']
           && d.script in ['trad','simp']
           && d.boss is bool
+          && (!('phonetic' in d) || d.phonetic in ['pinyin','zhuyin','both'])
           && d.sentences is list && d.sentences.size() >= 1 && d.sentences.size() <= 80
           && d.pro is bool
           && d.pro == (d.slot > 0 || d.sentences.size() > 50)

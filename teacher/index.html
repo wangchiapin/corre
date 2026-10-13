@@ -64,6 +64,12 @@
   .btn.ghost{background:transparent;border-color:var(--line);box-shadow:none;color:var(--text-dim);font-family:inherit;font-weight:600;}
   .btn.danger{border-color:var(--danger);color:var(--danger);background:transparent;box-shadow:none;font-family:inherit;}
   .btn.small{padding:6px 12px;font-size:12px;}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px;}
+  .modal[hidden]{display:none;}
+  .modal-box{position:relative;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:18px;max-width:420px;width:100%;max-height:92vh;overflow:auto;}
+  .modal-x{position:absolute;top:6px;right:10px;background:none;border:0;color:var(--text-dim);font-size:26px;cursor:pointer;}
+  .qr-img{width:100%;max-width:300px;display:block;margin:8px auto;border-radius:8px;}
+  .chk{display:block;margin:10px 0;font-size:14px;cursor:pointer;}
   .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center;}
 
   textarea,input[type=text]{
@@ -184,6 +190,12 @@
         <button class="toggle-btn" data-value="trad" data-i18n="trad">繁體</button>
         <button class="toggle-btn" data-value="simp" data-i18n="simp">簡體</button>
       </div>
+      <label class="lbl" data-i18n="phonetic">拼音／注音</label>
+      <div class="toggle-group" id="phoneticGroup">
+        <button class="toggle-btn" data-value="pinyin" data-i18n="phPinyin">拼音</button>
+        <button class="toggle-btn" data-value="zhuyin" data-i18n="phZhuyin">注音</button>
+        <button class="toggle-btn" data-value="both" data-i18n="phBoth">兩者</button>
+      </div>
       <label class="lbl" data-i18n="boss">Boss 關（聽語音）</label>
       <div class="toggle-group" id="bossGroup">
         <button class="toggle-btn" data-value="1" data-i18n="on">開</button>
@@ -246,7 +258,9 @@
   </div>
 </div>
 
+<div class="modal" id="modal" hidden><div class="modal-box"><button class="modal-x" id="modalClose" aria-label="close">×</button><div id="modalBody"></div></div></div>
 <!-- 繁簡轉換與拼音函式庫（版本固定） -->
+<script src="qrcode.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.4.1/dist/umd/full.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.20.0/dist/index.js"></script>
 <!-- Firebase (compat SDK)：教師登入、方案、句庫都在中心專案 subscription-48d3c -->
@@ -283,7 +297,7 @@
       banks:'我的句庫', slotN:'句庫 {n}', slotEmpty:'空位', create:'＋ 建立句庫', locked:'🔒 訂閱後可用',
       count:'{n} / {max} 句', edit:'編輯', test:'▶ 試玩', copyLink:'🔗 複製連結', copied:'已複製連結！', del:'刪除',
       delConfirm:'確定要刪除「{name}」嗎？學生的連結也會失效。', paused:'⏸ 學生連結已暫停（訂閱已到期）',
-      back:'← 回到我的句庫', bankSettings:'句庫設定', bankName:'句庫名稱', speed:'速度',
+      qrBtn:'QR', pdfBtn:'📄 學習單', qrTitle:'QR code', qrHint:'學生掃描就能開始玩這個句庫。可下載圖片貼進簡報或印出來。', qrDownload:'下載圖片', qrShare:'分享', pdfTitle:'下載學習單 PDF', pdfNeedSub:'學習單 PDF 是訂閱版功能。', pdfLang:'翻譯語言', pdfPinyin:'顯示拼音', pdfZhuyin:'顯示注音', pdfOrder:'加入「排列句子」練習（附答案頁）', pdfMake:'產生 PDF', pdfWorking:'產生中…', pdfDone:'已下載（共 {n} 頁）', phonetic:'拼音／注音', phPinyin:'拼音', phZhuyin:'注音', phBoth:'兩者', back:'← 回到我的句庫', bankSettings:'句庫設定', bankName:'句庫名稱', speed:'速度',
       facil:'容易', normal:'普通', dificil:'困難', script:'字體', trad:'繁體', simp:'簡體', boss:'Boss 關（聽語音）', on:'開', off:'關',
       sec1:'① 輸入句子', inputHint:'詞與詞之間用空白分開，例如：我 喜歡 吃 蘋果。每句最多 {n} 個漢字（不含標點）。',
       esLabel:'西班牙文翻譯（必填）', enLabel:'英文翻譯（選填）', autoHint:'翻譯留空會自動翻譯（機器翻譯，請務必檢查）。',
@@ -317,7 +331,7 @@
       banks:'我的句库', slotN:'句库 {n}', slotEmpty:'空位', create:'＋ 建立句库', locked:'🔒 订阅后可用',
       count:'{n} / {max} 句', edit:'编辑', test:'▶ 试玩', copyLink:'🔗 复制链接', copied:'已复制链接！', del:'删除',
       delConfirm:'确定要删除“{name}”吗？学生的链接也会失效。', paused:'⏸ 学生链接已暂停（订阅已到期）',
-      back:'← 回到我的句库', bankSettings:'句库设置', bankName:'句库名称', speed:'速度',
+      qrBtn:'QR', pdfBtn:'📄 学习单', qrTitle:'QR code', qrHint:'学生扫描就能开始玩这个句库。可下载图片贴进简报或打印出来。', qrDownload:'下载图片', qrShare:'分享', pdfTitle:'下载学习单 PDF', pdfNeedSub:'学习单 PDF 是订阅版功能。', pdfLang:'翻译语言', pdfPinyin:'显示拼音', pdfZhuyin:'显示注音', pdfOrder:'加入「排列句子」练习（附答案页）', pdfMake:'生成 PDF', pdfWorking:'生成中…', pdfDone:'已下载（共 {n} 页）', phonetic:'拼音／注音', phPinyin:'拼音', phZhuyin:'注音', phBoth:'两者', back:'← 回到我的句库', bankSettings:'句库设置', bankName:'句库名称', speed:'速度',
       facil:'容易', normal:'普通', dificil:'困难', script:'字体', trad:'繁体', simp:'简体', boss:'Boss 关（听语音）', on:'开', off:'关',
       sec1:'① 输入句子', inputHint:'词与词之间用空格分开，例如：我 喜歡 吃 蘋果。每句最多 {n} 个汉字（不含标点）。',
       esLabel:'西班牙文翻译（必填）', enLabel:'英文翻译（选填）', autoHint:'翻译留空会自动翻译（机器翻译，请务必检查）。',
@@ -352,7 +366,7 @@
       banks:'Mis bancos', slotN:'Banco {n}', slotEmpty:'Libre', create:'＋ Crear banco', locked:'🔒 Requiere suscripción',
       count:'{n} / {max} frases', edit:'Editar', test:'▶ Probar', copyLink:'🔗 Copiar enlace', copied:'¡Enlace copiado!', del:'Eliminar',
       delConfirm:'¿Eliminar «{name}»? El enlace de los alumnos dejará de funcionar.', paused:'⏸ Enlace en pausa (suscripción vencida)',
-      back:'← Volver a mis bancos', bankSettings:'Ajustes del banco', bankName:'Nombre del banco', speed:'Velocidad',
+      qrBtn:'QR', pdfBtn:'📄 Ficha', qrTitle:'Código QR', qrHint:'Tus alumnos lo escanean y juegan este banco. Descarga la imagen para tu presentación o para imprimir.', qrDownload:'Descargar imagen', qrShare:'Compartir', pdfTitle:'Descargar ficha PDF', pdfNeedSub:'La ficha en PDF es una función de la suscripción.', pdfLang:'Idioma de la traducción', pdfPinyin:'Mostrar pinyin', pdfZhuyin:'Mostrar zhuyin', pdfOrder:'Añadir ejercicio de ordenar frases (con respuestas)', pdfMake:'Crear PDF', pdfWorking:'Creando…', pdfDone:'Descargado ({n} páginas)', phonetic:'Pinyin / Zhuyin', phPinyin:'Pinyin', phZhuyin:'Zhuyin (bopomofo)', phBoth:'Ambos', back:'← Volver a mis bancos', bankSettings:'Ajustes del banco', bankName:'Nombre del banco', speed:'Velocidad',
       facil:'Fácil', normal:'Normal', dificil:'Difícil', script:'Caracteres', trad:'Tradicional', simp:'Simplificado', boss:'Nivel jefe (audio)', on:'Sí', off:'No',
       sec1:'① Escribe la frase', inputHint:'Separa las palabras con espacios, por ejemplo: 我 喜歡 吃 蘋果. Máximo {n} caracteres chinos por frase (sin puntuación).',
       esLabel:'Traducción al español (obligatoria)', enLabel:'Traducción al inglés (opcional)', autoHint:'Si dejas la traducción vacía se traduce automáticamente (traducción automática: revísala).',
@@ -387,7 +401,7 @@
       banks:'My banks', slotN:'Bank {n}', slotEmpty:'Empty', create:'＋ Create bank', locked:'🔒 Subscribers only',
       count:'{n} / {max} sentences', edit:'Edit', test:'▶ Try it', copyLink:'🔗 Copy link', copied:'Link copied!', del:'Delete',
       delConfirm:'Delete "{name}"? The student link will stop working.', paused:'⏸ Student link paused (subscription expired)',
-      back:'← Back to my banks', bankSettings:'Bank settings', bankName:'Bank name', speed:'Speed',
+      qrBtn:'QR', pdfBtn:'📄 Worksheet', qrTitle:'QR code', qrHint:'Students scan it to play this bank. Download the image for slides or print-outs.', qrDownload:'Download image', qrShare:'Share', pdfTitle:'Download worksheet PDF', pdfNeedSub:'The worksheet PDF is a subscription feature.', pdfLang:'Translation language', pdfPinyin:'Show pinyin', pdfZhuyin:'Show zhuyin', pdfOrder:'Add a word-order exercise (with answers)', pdfMake:'Create PDF', pdfWorking:'Creating…', pdfDone:'Downloaded ({n} pages)', phonetic:'Pinyin / Zhuyin', phPinyin:'Pinyin', phZhuyin:'Zhuyin (bopomofo)', phBoth:'Both', back:'← Back to my banks', bankSettings:'Bank settings', bankName:'Bank name', speed:'Speed',
       facil:'Easy', normal:'Normal', dificil:'Hard', script:'Characters', trad:'Traditional', simp:'Simplified', boss:'Boss level (audio)', on:'On', off:'Off',
       sec1:'① Enter a sentence', inputHint:'Separate words with spaces, e.g. 我 喜歡 吃 蘋果. Up to {n} Chinese characters per sentence (punctuation not counted).',
       esLabel:'Spanish translation (required)', enLabel:'English translation (optional)', autoHint:'Leave a translation empty to auto-translate (machine translation: please check it).',
@@ -446,6 +460,44 @@
   function fdate(ms){ const d = new Date(ms); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 
   // ================= 繁簡轉換與拼音（台灣讀音） =================
+  /* 拼音（帶聲調符號）→ 注音。輸入可含空格分隔的多個音節 */
+  const ZY = (function(){
+    var INI = {b:'ㄅ',p:'ㄆ',m:'ㄇ',f:'ㄈ',d:'ㄉ',t:'ㄊ',n:'ㄋ',l:'ㄌ',g:'ㄍ',k:'ㄎ',h:'ㄏ',j:'ㄐ',q:'ㄑ',x:'ㄒ',zh:'ㄓ',ch:'ㄔ',sh:'ㄕ',r:'ㄖ',z:'ㄗ',c:'ㄘ',s:'ㄙ'};
+    var FIN = {a:'ㄚ',o:'ㄛ',e:'ㄜ',ê:'ㄝ',ai:'ㄞ',ei:'ㄟ',ao:'ㄠ',ou:'ㄡ',an:'ㄢ',en:'ㄣ',ang:'ㄤ',eng:'ㄥ',er:'ㄦ',
+      i:'ㄧ',ia:'ㄧㄚ',io:'ㄧㄛ',ie:'ㄧㄝ',iao:'ㄧㄠ',iu:'ㄧㄡ',iou:'ㄧㄡ',ian:'ㄧㄢ',in:'ㄧㄣ',iang:'ㄧㄤ',ing:'ㄧㄥ',
+      u:'ㄨ',ua:'ㄨㄚ',uo:'ㄨㄛ',uai:'ㄨㄞ',ui:'ㄨㄟ',uei:'ㄨㄟ',uan:'ㄨㄢ',un:'ㄨㄣ',uen:'ㄨㄣ',uang:'ㄨㄤ',ong:'ㄨㄥ',ueng:'ㄨㄥ',
+      v:'ㄩ',ve:'ㄩㄝ',van:'ㄩㄢ',vn:'ㄩㄣ',iong:'ㄩㄥ'};
+    var MARK = ['','','ˊ','ˇ','ˋ'];
+    function one(syl){
+      var s = syl.normalize('NFD'), tone = 5;
+      if(/̄/.test(s)) tone = 1; else if(/́/.test(s)) tone = 2; else if(/̌/.test(s)) tone = 3; else if(/̀/.test(s)) tone = 4;
+      s = s.replace(/ü/g,'v').replace(/Ü/g,'v').replace(/[̀-ͯ]/g,'').replace(/ü/g,'v').toLowerCase();
+      if(!/^[a-zê]+$/.test(s)) return syl;
+      var ini = '', rest = s, m;
+      if(s === 'n' || s === 'm'){ var zz = s === 'n' ? 'ㄣ' : 'ㄇㄨ'; return tone === 5 ? '˙' + zz : zz + MARK[tone]; }
+      if(s === 'er' || s === 'r'){ rest = 'er'; }
+      else if((m = s.match(/^(zh|ch|sh|[bpmfdtnlgkhjqxrzcs])/))){ ini = m[1]; rest = s.slice(ini.length); }
+      else if(s[0] === 'y'){
+        rest = s.slice(1);
+        if(/^u/.test(rest)) rest = rest.replace(/^u/, 'v');          // yu yue yuan yun
+        else if(rest === 'i' || rest === 'in' || rest === 'ing') rest = rest;   // yi yin ying
+        else rest = 'i' + rest;                                       // ya yao yan yang yo ye you yong
+      } else if(s[0] === 'w'){
+        rest = s.slice(1);
+        rest = (rest === 'u') ? 'u' : 'u' + rest;                      // wu / wa wo wai wei wan wen wang weng
+      }
+      if(ini && /^[jqx]$/.test(ini)) rest = rest.replace(/^u/, 'v');
+      if(/^(zh|ch|sh|r|z|c|s)$/.test(ini) && rest === 'i') rest = '';
+      var f = rest === '' ? '' : FIN[rest];
+      if(f === undefined) return syl;
+      var z = (ini ? INI[ini] : '') + f;
+      return tone === 5 ? '˙' + z : z + MARK[tone];
+    }
+    function conv(py){ return String(py||'').trim().split(/\s+/).filter(Boolean).map(one).join(' '); }
+    return { one: one, conv: conv };
+  })();
+  
+  function phText(py, kind){ return kind==='zhuyin' ? ZY.conv(py) : kind==='both' ? py+'  '+ZY.conv(py) : py; }
   // 讀音以教育部《重編國語辭典修訂本》為準。pinyin-pro 預設是大陸讀音，
   // 所以這裡先放一份「台灣讀音例外表」。發現哪個詞讀錯了，把它加進這張表就好。
   // 做法：'詞': '拼音（每個字之間空一格，輕聲不標調）'
@@ -665,7 +717,9 @@
         const cb = mk('button', 'btn ghost small', tr('copyLink'));
         cb.addEventListener('click', ()=>copyText(bankLink(b.sid), cb));
         const db_ = mk('button', 'btn danger small', tr('del')); db_.addEventListener('click', ()=>deleteBank(i));
-        row.appendChild(eb); row.appendChild(tb); row.appendChild(cb); row.appendChild(db_);
+        const qb = mk('button', 'btn ghost small', tr('qrBtn')); qb.addEventListener('click', ()=>showQr(i));
+        const pb = mk('button', 'btn ghost small', tr('pdfBtn')); pb.addEventListener('click', ()=>showPdf(i));
+        row.appendChild(eb); row.appendChild(tb); row.appendChild(cb); row.appendChild(qb); row.appendChild(pb); row.appendChild(db_);
         card.appendChild(row);
       }else{
         card.appendChild(mk('div', 't', tr('slotN', { n: i + 1 })));
@@ -713,12 +767,12 @@
   function openEditor(slot){
     const b = BANKS[String(slot)];
     ED = b
-      ? { slot, sid: b.sid, name: b.data.name || '', speed: b.data.speed || 'normal', script: b.data.script || 'trad', boss: b.data.boss !== false,
+      ? { slot, sid: b.sid, name: b.data.name || '', speed: b.data.speed || 'normal', script: b.data.script || 'trad', boss: b.data.boss !== false, phonetic: b.data.phonetic || 'pinyin',
           sentences: (b.data.sentences || []).map(s => Object.assign({}, s)), dirty: false }
-      : { slot, sid: null, name: '', speed: 'normal', script: 'trad', boss: true, sentences: [], dirty: false };
+      : { slot, sid: null, name: '', speed: 'normal', script: 'trad', boss: true, phonetic: 'pinyin', sentences: [], dirty: false };
     $('viewList').hidden = true; $('viewEdit').hidden = false;
     $('bankName').value = ED.name;
-    setGroup('speedGroup', ED.speed); setGroup('scriptGroup', ED.script); setGroup('bossGroup', ED.boss ? '1' : '0');
+    setGroup('speedGroup', ED.speed); setGroup('scriptGroup', ED.script); setGroup('bossGroup', ED.boss ? '1' : '0'); setGroup('phoneticGroup', ED.phonetic);
     resetSentenceForm();
     $('bulkInput').value = ''; $('bulkPreview').textContent = ''; $('bulkGoBtn').hidden = true; setStatus($('bulkStatus'), '');
     setStatus($('saveStatus'), '');
@@ -728,7 +782,7 @@
   function setGroup(id, value){
     $(id).querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.value === value));
   }
-  ['speedGroup','scriptGroup','bossGroup'].forEach(id=>{
+  ['speedGroup','scriptGroup','bossGroup','phoneticGroup'].forEach(id=>{
     $(id).querySelectorAll('.toggle-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         if(!ED) return;
@@ -736,6 +790,7 @@
         if(id === 'speedGroup') ED.speed = btn.dataset.value;
         if(id === 'scriptGroup') ED.script = btn.dataset.value;
         if(id === 'bossGroup') ED.boss = btn.dataset.value === '1';
+        if(id === 'phoneticGroup'){ ED.phonetic = btn.dataset.value; renderSentList(); }
         markDirty();
       });
     });
@@ -762,7 +817,7 @@
       const card = mk('div', 'sent-card');
       const info = mk('div');
       info.appendChild(mk('div', 'hz', (s.trad || []).join(' · ')));
-      info.appendChild(mk('div', 'py', (s.pinyin || []).join('  ')));
+      info.appendChild(mk('div', 'py', phText((s.pinyin || []).join('  '), ED && ED.phonetic)));
       info.appendChild(mk('div', 'es', s.es || ''));
       info.appendChild(mk('div', 'en', s.en || tr('noEn')));
       info.appendChild(mk('div', 'n', tr('sentCount', { n: countHan(s.trad) })));
@@ -895,7 +950,7 @@
         if(!bad){ have.add(key); room--; ok++; bulkReady.push({ trad: tk.trad, simp: tk.simp, pinyin: tk.pinyin, es, en }); } else skip++;
         const card = mk('div', 'sent-card'); const info = mk('div');
         info.appendChild(mk('div', 'hz', tk.trad.join(' · ')));
-        info.appendChild(mk('div', 'py', tk.pinyin.join('  ')));
+        info.appendChild(mk('div', 'py', phText(tk.pinyin.join('  '), ED && ED.phonetic)));
         info.appendChild(mk('div', 'es', es || '')); info.appendChild(mk('div', 'en', en || ''));
         if(note) info.appendChild(mk('div', 'n', note));
         card.appendChild(info); if(bad) card.style.opacity = '.5';
@@ -932,6 +987,7 @@
       const ts = firebase.firestore.FieldValue.serverTimestamp();
       const clean = ED.sentences.map(s => ({ trad: s.trad, simp: s.simp, pinyin: s.pinyin, es: s.es, en: s.en || '' }));
       const data = { owner: user.uid, slot: ED.slot, name, speed: ED.speed, script: ED.script, boss: !!ED.boss, sentences: clean, pro, updatedAt: ts };
+      if(ED.phonetic === 'zhuyin' || ED.phonetic === 'both') data.phonetic = ED.phonetic;   // 預設拼音：不寫入，舊規則也能存
       const batch = db.batch();
       let sid = ED.sid, slots = SLOTS;
       if(!sid){
@@ -955,6 +1011,258 @@
   });
 
   // ================= 語言切換 =================
+  // ================= QR code 與學習單 PDF =================
+  const modalEl = $('modal'), modalBody = $('modalBody');
+  function openModal(build){ modalBody.textContent = ''; build(modalBody); modalEl.hidden = false; }
+  function closeModal(){ modalEl.hidden = true; modalBody.textContent = ''; }
+  $('modalClose').addEventListener('click', closeModal);
+  modalEl.addEventListener('click', e=>{ if(e.target === modalEl) closeModal(); });
+  function saveBlob(blob, filename){
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  }
+  const safeName = s => (String(s || 'bank').replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 30) || 'bank');
+  const canvasBlob = (cv, type, q) => new Promise(res => cv.toBlob(res, type, q));
+
+  // ---- QR ----
+  function qrCanvas(url, title){
+    const qr = qrcode(0, 'M'); qr.addData(url); qr.make();
+    const n = qr.getModuleCount(), quiet = 4, cell = Math.floor(560 / (n + quiet * 2)), qs = cell * (n + quiet * 2);
+    const W = qs + 80, H = qs + 190;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const c = cv.getContext('2d');
+    c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+    c.fillStyle = '#000';
+    for(let r = 0; r < n; r++) for(let k = 0; k < n; k++) if(qr.isDark(r, k)) c.fillRect(40 + (k + quiet) * cell, 40 + (r + quiet) * cell, cell, cell);
+    c.textAlign = 'center'; c.fillStyle = '#111';
+    let fs = 40; c.font = '900 ' + fs + 'px "Noto Sans TC",sans-serif';
+    while(c.measureText(title).width > W - 60 && fs > 18){ fs -= 2; c.font = '900 ' + fs + 'px "Noto Sans TC",sans-serif'; }
+    c.fillText(title, W / 2, qs + 40 + 60);
+    c.fillStyle = '#555'; c.font = '500 24px "Noto Sans TC",sans-serif';
+    c.fillText('跑吧！漢字 · 每天一分鐘', W / 2, qs + 40 + 110);
+    return cv;
+  }
+  async function showQr(i){
+    const b = BANKS[String(i)]; if(!b) return;
+    const url = bankLink(b.sid), title = b.data.name || tr('slotN', { n: i + 1 });
+    try{ await document.fonts.load('900 40px "Noto Sans TC"', title + '跑吧！漢字每天一分鐘'); }catch(e){}
+    const cv = qrCanvas(url, title);
+    openModal(box=>{
+      box.appendChild(mk('h2', null, tr('qrTitle')));
+      cv.className = 'qr-img'; box.appendChild(cv);
+      box.appendChild(mk('p', 'hint', tr('qrHint')));
+      const row = mk('div', 'row');
+      const dl = mk('button', 'btn small', tr('qrDownload'));
+      dl.addEventListener('click', async ()=>{ saveBlob(await canvasBlob(cv, 'image/png'), 'corre-qr-' + safeName(title) + '.png'); });
+      row.appendChild(dl);
+      if(navigator.share){
+        const sh = mk('button', 'btn ghost small', tr('qrShare'));
+        sh.addEventListener('click', async ()=>{
+          try{
+            const blob = await canvasBlob(cv, 'image/png');
+            const file = new File([blob], 'corre-qr-' + safeName(title) + '.png', { type: 'image/png' });
+            if(navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: title, text: url });
+            else await navigator.share({ title: title, url: url });
+          }catch(e){ /* 使用者取消 */ }
+        });
+        row.appendChild(sh);
+      }
+      const cp = mk('button', 'btn ghost small', tr('copyLink')); cp.addEventListener('click', ()=>copyText(url, cp));
+      row.appendChild(cp);
+      box.appendChild(row);
+    });
+  }
+
+  // ---- 學習單 PDF（用 canvas 畫成 A4 圖片頁，再包成 PDF，字型不會有缺字問題）----
+  const PDFW = 1240, PDFH = 1754, PM = 90;
+  const WS_TXT = {
+    es: { name: 'Nombre:', date: 'Fecha:', s1: 'Frases', s2: 'Ordena las palabras para formar la frase.', ans: 'Respuestas' },
+    en: { name: 'Name:', date: 'Date:', s1: 'Sentences', s2: 'Put the words in order to make a sentence.', ans: 'Answer key' }
+  };
+  function buildPdf(jpegs, pw, ph){
+    const enc = new TextEncoder(), parts = [], offs = [];
+    let len = 0;
+    const push = b => { const u = typeof b === 'string' ? enc.encode(b) : b; parts.push(u); len += u.length; };
+    const n = jpegs.length, objCount = 2 + n * 3;
+    push(new Uint8Array([37, 80, 68, 70, 45, 49, 46, 52, 10, 37, 226, 227, 207, 211, 10]));   // %PDF-1.4 + 二進位註記
+    const obj = (id, dict, stream) => {
+      offs[id] = len; push(id + ' 0 obj\n');
+      if(stream){ push(dict.replace('LEN', stream.length) + '\nstream\n'); push(stream); push('\nendstream\nendobj\n'); }
+      else push(dict + '\nendobj\n');
+    };
+    const kids = []; for(let i = 0; i < n; i++) kids.push((3 + i * 3) + ' 0 R');
+    obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+    obj(2, '<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + n + ' >>');
+    for(let i = 0; i < n; i++){
+      const pg = 3 + i * 3, ct = pg + 1, im = pg + 2;
+      obj(pg, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ' + im + ' 0 R >> >> /Contents ' + ct + ' 0 R >>');
+      obj(ct, '<< /Length LEN >>', enc.encode('q 595.28 0 0 841.89 0 0 cm /Im0 Do Q'));
+      obj(im, '<< /Type /XObject /Subtype /Image /Width ' + pw + ' /Height ' + ph + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length LEN >>', jpegs[i]);
+    }
+    const xref = len;
+    let x = 'xref\n0 ' + (objCount + 1) + '\n0000000000 65535 f \n';
+    for(let id = 1; id <= objCount; id++) x += String(offs[id]).padStart(10, '0') + ' 00000 n \n';
+    push(x + 'trailer\n<< /Size ' + (objCount + 1) + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF\n');
+    return new Blob(parts, { type: 'application/pdf' });
+  }
+  function seededShuffle(arr, seed){
+    const a = arr.map((v, i) => ({ v, i })); let s = seed * 9301 + 49297;
+    const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    if(a.every((o, k) => o.i === k)) a.push(a.shift());
+    return a.map(o => o.v);
+  }
+  async function makeWorksheet(data, opt){
+    const script = data.script === 'simp' ? 'simp' : 'trad';
+    const L = WS_TXT[opt.lang] || WS_TXT.es;
+    const sents = (data.sentences || []).map(s => ({
+      words: (s[script] || s.trad || []).slice(),
+      py: (s.pinyin || []).slice(),
+      tr: (opt.lang === 'en' ? (s.en || s.es) : s.es) || ''
+    }));
+    const FF = '"Noto Sans TC","PingFang TC","Microsoft JhengHei","Noto Sans CJK TC",sans-serif';
+    const all = sents.map(s => s.words.join('') + s.py.join('') + ZY.conv(s.py.join(' ')) + s.tr).join('') + (data.name || '') + L.name + L.date + L.s1 + L.s2 + L.ans + '0123456789.:_ ';
+    try{ await Promise.all([document.fonts.load('900 44px "Noto Sans TC"', all), document.fonts.load('500 26px "Noto Sans TC"', all)]); }catch(e){}
+    const pages = [];
+    let cv, c, y;
+    const newPage = () => {
+      cv = document.createElement('canvas'); cv.width = PDFW; cv.height = PDFH; c = cv.getContext('2d');
+      c.fillStyle = '#fff'; c.fillRect(0, 0, PDFW, PDFH); c.textBaseline = 'alphabetic'; c.textAlign = 'left';
+      pages.push(cv); y = PM;
+    };
+    const ensure = h => { if(y + h > PDFH - PM - 40) newPage(); };
+    const font = (w, px) => { c.font = w + ' ' + px + 'px ' + FF; };
+    // 每個詞一格：拼音在上、漢字、注音在下
+    const cellInfo = (word, py) => {
+      font(900, 44); const wh = c.measureText(word).width;
+      let pw = 0, zw = 0, pt = '', zt = '';
+      if(opt.pinyin){ pt = py; font(500, 22); pw = c.measureText(pt).width; }
+      if(opt.zhuyin){ zt = ZY.conv(py); font(500, 22); zw = c.measureText(zt).width; }
+      return { word, pt, zt, w: Math.max(wh, pw, zw) };
+    };
+    const lineH = (opt.pinyin ? 28 : 0) + 52 + (opt.zhuyin ? 30 : 0);
+    const drawCell = (ci, x, top, boxed) => {
+      c.textAlign = 'center'; const cx = x + ci.w / 2; let yy = top;
+      if(opt.pinyin){ font(500, 22); c.fillStyle = '#555'; c.fillText(ci.pt, cx, yy + 22); yy += 28; }
+      font(900, 44); c.fillStyle = '#111'; c.fillText(ci.word, cx, yy + 42); yy += 52;
+      if(opt.zhuyin){ font(500, 22); c.fillStyle = '#555'; c.fillText(ci.zt, cx, yy + 22); }
+      c.textAlign = 'left';
+    };
+    // 把一句排成多行，回傳 [{x,ci}] 的行
+    const layout = (words, py, x0, maxW, gap, pad) => {
+      const lines = [[]]; let x = x0;
+      words.forEach((w, i) => {
+        const ci = cellInfo(w, py[i] || '');
+        const cw = ci.w + pad * 2;
+        if(x + cw > x0 + maxW && lines[lines.length - 1].length){ lines.push([]); x = x0; }
+        lines[lines.length - 1].push({ x: x + pad, ci, cw }); x += cw + gap;
+      });
+      return lines;
+    };
+    newPage();
+    font(900, 46); c.fillStyle = '#0a6b73'; c.fillText(data.name || '', PM, y + 44); y += 70;
+    font(500, 26); c.fillStyle = '#333';
+    c.fillText(L.name + ' ____________________', PM, y + 26);
+    c.fillText(L.date + ' ______________', PDFW / 2 + 40, y + 26); y += 58;
+    c.strokeStyle = '#0a6b73'; c.lineWidth = 3; c.beginPath(); c.moveTo(PM, y); c.lineTo(PDFW - PM, y); c.stroke(); y += 30;
+    font(700, 28); c.fillStyle = '#0a6b73'; c.fillText(L.s1, PM, y + 28); y += 52;
+
+    sents.forEach((s, idx) => {
+      const lines = layout(s.words, s.py, PM + 70, PDFW - PM * 2 - 70, 26, 0);
+      const h = lines.length * (lineH + 10) + 44 + 24;
+      ensure(h);
+      font(700, 30); c.fillStyle = '#0a6b73'; c.fillText((idx + 1) + '.', PM, y + (opt.pinyin ? 28 : 0) + 40);
+      lines.forEach(line => { line.forEach(o => drawCell(o.ci, o.x, y, false)); y += lineH + 10; });
+      font(500, 26); c.fillStyle = '#333'; c.fillText(s.tr, PM + 70, y + 26); y += 44;
+      c.strokeStyle = '#ddd'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(PM, y); c.lineTo(PDFW - PM, y); c.stroke(); y += 24;
+    });
+
+    if(opt.order){
+      const ex = sents.filter(s => s.words.length >= 2);
+      if(ex.length){
+        newPage();
+        font(900, 40); c.fillStyle = '#0a6b73'; c.fillText(L.s2, PM, y + 38); y += 70;
+        ex.forEach((s, idx) => {
+          const sh = seededShuffle(s.words.map((w, i) => i), idx + 1);
+          const lines = layout(sh.map(i => s.words[i]), sh.map(i => s.py[i] || ''), PM + 70, PDFW - PM * 2 - 70, 18, 14);
+          const h = 44 + lines.length * (lineH + 34) + 80;
+          ensure(h);
+          font(700, 30); c.fillStyle = '#0a6b73'; c.fillText((idx + 1) + '.', PM, y + 40);
+          font(500, 24); c.fillStyle = '#666'; c.fillText(s.tr, PM + 70, y + 26); y += 44;
+          lines.forEach(line => {
+            line.forEach(o => {
+              c.strokeStyle = '#0a6b73'; c.lineWidth = 2.5;
+              const bx = o.x - 14, bw = o.ci.w + 28, bh = lineH + 20;
+              c.beginPath(); c.roundRect ? c.roundRect(bx, y - 4, bw, bh, 12) : c.rect(bx, y - 4, bw, bh); c.stroke();
+              drawCell(o.ci, o.x, y + 6, true);
+            });
+            y += lineH + 34;
+          });
+          c.strokeStyle = '#999'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(PM + 70, y + 40); c.lineTo(PDFW - PM, y + 40); c.stroke();
+          y += 80;
+        });
+        newPage();
+        font(900, 40); c.fillStyle = '#0a6b73'; c.fillText(L.ans, PM, y + 38); y += 70;
+        ex.forEach((s, idx) => {
+          const lines = layout(s.words, s.py, PM + 70, PDFW - PM * 2 - 70, 26, 0);
+          ensure(lines.length * (lineH + 10) + 40);
+          font(700, 28); c.fillStyle = '#0a6b73'; c.fillText((idx + 1) + '.', PM, y + (opt.pinyin ? 28 : 0) + 38);
+          lines.forEach(line => { line.forEach(o => drawCell(o.ci, o.x, y, false)); y += lineH + 10; });
+          y += 20;
+        });
+      }
+    }
+    // 頁尾
+    pages.forEach((p, i) => {
+      const g = p.getContext('2d'); g.fillStyle = '#999'; g.font = '500 22px ' + FF; g.textAlign = 'center';
+      g.fillText('每天一分鐘 · 跑吧！漢字 · ' + (i + 1) + ' / ' + pages.length, PDFW / 2, PDFH - 50);
+    });
+    const jpegs = [];
+    for(const p of pages){
+      const b64 = p.toDataURL('image/jpeg', 0.85).split(',')[1], bin = atob(b64), u = new Uint8Array(bin.length);
+      for(let k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k);
+      jpegs.push(u);
+    }
+    return { blob: buildPdf(jpegs, PDFW, PDFH), pages: pages.length };
+  }
+  function showPdf(i){
+    const b = BANKS[String(i)]; if(!b) return;
+    const d = b.data;
+    openModal(box=>{
+      box.appendChild(mk('h2', null, tr('pdfTitle')));
+      if(!PLAN.active){
+        box.appendChild(mk('div', 'notice err', tr('pdfNeedSub')));
+        const a = mk('a', 'btn small', tr('subscribe')); a.href = PORTAL_URL; a.target = '_blank'; a.rel = 'noopener'; a.style.textDecoration = 'none';
+        box.appendChild(a); return;
+      }
+      box.appendChild(mk('label', 'lbl', tr('pdfLang')));
+      const lg = mk('div', 'toggle-group'); let lang = 'es';
+      [['es', 'Español'], ['en', 'English']].forEach(([v, t]) => {
+        const bt = mk('button', 'toggle-btn' + (v === lang ? ' active' : ''), t);
+        bt.addEventListener('click', ()=>{ lang = v; lg.querySelectorAll('.toggle-btn').forEach(x => x.classList.toggle('active', x === bt)); });
+        lg.appendChild(bt);
+      });
+      box.appendChild(lg);
+      const chk = (label, val) => {
+        const l = mk('label', 'chk'); const inp = document.createElement('input'); inp.type = 'checkbox'; inp.checked = val;
+        l.appendChild(inp); l.appendChild(mk('span', null, ' ' + label)); box.appendChild(l); return inp;
+      };
+      const ph = d.phonetic || 'pinyin';
+      const cPy = chk(tr('pdfPinyin'), ph !== 'zhuyin'), cZy = chk(tr('pdfZhuyin'), ph === 'zhuyin' || ph === 'both'), cOrd = chk(tr('pdfOrder'), true);
+      const st = mk('div', 'status'); const go = mk('button', 'btn', tr('pdfMake'));
+      go.addEventListener('click', async ()=>{
+        go.disabled = true; setStatus(st, tr('pdfWorking'));
+        try{
+          const r = await makeWorksheet(d, { lang, pinyin: cPy.checked, zhuyin: cZy.checked, order: cOrd.checked });
+          saveBlob(r.blob, 'worksheet-' + safeName(d.name) + '.pdf');
+          setStatus(st, tr('pdfDone', { n: r.pages }), 'ok');
+        }catch(e){ console.error(e); setStatus(st, (e && e.message) || String(e), 'err'); }
+        go.disabled = false;
+      });
+      box.appendChild(go); box.appendChild(st);
+    });
+  }
+
   function applyLang(){
     document.documentElement.lang = HTML_LANG[LANG];
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = tr(el.dataset.i18n); });
@@ -969,7 +1277,7 @@
   applyLang();
 
   // 給測試用
-  window.__teacher = { get ED(){ return ED; }, makeTokens, countHan };
+  window.__teacher = { get ED(){ return ED; }, makeTokens, countHan, makeWorksheet, buildPdf, qrCanvas, ZY };
 })();
 </script>
 </body>

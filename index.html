@@ -225,6 +225,8 @@
     height:11px;
     font-family:'Work Sans',sans-serif;
   }
+  .slot .py.zy, .slot .py .zy{ font-family:'Noto Sans TC',sans-serif; }
+  .slot .py.two{ height:auto; line-height:1.15; }
   .slot.next{
     border-style:solid;
     border-color:var(--magenta);
@@ -1128,6 +1130,8 @@
   const MAX_BANK_CHARS = 20;      // 每句最多漢字數（編輯頁已限制，這裡再把關一次）
   let bankName = '';
   let bankBoss = true;
+  let bankPhonetic = 'pinyin';   // 老師設定的注音/拼音顯示方式
+  let phKind = 'pinyin';         // 目前顯示：pinyin | zhuyin | both | off
   let bankErrKey = '';
   const CENTRAL_CONFIG = {
     apiKey: "AIzaSyCHZz8Hh7m45bJfZC9aK_f_NvUD-aUeuzU",
@@ -1137,6 +1141,43 @@
     messagingSenderId: "276281656991",
     appId: "1:276281656991:web:de242ba22373816c3044aa"
   };
+  // ===== 注音：由拼音轉換（已用 pypinyin 比對過常用字）=====
+  /* 拼音（帶聲調符號）→ 注音。輸入可含空格分隔的多個音節 */
+  const ZY = (function(){
+    var INI = {b:'ㄅ',p:'ㄆ',m:'ㄇ',f:'ㄈ',d:'ㄉ',t:'ㄊ',n:'ㄋ',l:'ㄌ',g:'ㄍ',k:'ㄎ',h:'ㄏ',j:'ㄐ',q:'ㄑ',x:'ㄒ',zh:'ㄓ',ch:'ㄔ',sh:'ㄕ',r:'ㄖ',z:'ㄗ',c:'ㄘ',s:'ㄙ'};
+    var FIN = {a:'ㄚ',o:'ㄛ',e:'ㄜ',ê:'ㄝ',ai:'ㄞ',ei:'ㄟ',ao:'ㄠ',ou:'ㄡ',an:'ㄢ',en:'ㄣ',ang:'ㄤ',eng:'ㄥ',er:'ㄦ',
+      i:'ㄧ',ia:'ㄧㄚ',io:'ㄧㄛ',ie:'ㄧㄝ',iao:'ㄧㄠ',iu:'ㄧㄡ',iou:'ㄧㄡ',ian:'ㄧㄢ',in:'ㄧㄣ',iang:'ㄧㄤ',ing:'ㄧㄥ',
+      u:'ㄨ',ua:'ㄨㄚ',uo:'ㄨㄛ',uai:'ㄨㄞ',ui:'ㄨㄟ',uei:'ㄨㄟ',uan:'ㄨㄢ',un:'ㄨㄣ',uen:'ㄨㄣ',uang:'ㄨㄤ',ong:'ㄨㄥ',ueng:'ㄨㄥ',
+      v:'ㄩ',ve:'ㄩㄝ',van:'ㄩㄢ',vn:'ㄩㄣ',iong:'ㄩㄥ'};
+    var MARK = ['','','ˊ','ˇ','ˋ'];
+    function one(syl){
+      var s = syl.normalize('NFD'), tone = 5;
+      if(/̄/.test(s)) tone = 1; else if(/́/.test(s)) tone = 2; else if(/̌/.test(s)) tone = 3; else if(/̀/.test(s)) tone = 4;
+      s = s.replace(/ü/g,'v').replace(/Ü/g,'v').replace(/[̀-ͯ]/g,'').replace(/ü/g,'v').toLowerCase();
+      if(!/^[a-zê]+$/.test(s)) return syl;
+      var ini = '', rest = s, m;
+      if(s === 'n' || s === 'm'){ var zz = s === 'n' ? 'ㄣ' : 'ㄇㄨ'; return tone === 5 ? '˙' + zz : zz + MARK[tone]; }
+      if(s === 'er' || s === 'r'){ rest = 'er'; }
+      else if((m = s.match(/^(zh|ch|sh|[bpmfdtnlgkhjqxrzcs])/))){ ini = m[1]; rest = s.slice(ini.length); }
+      else if(s[0] === 'y'){
+        rest = s.slice(1);
+        if(/^u/.test(rest)) rest = rest.replace(/^u/, 'v');          // yu yue yuan yun
+        else if(rest === 'i' || rest === 'in' || rest === 'ing') rest = rest;   // yi yin ying
+        else rest = 'i' + rest;                                       // ya yao yan yang yo ye you yong
+      } else if(s[0] === 'w'){
+        rest = s.slice(1);
+        rest = (rest === 'u') ? 'u' : 'u' + rest;                      // wu / wa wo wai wei wan wen wang weng
+      }
+      if(ini && /^[jqx]$/.test(ini)) rest = rest.replace(/^u/, 'v');
+      if(/^(zh|ch|sh|r|z|c|s)$/.test(ini) && rest === 'i') rest = '';
+      var f = rest === '' ? '' : FIN[rest];
+      if(f === undefined) return syl;
+      var z = (ini ? INI[ini] : '') + f;
+      return tone === 5 ? '˙' + z : z + MARK[tone];
+    }
+    function conv(py){ return String(py||'').trim().split(/\s+/).filter(Boolean).map(one).join(' '); }
+    return { one: one, conv: conv };
+  })();
   const HAN_RE = /[㐀-鿿]/;
   const countHan = arr => Array.from((arr || []).join('')).filter(c => HAN_RE.test(c)).length;
   function loadScriptOnce(src){
@@ -1168,6 +1209,8 @@
     rebuildWordPools();
     bankName = String(d.name || '').slice(0, 40);
     bankBoss = d.boss !== false;
+    bankPhonetic = (d.phonetic === 'zhuyin' || d.phonetic === 'both') ? d.phonetic : 'pinyin';
+    phKind = bankPhonetic;
     diffKey = (d.speed === 'facil' || d.speed === 'dificil') ? d.speed : 'normal';
     useSimplified = d.script === 'simp';
   }
@@ -1388,7 +1431,15 @@
       py.className = 'py';
       // 沒有語音的 Boss：還沒吃到的格子強制顯示拼音（就算玩家把拼音開關關掉），漢字仍然是「？」
       const hintPinyin = isBoss && bossNoVoice && !stamped;
-      py.textContent = ((showChar && showPinyin) || hintPinyin) ? (sentence.pinyin[i] || '') : '';
+      const kind = hintPinyin ? (phKind === 'zhuyin' ? 'zhuyin' : 'pinyin') : ((showChar && showPinyin) ? phKind : 'off');
+      const pyTxt = sentence.pinyin[i] || '';
+      if(kind === 'pinyin') py.textContent = pyTxt;
+      else if(kind === 'zhuyin'){ py.textContent = ZY.conv(pyTxt); py.classList.add('zy'); }
+      else if(kind === 'both'){
+        const a = document.createElement('div'); a.textContent = pyTxt;
+        const b = document.createElement('div'); b.textContent = ZY.conv(pyTxt); b.className = 'zy';
+        py.appendChild(a); py.appendChild(b); py.classList.add('two');
+      }
       slot.appendChild(hz);
       slot.appendChild(py);
       if(stamped){
@@ -1783,12 +1834,20 @@
     dragPointerId = null;
   });
 
-  pinyinToggle.addEventListener('click', ()=>{
-    showPinyin = !showPinyin;
+  const PH_LABEL = { pinyin:'拼音', zhuyin:'注音', both:'拼+注', off:'音標關' };
+  function syncPhToggle(){
+    showPinyin = phKind !== 'off';
+    pinyinToggle.textContent = PH_LABEL[phKind];
     pinyinToggle.classList.toggle('on', showPinyin);
+  }
+  pinyinToggle.addEventListener('click', ()=>{
+    // 一般模式：拼音 → 注音 → 拼+注 → 關；教師模式：老師決定顯示方式，學生只能開／關
+    const order = TEACHER_MODE ? [bankPhonetic, 'off'] : ['pinyin', 'zhuyin', 'both', 'off'];
+    phKind = order[(order.indexOf(phKind) + 1) % order.length];
+    syncPhToggle();
     renderBanner();
   });
-  pinyinToggle.classList.add('on');
+  syncPhToggle();
 
   musicToggleEl.classList.toggle('on', musicOn);
   musicToggleEl.addEventListener('click', toggleMusic);
@@ -1935,6 +1994,7 @@
     startBtn.textContent = t('loadingSent');
     fetchTeacherBank().then(d=>{
       applyTeacherBank(d);
+      syncPhToggle();
       const tag = document.getElementById('bankTag');
       tag.textContent = '📚 ' + bankName + (PREVIEW ? ' · ' + t('preview') : '');
       tag.hidden = false;
