@@ -119,6 +119,19 @@
   .sent-card .del{color:var(--seal);}
   .sent-card .edit{color:var(--jade-dark);}
   .empty-msg{font-size:13px;color:var(--ink-soft);font-style:italic;}
+  #modeBar{display:flex;gap:8px;padding:12px 24px 0;}
+  #modeBar .btn.on{background:var(--jade);color:#fdf6e3;border-color:var(--jade-dark);}
+  #packBar{margin:12px 24px 0;padding:14px 16px;border:1.5px solid var(--gold);border-radius:12px;background:#fff8e1;}
+  #packBar h2{margin:0 0 6px;}
+  #packBar .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  #packBar .grid input,#packBar select{font-size:14px;padding:8px 10px;}
+  #packBar select{width:100%;border:1.5px solid var(--line);border-radius:8px;background:#fffdf7;font-family:'Work Sans';}
+  #packBar .lbl{font-size:11.5px;color:var(--ink-soft);display:block;margin-top:2px;}
+  #pickPanel{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;}
+  #pickList{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+  #pickList label.pick{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;background:#fffdf7;cursor:pointer;}
+  #pickList label.pick.off{opacity:.45;cursor:not-allowed;}
+  @media(max-width:700px){#packBar .grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -136,6 +149,47 @@
     </div>
     <div class="status" id="pruneStatus"></div>
   </header>
+
+  <div id="modeBar">
+    <button class="btn btn-secondary on" data-mode="pool" id="modePool">📚 公開題庫</button>
+    <button class="btn btn-secondary" data-mode="pack" id="modePack">🎁 主題包（訂閱者專用）</button>
+  </div>
+  <div id="packBar" hidden>
+    <h2>主題包</h2>
+    <p class="sub" style="margin:0;">主題包存在中心專案 subscription-48d3c，只有訂閱中的老師讀得到。下方左邊的「輸入句子」「批次匯入」會把句子加進目前選的主題包。</p>
+    <div class="authbar">
+      <span class="who" id="cAuthStatus">主題包資料庫：尚未登入</span>
+      <button class="btn btn-secondary btn-small" id="cLoginBtn">登入主題包資料庫（Google）</button>
+      <button class="btn btn-secondary btn-small" id="cLogoutBtn" hidden>登出</button>
+      <span class="authmsg" id="cAuthMsg"></span>
+    </div>
+    <div id="packBody" hidden>
+      <div class="row" style="align-items:center;">
+        <select id="packSel" style="flex:1;min-width:200px;"></select>
+        <button class="btn btn-primary btn-small" id="packNewBtn">＋ 新增主題包</button>
+        <button class="btn btn-secondary btn-small" id="packDelBtn">🗑 刪除這個主題包</button>
+      </div>
+      <div id="packMeta" hidden>
+        <div class="grid">
+          <div><span class="lbl">名稱（中文）</span><input type="text" id="pkNameZh" maxlength="30"></div>
+          <div><span class="lbl">Nombre (español)</span><input type="text" id="pkNameEs" maxlength="40"></div>
+          <div><span class="lbl">說明（中文）</span><input type="text" id="pkDescZh" maxlength="80"></div>
+          <div><span class="lbl">Descripción (español)</span><input type="text" id="pkDescEs" maxlength="120"></div>
+          <div><span class="lbl">排序（數字小的在前面）</span><input type="text" id="pkOrder" maxlength="4"></div>
+        </div>
+        <div class="row">
+          <button class="btn btn-primary btn-small" id="packSaveMetaBtn">💾 儲存名稱與說明</button>
+          <button class="btn btn-secondary btn-small" id="pickBtn">📚 從公開題庫挑句子加入</button>
+        </div>
+        <div id="pickPanel" hidden>
+          <input type="text" id="pickSearch" placeholder="搜尋（漢字、拼音或西文）">
+          <div id="pickList"></div>
+          <div class="row"><button class="btn btn-primary btn-small" id="pickAddBtn">加入勾選的句子</button><span class="status" id="pickStatus" style="margin:0;align-self:center;"></span></div>
+        </div>
+      </div>
+      <div class="status" id="packStatus"></div>
+    </div>
+  </div>
 
   <div id="layout">
     <!-- ===== 左欄：建立題目 ===== -->
@@ -194,7 +248,7 @@
     <!-- ===== 右欄：目前題庫 ===== -->
     <div id="colRight">
       <section>
-        <h2>目前題庫 <span id="countLabel"></span></h2>
+        <h2><span id="listTitle">目前題庫</span> <span id="countLabel"></span></h2>
         <div class="toolbar">
           <button class="btn btn-secondary btn-small" id="backfillBtn" hidden>補齊舊句子的隨機欄位</button>
           <span class="status" id="backfillStatus" style="margin-top:0;"></span>
@@ -239,6 +293,23 @@
       firebaseReady = true;
     }
   }catch(e){ console.warn('Firebase 初始化失敗:', e); }
+
+  // 主題包存放的中心專案（教師登入、訂閱方案都在這裡；與題庫的 corre 專案是兩個獨立連線）
+  const centralConfig = {
+    apiKey: "AIzaSyCHZz8Hh7m45bJfZC9aK_f_NvUD-aUeuzU",
+    authDomain: "subscription-48d3c.firebaseapp.com",
+    projectId: "subscription-48d3c",
+    storageBucket: "subscription-48d3c.firebasestorage.app",
+    messagingSenderId: "276281656991",
+    appId: "1:276281656991:web:de242ba22373816c3044aa"
+  };
+  let cauth = null, cdb = null;
+  try{
+    if(window.firebase){
+      const capp = firebase.initializeApp(centralConfig, 'central');
+      cauth = capp.auth(); cdb = capp.firestore();
+    }
+  }catch(e){ console.warn('中心專案初始化失敗:', e); }
 
   // ================= DOM =================
   const $ = id => document.getElementById(id);
@@ -514,6 +585,7 @@
   }
 
   // ================= 題庫資料（列表與重複檢查共用） =================
+  let MODE = 'pool';         // 'pool' = 公開題庫（corre）；'pack' = 主題包（中心專案）
   let allDocs = [];          // [{ id, data }]
   let editingId = null;      // 正在編輯的文件 id（null = 新增）
   const keyOf = trad => (trad || []).join('');
@@ -526,8 +598,60 @@
     previewSection.style.display = 'none';
     editBanner.hidden = true;
     cancelEditBtn.hidden = true;
-    saveBtn.textContent = '💾 儲存到題庫';
+    saveBtn.textContent = MODE === 'pack' ? '💾 加入主題包' : '💾 儲存到題庫';
     setStatus(genStatus,'','');
+  }
+
+  const HAN_RE = /[㐀-鿿]/;
+  const countHan = arr => Array.from((arr || []).join('')).filter(c => HAN_RE.test(c)).length;
+  const MAX_HAN = 20, MAX_PACK_SENT = 200;
+  const PACK_COL = 'site_content', PACK_PREFIX = 'corre_pack_';
+  let PACKS = [];            // [{ id, data }]
+  let curPackId = null;
+  const curPack = () => PACKS.find(p => p.id === curPackId) || null;
+  // 目前正在編輯的句子清單（公開題庫或主題包），格式統一成 { id, data }
+  function currentDocs(){
+    if(MODE === 'pack'){ const p = curPack(); return p ? (p.data.sentences || []).map((x, i) => ({ id: String(i), data: x })) : []; }
+    return allDocs;
+  }
+  function afterChange(){ if(MODE === 'pack') renderPackView(); else refreshList(); }
+  function requirePackLogin(statusEl){
+    if(cauth && isRealUser(cauth.currentUser)) return true;
+    setStatus(statusEl, '請先登入主題包資料庫（上方「登入主題包資料庫」）。', 'err');
+    return false;
+  }
+  async function writePack(p, sentences){
+    const data = Object.assign({}, p.data, { sentences, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    await cdb.collection(PACK_COL).doc(p.id).set(data);
+    p.data = Object.assign({}, data, { updatedAt: null });
+  }
+  async function savePackSentence(tokens, es, en, statusEl){
+    const p = curPack();
+    if(!p){ setStatus(statusEl, '請先在上方選一個主題包（或新增一個）。', 'err'); return; }
+    if(!requirePackLogin(statusEl)) return;
+    if(countHan(tokens.trad) > MAX_HAN){ setStatus(statusEl, `這句有 ${countHan(tokens.trad)} 個漢字，主題包的句子最多 ${MAX_HAN} 個。`, 'err'); return; }
+    const sents = (p.data.sentences || []).slice();
+    const key = keyOf(tokens.trad), obj = { trad: tokens.trad, simp: tokens.simp, pinyin: tokens.pinyin, es, en: en || '' };
+    const dupIdx = sents.findIndex(x => keyOf(x.trad) === key);
+    if(editingId !== null){
+      const idx = +editingId;
+      if(dupIdx >= 0 && dupIdx !== idx){ setStatus(statusEl, '主題包裡已經有另一筆相同的句子了。', 'err'); return; }
+      sents[idx] = obj;
+    }else if(dupIdx >= 0){
+      if(!confirm('主題包裡已經有這一句了。\n要用現在的內容覆蓋它嗎？')) return;
+      sents[dupIdx] = obj;
+    }else{
+      if(sents.length >= MAX_PACK_SENT){ setStatus(statusEl, `一個主題包最多 ${MAX_PACK_SENT} 句。`, 'err'); return; }
+      sents.push(obj);
+    }
+    saveBtn.disabled = true; setStatus(statusEl, '儲存中…');
+    try{
+      await writePack(p, sents);
+      clearForm();
+      setStatus(statusEl, '已加入主題包！', 'ok');
+      renderPackView();
+    }catch(e){ console.error(e); setStatus(statusEl, '儲存失敗：' + explainError(e), 'err'); }
+    finally{ saveBtn.disabled = false; }
   }
 
   // ================= 儲存（新增 / 覆蓋 / 編輯） =================
@@ -542,6 +666,7 @@
       setStatus(saveStatus,'繁體、簡體、拼音的格數必須一樣多，請檢查。','err'); return;
     }
     if(!es){ setStatus(saveStatus,'請填寫西班牙文翻譯。','err'); return; }
+    if(MODE === 'pack') return savePackSentence(tokens, es, en, saveStatus);
     if(!firebaseReady){ setStatus(saveStatus,'Firebase 尚未載入完成，請重新整理頁面。','err'); return; }
     if(!requireLogin(saveStatus)) return;
 
@@ -612,6 +737,17 @@
 
   async function deleteDoc(doc){
     setStatus(listStatus,'','');
+    if(MODE === 'pack'){
+      const p = curPack(); if(!p || !requirePackLogin(listStatus)) return;
+      if(!confirm('確定要從主題包刪除這句話嗎？')) return;
+      try{
+        const sents = (p.data.sentences || []).filter((_, i) => String(i) !== doc.id);
+        await writePack(p, sents);
+        if(editingId === doc.id) clearForm();
+        renderPackView();
+      }catch(e){ console.error(e); setStatus(listStatus,'刪除失敗：'+explainError(e),'err'); }
+      return;
+    }
     if(!requireLogin(listStatus)) return;
     if(!confirm('確定要刪除這句話嗎？')) return;
     try{
@@ -626,11 +762,12 @@
 
   function renderList(){
     sentenceList.textContent = '';
-    if(allDocs.length === 0){
-      sentenceList.appendChild(mk('p','empty-msg','還沒有句子，先在左邊新增第一句吧！'));
+    const docs = currentDocs();
+    if(docs.length === 0){
+      sentenceList.appendChild(mk('p','empty-msg', MODE === 'pack' ? (curPack() ? '這個主題包還沒有句子。可以在左邊新增、批次匯入，或按上方「從公開題庫挑句子加入」。' : '請先選一個主題包，或按「＋ 新增主題包」。') : '還沒有句子，先在左邊新增第一句吧！'));
       return;
     }
-    allDocs.forEach(doc=>{
+    docs.forEach(doc=>{
       const d = doc.data;
       const card = mk('div','sent-card');
       const info = mk('div');
@@ -728,7 +865,7 @@
     if(lines.length === 0){ setStatus(bulkStatus,'請先貼上要匯入的句子。','err'); return; }
     bulkPreviewBtn.disabled = true;
     setStatus(bulkStatus,'處理中…');
-    const existing = new Map(allDocs.map(d => [keyOf(d.data.trad), d]));
+    const existing = new Map(currentDocs().map(d => [keyOf(d.data.trad), d]));
     const seen = new Set();
     let ok = 0, skip = 0, bad = 0, translated = 0, filled = 0;
     try{
@@ -743,7 +880,8 @@
         let note = '';
         const key = keyOf(tk.trad);
         const old = existing.get(key);
-        if(old){
+        if(MODE === 'pack' && countHan(tk.trad) > MAX_HAN){ note = `超過 ${MAX_HAN} 個漢字，略過`; skip++; }
+        else if(old){
           if(en && !old.data.en && !seen.has(key)){ bulkEnFill.push({ id: old.id, en }); seen.add(key); note = '已存在，補上英文'; filled++; }
           else{ note = '已存在，略過'; skip++; }
         }else if(seen.has(key)){ note = '重複，略過'; skip++; }
@@ -778,6 +916,26 @@
     }
   }
   async function bulkImport(){
+    if(MODE === 'pack'){
+      const p = curPack();
+      if(!p){ setStatus(bulkStatus,'請先選一個主題包。','err'); return; }
+      if(!requirePackLogin(bulkStatus)) return;
+      const sents = (p.data.sentences || []).slice();
+      const room = MAX_PACK_SENT - sents.length;
+      const add = bulkReady.slice(0, Math.max(0, room));
+      if(!confirm(`要加入 ${add.length} 句到主題包「${p.data.name && p.data.name.zh || ''}」` + (bulkReady.length > add.length ? `（超過上限，有 ${bulkReady.length - add.length} 句不會加入）` : '') + (bulkEnFill.length ? `，並替 ${bulkEnFill.length} 句補上英文` : '') + ' 嗎？')) return;
+      bulkImportBtn.disabled = true; setStatus(bulkStatus,'匯入中…');
+      try{
+        bulkEnFill.forEach(f => { const i = +f.id; if(sents[i]) sents[i] = Object.assign({}, sents[i], { en: f.en }); });
+        add.forEach(r => sents.push({ trad: r.trad, simp: r.simp, pinyin: r.pinyin, es: r.es, en: r.en || '' }));
+        await writePack(p, sents);
+        bulkReady = []; bulkEnFill = []; bulkImportBtn.hidden = true; bulkInput.value = ''; bulkPreview.textContent = '';
+        setStatus(bulkStatus, `已加入 ${add.length} 句！`, 'ok');
+        renderPackView();
+      }catch(e){ console.error(e); setStatus(bulkStatus,'匯入失敗：'+explainError(e),'err'); }
+      finally{ bulkImportBtn.disabled = false; }
+      return;
+    }
     if(!requireLogin(bulkStatus)) return;
     const total = bulkReady.length + bulkEnFill.length;
     if(total === 0) return;
@@ -813,6 +971,172 @@
   bulkPreviewBtn.addEventListener('click', bulkCheck);
   bulkImportBtn.addEventListener('click', bulkImport);
   bulkInput.addEventListener('input', ()=>{ bulkReady = []; bulkEnFill = []; bulkImportBtn.hidden = true; });
+
+  // ================= 主題包：登入、選擇、建立、挑句子 =================
+  const modePoolBtn = $('modePool'), modePackBtn = $('modePack'), packBar = $('packBar'), packBody = $('packBody');
+  const packSel = $('packSel'), packMeta = $('packMeta'), packStatus = $('packStatus');
+  const cAuthStatus = $('cAuthStatus'), cLoginBtn = $('cLoginBtn'), cLogoutBtn = $('cLogoutBtn'), cAuthMsg = $('cAuthMsg');
+  const newPackId = () => { const a = new Uint8Array(10); crypto.getRandomValues(a); return PACK_PREFIX + Array.from(a).map(x => (x % 36).toString(36)).join(''); };
+  const packTitle = p => (p.data.name && (p.data.name.zh || p.data.name.es)) || '（未命名）';
+
+  function setMode(m){
+    MODE = m;
+    modePoolBtn.classList.toggle('on', m === 'pool'); modePackBtn.classList.toggle('on', m === 'pack');
+    packBar.hidden = m !== 'pack';
+    clearForm();
+    bulkReady = []; bulkEnFill = []; bulkImportBtn.hidden = true; bulkPreview.textContent = ''; setStatus(bulkStatus, '');
+    setStatus(saveStatus, '');
+    if(m === 'pack'){
+      backfillBtn.hidden = true; setStatus(backfillStatus, '');
+      renderPackView();
+      if(cauth && isRealUser(cauth.currentUser) && PACKS.length === 0) loadPacks();
+    }else{
+      $('listTitle').textContent = '目前題庫';
+      countLabel.textContent = `（共 ${allDocs.length} 句）`;
+      renderList(); updateBackfillUi();
+    }
+  }
+  modePoolBtn.addEventListener('click', ()=>setMode('pool'));
+  modePackBtn.addEventListener('click', ()=>setMode('pack'));
+
+  function renderCAuth(user){
+    const real = isRealUser(user);
+    cAuthStatus.textContent = real ? '主題包資料庫：已登入 ' + user.email : '主題包資料庫：尚未登入';
+    cAuthStatus.className = 'who' + (real ? ' ok' : '');
+    cLoginBtn.hidden = real; cLogoutBtn.hidden = !real;
+    packBody.hidden = !real;
+  }
+  cLoginBtn.addEventListener('click', async ()=>{
+    if(!cauth){ cAuthMsg.textContent = 'Firebase 尚未載入完成，請重新整理頁面。'; return; }
+    cAuthMsg.textContent = '登入視窗開啟中…';
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try{ await cauth.signInWithPopup(provider); cAuthMsg.textContent = ''; }
+    catch(e){
+      const code = e && e.code;
+      if(code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment'){ cauth.signInWithRedirect(provider); return; }
+      cAuthMsg.textContent = code === 'auth/popup-closed-by-user' ? '登入視窗被關閉了。' : ('登入失敗：' + ((e && e.message) || code || ''));
+    }
+  });
+  cLogoutBtn.addEventListener('click', ()=>{ if(cauth) cauth.signOut(); });
+  if(cauth){
+    cauth.getRedirectResult().catch(()=>{});
+    cauth.onAuthStateChanged(user=>{
+      renderCAuth(user);
+      if(isRealUser(user)){ if(MODE === 'pack') loadPacks(); } else { PACKS = []; curPackId = null; }
+    });
+  }
+
+  async function loadPacks(){
+    setStatus(packStatus, '載入主題包…');
+    try{
+      const snap = await cdb.collection(PACK_COL).where('kind', '==', 'corre_pack').get();
+      PACKS = snap.docs.filter(d => d.id.startsWith(PACK_PREFIX)).map(d => ({ id: d.id, data: d.data() }));
+      PACKS.sort((a, b) => (a.data.order || 0) - (b.data.order || 0));
+      if(!PACKS.some(p => p.id === curPackId)) curPackId = PACKS.length ? PACKS[0].id : null;
+      setStatus(packStatus, PACKS.length ? '' : '還沒有主題包，按「＋ 新增主題包」開始。');
+      renderPackView();
+    }catch(e){ console.error(e); setStatus(packStatus, '讀取失敗：' + explainError(e), 'err'); }
+  }
+  function renderPackView(){
+    packSel.textContent = '';
+    PACKS.forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = packTitle(p) + `（${(p.data.sentences || []).length} 句）`; packSel.appendChild(o); });
+    if(curPackId) packSel.value = curPackId;
+    const p = curPack();
+    packSel.hidden = !PACKS.length; $('packDelBtn').hidden = !p;
+    packMeta.hidden = !p;
+    if(p){
+      const d = p.data;
+      $('pkNameZh').value = (d.name && d.name.zh) || ''; $('pkNameEs').value = (d.name && d.name.es) || '';
+      $('pkDescZh').value = (d.desc && d.desc.zh) || ''; $('pkDescEs').value = (d.desc && d.desc.es) || '';
+      $('pkOrder').value = d.order != null ? d.order : '';
+    }
+    $('listTitle').textContent = p ? `主題包「${packTitle(p)}」的句子` : '主題包的句子';
+    countLabel.textContent = p ? `（共 ${(p.data.sentences || []).length} 句，上限 ${MAX_PACK_SENT}）` : '';
+    renderList();
+    if(!$('pickPanel').hidden) renderPick();
+  }
+  packSel.addEventListener('change', ()=>{ curPackId = packSel.value; clearForm(); renderPackView(); });
+
+  $('packNewBtn').addEventListener('click', async ()=>{
+    if(!requirePackLogin(packStatus)) return;
+    const name = (prompt('新主題包的名稱（中文）：') || '').trim();
+    if(!name) return;
+    const id = newPackId();
+    const data = { kind: 'corre_pack', name: { zh: name, es: '' }, desc: { zh: '', es: '' }, order: (PACKS.length ? Math.max(...PACKS.map(p => p.data.order || 0)) : 0) + 10, sentences: [], updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+    try{
+      await cdb.collection(PACK_COL).doc(id).set(data);
+      PACKS.push({ id, data: Object.assign({}, data, { updatedAt: null }) }); curPackId = id;
+      setStatus(packStatus, '已建立。請填寫西文名稱與說明（選填），再開始加句子。', 'ok');
+      renderPackView();
+    }catch(e){ console.error(e); setStatus(packStatus, '建立失敗：' + explainError(e), 'err'); }
+  });
+  $('packSaveMetaBtn').addEventListener('click', async ()=>{
+    const p = curPack(); if(!p || !requirePackLogin(packStatus)) return;
+    const zh = $('pkNameZh').value.trim();
+    if(!zh){ setStatus(packStatus, '中文名稱不能是空的。', 'err'); return; }
+    const order = parseInt($('pkOrder').value, 10);
+    const data = Object.assign({}, p.data, {
+      name: { zh, es: $('pkNameEs').value.trim() }, desc: { zh: $('pkDescZh').value.trim(), es: $('pkDescEs').value.trim() },
+      order: isNaN(order) ? (p.data.order || 0) : order, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    try{
+      await cdb.collection(PACK_COL).doc(p.id).set(data);
+      p.data = Object.assign({}, data, { updatedAt: null });
+      PACKS.sort((a, b) => (a.data.order || 0) - (b.data.order || 0));
+      setStatus(packStatus, '已儲存。', 'ok'); renderPackView();
+    }catch(e){ console.error(e); setStatus(packStatus, '儲存失敗：' + explainError(e), 'err'); }
+  });
+  $('packDelBtn').addEventListener('click', async ()=>{
+    const p = curPack(); if(!p || !requirePackLogin(packStatus)) return;
+    if(!confirm(`確定要刪除主題包「${packTitle(p)}」和裡面的 ${(p.data.sentences || []).length} 句嗎？\n（老師已經加進自己句庫的句子不受影響）`)) return;
+    try{
+      await cdb.collection(PACK_COL).doc(p.id).delete();
+      PACKS = PACKS.filter(x => x.id !== p.id); curPackId = PACKS.length ? PACKS[0].id : null;
+      clearForm(); setStatus(packStatus, '已刪除。', 'ok'); renderPackView();
+    }catch(e){ console.error(e); setStatus(packStatus, '刪除失敗：' + explainError(e), 'err'); }
+  });
+
+  // ---- 從公開題庫挑句子 ----
+  const pickPanel = $('pickPanel'), pickList = $('pickList'), pickSearch = $('pickSearch'), pickStatus = $('pickStatus');
+  $('pickBtn').addEventListener('click', ()=>{ pickPanel.hidden = !pickPanel.hidden; if(!pickPanel.hidden) renderPick(); });
+  pickSearch.addEventListener('input', renderPick);
+  function renderPick(){
+    pickList.textContent = '';
+    const p = curPack(); if(!p) return;
+    const have = new Set((p.data.sentences || []).map(x => keyOf(x.trad)));
+    const q = pickSearch.value.trim().toLowerCase();
+    const rows = allDocs.filter(d => {
+      if(!q) return true;
+      const x = d.data; return ((x.trad || []).join('') + ' ' + (x.pinyin || []).join(' ') + ' ' + (x.es || '') + ' ' + (x.en || '')).toLowerCase().includes(q);
+    }).slice(0, 300);
+    if(!rows.length){ pickList.appendChild(mk('p', 'empty-msg', allDocs.length ? '沒有符合的句子。' : '公開題庫還沒有句子。')); return; }
+    rows.forEach(d => {
+      const x = d.data, n = countHan(x.trad), already = have.has(keyOf(x.trad)), tooLong = n > MAX_HAN;
+      const lab = mk('label', 'pick' + ((already || tooLong) ? ' off' : ''));
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.disabled = already || tooLong; cb.dataset.id = d.id;
+      const info = mk('div');
+      info.appendChild(mk('div', 'hz', (x.trad || []).join(' · ')));
+      info.appendChild(mk('div', 'py', (x.pinyin || []).join('  ')));
+      info.appendChild(mk('div', 'es', x.es || ''));
+      if(already) info.appendChild(mk('div', 'py', '已在主題包裡'));
+      else if(tooLong) info.appendChild(mk('div', 'py', `${n} 個漢字，超過 ${MAX_HAN} 字，不能加入`));
+      lab.appendChild(cb); lab.appendChild(info); pickList.appendChild(lab);
+    });
+  }
+  $('pickAddBtn').addEventListener('click', async ()=>{
+    const p = curPack(); if(!p || !requirePackLogin(pickStatus)) return;
+    const ids = [...pickList.querySelectorAll('input:checked')].map(i => i.dataset.id);
+    if(!ids.length){ setStatus(pickStatus, '請先勾選句子。', 'err'); return; }
+    const sents = (p.data.sentences || []).slice(), room = MAX_PACK_SENT - sents.length;
+    const chosen = ids.map(id => allDocs.find(d => d.id === id)).filter(Boolean).slice(0, Math.max(0, room));
+    chosen.forEach(d => sents.push({ trad: d.data.trad, simp: d.data.simp, pinyin: d.data.pinyin, es: d.data.es || '', en: d.data.en || '' }));
+    setStatus(pickStatus, '加入中…');
+    try{
+      await writePack(p, sents);
+      setStatus(pickStatus, `已加入 ${chosen.length} 句` + (ids.length > chosen.length ? `（超過上限，其餘沒加入）` : '') + '。', 'ok');
+      renderPackView();
+    }catch(e){ console.error(e); setStatus(pickStatus, '加入失敗：' + explainError(e), 'err'); }
+  });
 
   // ================= 清理排行榜（只留前 100 名） =================
   const SCORE_COLLECTION = 'mandarinRunnerScores';
