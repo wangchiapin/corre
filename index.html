@@ -705,8 +705,20 @@
   // ================= AUDIO CONTEXT (shared by SFX, voice ducking, and music) =================
   let actx;
   function ensureAudioCtx(){
-    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    if(!actx){
+      actx = new (window.AudioContext||window.webkitAudioContext)();
+      // 被系統中斷（語音、來電、切換 App）而不是我們自己暫停時，稍後自動叫醒
+      actx.onstatechange = ()=>{ if(actx.state !== 'running') setTimeout(ensureMusicRunning, 300); };
+    }
     return actx;
+  }
+  // iPhone 在語音播報、來電或切換 App 之後，會把 AudioContext 變成 suspended／interrupted，
+  // 而且不會自己恢復，背景音樂就會整個消失。只要音樂「應該在播」、遊戲也沒暫停，就試著叫醒它。
+  function ensureMusicRunning(){
+    try{
+      if(!actx || !musicOn || !musicStarted || paused) return;
+      if(actx.state !== 'running' && actx.resume) actx.resume().catch(()=>{});
+    }catch(e){}
   }
 
   // ================= SPEECH ==================
@@ -747,18 +759,6 @@
     speechState = 'none';
     if(isBoss) applyBossVoiceMode();   // Boss 進行到一半才發現沒語音：當場改成只看拼音
   }
-  // iPhone 通常要「使用者點擊」之後才允許發聲：在按下開始時先無聲地念一次，打開權限。
-  let speechUnlocked = false;
-  function unlockSpeech(){
-    if(speechUnlocked || !('speechSynthesis' in window)) return;
-    speechUnlocked = true;
-    try{
-      const u = new SpeechSynthesisUtterance(' ');
-      u.volume = 0;
-      speechSynthesis.speak(u);
-    }catch(e){}
-  }
-
   // 每次念字都有一個編號；只有「最新那一次」念完時，才把背景音樂調回來。
   // 這樣前一次被打斷或比較早結束的語音，不會在新的語音還在念的時候就把音樂調大聲。
   let speakSeq = 0;
@@ -778,7 +778,7 @@
         const v = pickVoice();
         if(v) u.voice = v;
         let started = false;
-        const restore = ()=>{ if(mySeq === speakSeq) duckMusic(false); };
+        const restore = ()=>{ if(mySeq === speakSeq){ duckMusic(false); ensureMusicRunning(); } };
         u.onstart = ()=>{
           started = true;
           speechState = 'ok';
@@ -1502,6 +1502,7 @@
   const DRAG_GAIN = 1.5;   // 手指移動 1 單位，角色移動幾單位；覺得太快或太慢就改這個數字
   let dragPointerId = null, dragLastX = 0, dragLastY = 0;
   trackEl.addEventListener('pointerdown', e=>{
+    ensureMusicRunning();   // 手指一碰到畫面就順便確認音樂還活著（iPhone 只允許在觸碰時恢復聲音）
     if(!running || dragPointerId !== null) return;
     dragPointerId = e.pointerId;
     dragLastX = e.clientX;
@@ -1630,7 +1631,6 @@
     lbOverlay.classList.add('hidden');
 
     if(musicOn){ startMusic(); setMusicVolume(); }
-    unlockSpeech();
 
     clearTimeout(nextSentenceTimer);
     targetMissWaves = 0;
