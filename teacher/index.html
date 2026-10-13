@@ -133,6 +133,10 @@
     display:flex;gap:8px;align-items:center;flex-wrap:wrap;
   }
   .dirty{color:var(--gold);font-size:12px;}
+  .pick-card{justify-content:flex-start;align-items:center;gap:10px;cursor:pointer;}
+  .pick-card.dis{opacity:.45;cursor:not-allowed;}
+  .pick-card input[type=checkbox]{width:20px;height:20px;flex-shrink:0;accent-color:var(--magenta);}
+  .pick-card .why{font-size:11px;color:var(--gold);margin-top:2px;}
   .gwrap{overflow-x:auto;}
   table.gt{border-collapse:collapse;width:100%;font-size:13px;}
   table.gt th,table.gt td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;white-space:nowrap;}
@@ -294,6 +298,30 @@
       <div id="bulkPreview"></div>
     </section>
 
+    <section id="pickSection">
+      <h2 data-i18n="pickTitle">從題庫／主題包加入</h2>
+      <p class="hint" id="pickHint"></p>
+      <div class="toggle-group" id="pickSrcGroup">
+        <button class="toggle-btn" data-value="pool" data-i18n="pickPool">公開題庫</button>
+        <button class="toggle-btn" data-value="pack" data-i18n="pickPack">主題包</button>
+      </div>
+      <div id="pickPanel" hidden>
+        <div id="packBox" hidden style="margin-top:10px;">
+          <select id="packSel"></select>
+          <p class="hint" id="packDesc" style="margin-top:6px;"></p>
+        </div>
+        <input type="text" id="pickFilter" style="margin-top:10px;">
+        <div class="row">
+          <button class="btn small" id="pickAddBtn"></button>
+          <button class="btn ghost small" id="pickAllBtn" hidden></button>
+          <span class="counter" id="pickCount"></span>
+        </div>
+        <div class="status" id="pickStatus"></div>
+        <div id="pickList"></div>
+        <div class="row"><button class="btn ghost small" id="pickMoreBtn" hidden></button></div>
+      </div>
+    </section>
+
     <section>
       <h2><span data-i18n="inBank">句庫內的句子</span> <span class="counter" id="counter"></span></h2>
       <div id="sentList"></div>
@@ -368,7 +396,14 @@
       permDenied:'沒有權限，或訂閱已到期。', network:'網路連線有問題，請稍後再試。', needLogin:'請先登入。',
       loading:'載入中…', loadFail:'讀取失敗：{m}', confirmLeave:'有尚未上傳的修改，確定要離開嗎？', saveFirst:'請先儲存句庫，才能取得連結與試玩。',
       pickPlace:'句庫位置', autoNameDefault:'我的句庫', delFail:'刪除失敗：{m}', sentCount:'{n} 個漢字', noEn:'（無英文）',
-      linkHint:'學生連結：', unsavedChanges:'尚未上傳'
+      linkHint:'學生連結：', unsavedChanges:'尚未上傳',
+      pickTitle:'從題庫／主題包加入', pickHint:'從公開題庫或管理員做好的主題包挑句子，複製進這個句庫（不會改到原本的題庫）。每句最多 {n} 個漢字，超過的會灰掉、不能選。',
+      pickPool:'公開題庫', pickPack:'主題包', pickFilter:'輸入關鍵字篩選（漢字、拼音或翻譯）', pickAddSel:'＋ 加入選取的句子', pickAddAll:'整包加入（到上限為止）',
+      pickSelCount:'已選 {n}／還可加 {room}', pickMore:'載入更多', pickAdded:'已加入 {n} 句（尚未上傳）。', pickAddedSkip:'已加入 {n} 句，略過 {skip} 句（重複或超過字數）。',
+      pickRoomFull:'句庫已滿（{max} 句），沒有空位了。', pickNoRoom:'最多還能再選 {n} 句。', pickNothing:'請先勾選句子。', pickDup:'已在句庫裡', pickLong:'超過 {max} 字',
+      pickEmpty:'沒有符合的句子。', pickPoolCap:'為了節省讀取額度，這次最多載入 {n} 句。可用關鍵字篩選已載入的句子，或重新整理頁面換一批。',
+      pickPoolFail:'讀取公開題庫失敗：{m}', packNeedSub:'主題包是訂閱版功能。訂閱後就能把整包句子複製進你的句庫。', packNone:'目前還沒有主題包。',
+      packLoadFail:'讀取主題包失敗：{m}', packCount:'{n} 句', pickCut:'句庫已滿（{max} 句），其餘沒有加入。'
     },
     cn:{
       brandTag:'教师版', sub:'建立自己的句库，用链接分享给学生玩。', toGame:'← 回到游戏', login:'使用 Google 登录', logout:'退出',
@@ -402,7 +437,14 @@
       permDenied:'没有权限，或订阅已到期。', network:'网络连接有问题，请稍后再试。', needLogin:'请先登录。',
       loading:'加载中…', loadFail:'读取失败：{m}', confirmLeave:'有尚未上传的修改，确定要离开吗？', saveFirst:'请先保存句库，才能获得链接与试玩。',
       pickPlace:'句库位置', autoNameDefault:'我的句库', delFail:'删除失败：{m}', sentCount:'{n} 个汉字', noEn:'（无英文）',
-      linkHint:'学生链接：', unsavedChanges:'尚未上传'
+      linkHint:'学生链接：', unsavedChanges:'尚未上传',
+      pickTitle:'从题库／主题包加入', pickHint:'从公开题库或管理员做好的主题包挑句子，复制进这个句库（不会改到原本的题库）。每句最多 {n} 个汉字，超过的会变灰、不能选。',
+      pickPool:'公开题库', pickPack:'主题包', pickFilter:'输入关键字筛选（汉字、拼音或翻译）', pickAddSel:'＋ 加入选中的句子', pickAddAll:'整包加入（到上限为止）',
+      pickSelCount:'已选 {n}／还可加 {room}', pickMore:'加载更多', pickAdded:'已加入 {n} 句（尚未上传）。', pickAddedSkip:'已加入 {n} 句，跳过 {skip} 句（重复或超过字数）。',
+      pickRoomFull:'句库已满（{max} 句），没有空位了。', pickNoRoom:'最多还能再选 {n} 句。', pickNothing:'请先勾选句子。', pickDup:'已在句库里', pickLong:'超过 {max} 字',
+      pickEmpty:'没有符合的句子。', pickPoolCap:'为了节省读取额度，这次最多加载 {n} 句。可用关键字筛选已加载的句子，或刷新页面换一批。',
+      pickPoolFail:'读取公开题库失败：{m}', packNeedSub:'主题包是订阅版功能。订阅后就能把整包句子复制进你的句库。', packNone:'目前还没有主题包。',
+      packLoadFail:'读取主题包失败：{m}', packCount:'{n} 句', pickCut:'句库已满（{max} 句），其余没有加入。'
     },
     es:{
       brandTag:'Profesores', sub:'Crea tu propio banco de frases y compártelo con tus alumnos mediante un enlace.', toGame:'← Volver al juego',
@@ -437,7 +479,14 @@
       permDenied:'Sin permiso, o la suscripción venció.', network:'Problema de conexión. Inténtalo más tarde.', needLogin:'Inicia sesión primero.',
       loading:'Cargando…', loadFail:'Error al leer: {m}', confirmLeave:'Hay cambios sin subir. ¿Salir de todos modos?', saveFirst:'Guarda primero el banco para obtener el enlace y probarlo.',
       pickPlace:'Posición', autoNameDefault:'Mi banco', delFail:'Error al eliminar: {m}', sentCount:'{n} caracteres', noEn:'(sin inglés)',
-      linkHint:'Enlace para alumnos:', unsavedChanges:'Sin subir'
+      linkHint:'Enlace para alumnos:', unsavedChanges:'Sin subir',
+      pickTitle:'Añadir desde el banco público / paquetes temáticos', pickHint:'Elige frases del banco público o de un paquete temático del administrador y cópialas a este banco (el original no se modifica). Máximo {n} caracteres por frase; las que lo superan aparecen en gris y no se pueden elegir.',
+      pickPool:'Banco público', pickPack:'Paquetes temáticos', pickFilter:'Filtrar por palabra (caracteres, pinyin o traducción)', pickAddSel:'＋ Añadir las seleccionadas', pickAddAll:'Añadir todo el paquete (hasta el límite)',
+      pickSelCount:'Seleccionadas {n} / caben {room}', pickMore:'Cargar más', pickAdded:'Se añadieron {n} frases (aún sin subir).', pickAddedSkip:'Se añadieron {n} frases; se omitieron {skip} (repetidas o demasiado largas).',
+      pickRoomFull:'El banco está lleno ({max} frases): no hay espacio.', pickNoRoom:'Solo caben {n} frases más.', pickNothing:'Marca primero alguna frase.', pickDup:'Ya está en el banco', pickLong:'Más de {max} caracteres',
+      pickEmpty:'No hay frases que coincidan.', pickPoolCap:'Para ahorrar lecturas, esta vez se cargan como máximo {n} frases. Filtra las ya cargadas por palabra o recarga la página para ver otras.',
+      pickPoolFail:'Error al leer el banco público: {m}', packNeedSub:'Los paquetes temáticos son una función de la suscripción. Al suscribirte puedes copiar un paquete entero a tu banco.', packNone:'Todavía no hay paquetes temáticos.',
+      packLoadFail:'Error al leer los paquetes: {m}', packCount:'{n} frases', pickCut:'El banco está lleno ({max} frases): el resto no se añadió.'
     },
     en:{
       brandTag:'Teachers', sub:'Build your own sentence bank and share it with students via a link.', toGame:'← Back to game',
@@ -472,7 +521,14 @@
       permDenied:'No permission, or the subscription has expired.', network:'Connection problem. Please try again later.', needLogin:'Please sign in first.',
       loading:'Loading…', loadFail:'Could not load: {m}', confirmLeave:'You have changes that are not uploaded. Leave anyway?', saveFirst:'Save the bank first to get the link and try it.',
       pickPlace:'Slot', autoNameDefault:'My bank', delFail:'Delete failed: {m}', sentCount:'{n} characters', noEn:'(no English)',
-      linkHint:'Student link:', unsavedChanges:'Not uploaded'
+      linkHint:'Student link:', unsavedChanges:'Not uploaded',
+      pickTitle:'Add from the public pool / theme packs', pickHint:'Pick sentences from the public pool or from an admin-made theme pack and copy them into this bank (the originals are not changed). Up to {n} characters per sentence; longer ones are greyed out and cannot be picked.',
+      pickPool:'Public pool', pickPack:'Theme packs', pickFilter:'Filter by keyword (characters, pinyin or translation)', pickAddSel:'＋ Add selected sentences', pickAddAll:'Add the whole pack (up to the limit)',
+      pickSelCount:'Selected {n} / room for {room}', pickMore:'Load more', pickAdded:'Added {n} sentences (not uploaded yet).', pickAddedSkip:'Added {n} sentences; skipped {skip} (duplicates or too long).',
+      pickRoomFull:'The bank is full ({max} sentences): no room left.', pickNoRoom:'Only {n} more sentences fit.', pickNothing:'Tick some sentences first.', pickDup:'Already in the bank', pickLong:'Over {max} characters',
+      pickEmpty:'No matching sentences.', pickPoolCap:'To save read quota, at most {n} sentences are loaded this time. Filter the loaded ones by keyword, or reload the page for a different batch.',
+      pickPoolFail:'Could not read the public pool: {m}', packNeedSub:'Theme packs are a subscription feature. Subscribe to copy a whole pack into your bank.', packNone:'There are no theme packs yet.',
+      packLoadFail:'Could not read theme packs: {m}', packCount:'{n} sentences', pickCut:'The bank is full ({max} sentences): the rest were not added.'
     }
   };
   let LANG = 'zh';
@@ -823,7 +879,7 @@
     $('viewList').hidden = true; $('viewEdit').hidden = false;
     $('bankName').value = ED.name;
     setGroup('speedGroup', ED.speed); setGroup('scriptGroup', ED.script); setGroup('bossGroup', ED.boss ? '1' : '0'); setGroup('phoneticGroup', ED.phonetic);
-    resetSentenceForm();
+    resetSentenceForm(); resetPick();
     $('bulkInput').value = ''; $('bulkPreview').textContent = ''; $('bulkGoBtn').hidden = true; setStatus($('bulkStatus'), '');
     setStatus($('saveStatus'), '');
     renderEditorMeta(); renderSentList();
@@ -860,6 +916,7 @@
     if(ED && n > FREE_SENT) note.appendChild(mk('div', 'notice', tr('over50')));
     if(ED && ED.slot > 0 && !PLAN.active) note.appendChild(mk('div', 'notice err', tr('expiredNotice')));
     $('addSentBtn').textContent = editingIdx >= 0 ? tr('updSent') : tr('addSent');
+    renderPick();
   }
   function renderSentList(){
     const box = $('sentList'); box.textContent = '';
@@ -1057,7 +1114,230 @@
   $('saveBankBtn').addEventListener('click', saveBank);
   $('backBtn').addEventListener('click', ()=>{
     if(ED && ED.dirty && !confirm(tr('confirmLeave'))) return;
-    ED = null; $('viewEdit').hidden = true; $('viewList').hidden = false; renderList();
+    ED = null; resetPick(); $('viewEdit').hidden = true; $('viewList').hidden = false; renderList();
+  });
+
+  // ================= 從公開題庫／主題包挑句子 =================
+  // 公開題庫在遊戲用的 corre-d16da 專案（第二個 Firebase app，只讀）；主題包在中心專案 site_content。
+  // Spark 配額以專案為單位共用，所以公開題庫一律分頁、隨機起點（用 rand 欄位，與遊戲抽題相同），
+  // 而且每次開頁最多只讀 POOL_MAX 筆。
+  const POOL_CONFIG = {
+    apiKey: "AIzaSyA0jxyA3ZqWcFfsN1nu5Zol33QSxwrgq68",
+    authDomain: "corre-d16da.firebaseapp.com",
+    projectId: "corre-d16da",
+    storageBucket: "corre-d16da.firebasestorage.app",
+    messagingSenderId: "734685362204",
+    appId: "1:734685362204:web:fec4c0f9f39b1730dfc7d9"
+  };
+  const POOL_COL = 'mandarinRunnerSentences', PACK_COL = 'site_content', PACK_PREFIX = 'corre_pack_';
+  const POOL_PAGE = 20, POOL_MAX = 100;
+  let pdb = null;
+  try{ pdb = firebase.initializeApp(POOL_CONFIG, 'pool').firestore(); }catch(e){ console.warn('pool init failed', e); }
+
+  const PICK = {
+    src: null, sel: new Map(), msg: null,
+    pool: { items: [], r: Math.random(), phase: 1, last: null, read: 0, done: false, capped: false, loading: false, err: null, plainTried: false },
+    packs: null, packsUid: null, packsErr: null, packId: null, loadingPacks: false
+  };
+
+  function cleanSentence(r){
+    if(!r || !Array.isArray(r.trad) || !r.trad.length) return null;
+    const n = r.trad.length;
+    if(!Array.isArray(r.simp) || r.simp.length !== n || !Array.isArray(r.pinyin) || r.pinyin.length !== n) return null;
+    if(typeof r.es !== 'string' || !r.es.trim()) return null;
+    const str = a => a.map(x => String(x));
+    return { trad: str(r.trad), simp: str(r.simp), pinyin: str(r.pinyin), es: r.es, en: typeof r.en === 'string' ? r.en : '' };
+  }
+  function pickRoom(){ return ED ? Math.max(0, cap() - ED.sentences.length) : 0; }
+  function setPickMsg(text, cls){ PICK.msg = text ? { text, cls: cls || '' } : null; }
+
+  async function poolLoadMore(){
+    const P = PICK.pool;
+    if(P.loading || P.done || !pdb) return;
+    P.loading = true; P.err = null; renderPick();
+    try{
+      const col = pdb.collection(POOL_COL);
+      let got = 0;
+      const take = snap => snap.docs.forEach(d => { P.read++; got++; const s = cleanSentence(d.data()); if(s) P.items.push({ id: d.id, s }); });
+      while(!P.done && got < POOL_PAGE){
+        const need = Math.min(POOL_PAGE - got, POOL_MAX - P.read);
+        if(need <= 0){ P.done = true; P.capped = true; break; }
+        let q = P.phase === 1 ? col.where('rand', '>=', P.r).orderBy('rand') : col.where('rand', '<', P.r).orderBy('rand');
+        if(P.last) q = q.startAfter(P.last);
+        const snap = await q.limit(need).get();
+        take(snap);
+        if(snap.docs.length) P.last = snap.docs[snap.docs.length - 1];
+        if(snap.docs.length < need){
+          if(P.phase === 1){ P.phase = 2; P.last = null; } else P.done = true;
+        }
+      }
+      if(!P.done && P.read >= POOL_MAX){ P.done = true; P.capped = true; }
+      if(P.done && P.read === 0 && !P.plainTried){
+        // 舊句子還沒有 rand 欄位時的備援（遊戲也是這樣）：直接取前幾句
+        P.plainTried = true; P.capped = false;
+        take(await col.limit(POOL_PAGE).get());
+      }
+    }catch(e){ console.error(e); P.err = e; }
+    finally{ P.loading = false; renderPick(); }
+  }
+
+  async function packsLoad(force){
+    const uid = user && user.uid;
+    if(PICK.packsUid !== uid){ PICK.packs = null; PICK.packsUid = uid; PICK.packId = null; }
+    if(PICK.loadingPacks || (PICK.packs && !force)) return;
+    if(!PLAN.active){ renderPick(); return; }       // 非訂閱者不查（規則也會擋）
+    PICK.loadingPacks = true; PICK.packsErr = null; renderPick();
+    try{
+      const snap = await db.collection(PACK_COL).where('kind', '==', 'corre_pack').get();
+      PICK.packs = snap.docs.filter(d => d.id.indexOf(PACK_PREFIX) === 0).map(d => ({ id: d.id, data: d.data() }));
+      PICK.packs.sort((a, b) => (a.data.order || 0) - (b.data.order || 0));
+      if(!PICK.packs.some(p => p.id === PICK.packId)) PICK.packId = PICK.packs.length ? PICK.packs[0].id : null;
+    }catch(e){ console.error(e); PICK.packsErr = e; }
+    finally{ PICK.loadingPacks = false; renderPick(); }
+  }
+  function packText(obj, id){
+    const o = obj || {};
+    if(LANG === 'es' || LANG === 'en') return o.es || o.zh || id || '';
+    const z = o.zh || o.es || id || '';
+    if(LANG === 'cn'){ try{ return toSimplified(z); }catch(e){} }
+    return z;
+  }
+  const packTitle = p => packText(p.data.name, p.id);
+
+  function pickItems(){
+    let rows;
+    if(PICK.src === 'pool') rows = PICK.pool.items.map(x => x.s);
+    else{
+      const p = (PICK.packs || []).find(x => x.id === PICK.packId);
+      rows = p ? (p.data.sentences || []).map(cleanSentence).filter(Boolean) : [];
+    }
+    const seen = new Set();
+    return rows.map(s => ({ key: keyOf(s.trad), s })).filter(it => { if(seen.has(it.key)) return false; seen.add(it.key); return true; });
+  }
+  function pickState(it, have){
+    const han = countHan(it.s.trad);
+    if(han < 1 || han > MAX_CHARS) return 'long';
+    return have.has(it.key) ? 'dup' : 'ok';
+  }
+  function updatePickCount(){ $('pickCount').textContent = tr('pickSelCount', { n: PICK.sel.size, room: pickRoom() }); }
+
+  function renderPick(){
+    $('pickHint').textContent = tr('pickHint', { n: MAX_CHARS });
+    setGroup('pickSrcGroup', PICK.src || '');
+    const panel = $('pickPanel'); panel.hidden = !PICK.src;
+    if(!PICK.src || !ED) return;
+    const isPack = PICK.src === 'pack', P = PICK.pool;
+    const st = $('pickStatus'), list = $('pickList');
+    list.textContent = ''; $('pickMoreBtn').hidden = true;
+    const denied = isPack && PICK.packsErr && PICK.packsErr.code === 'permission-denied';
+    const locked = isPack && (!PLAN.active || denied);
+    $('packBox').hidden = !isPack || locked;
+    $('pickFilter').hidden = locked; $('pickAddBtn').hidden = locked; $('pickAllBtn').hidden = !isPack || locked; $('pickCount').hidden = locked;
+    $('pickFilter').placeholder = tr('pickFilter');
+    $('pickAddBtn').textContent = tr('pickAddSel'); $('pickAllBtn').textContent = tr('pickAddAll');
+    if(locked){
+      setStatus(st, '');
+      list.appendChild(mk('div', 'notice', tr('packNeedSub')));
+      const a = mk('a', 'btn ghost small', tr('subscribe')); a.href = PORTAL_URL; a.target = '_blank'; a.rel = 'noopener'; a.style.textDecoration = 'none';
+      list.appendChild(a);
+      return;
+    }
+    if(isPack){
+      const sel = $('packSel'); sel.textContent = '';
+      (PICK.packs || []).forEach(p => {
+        const o = document.createElement('option'); o.value = p.id;
+        o.textContent = packTitle(p) + ' · ' + tr('packCount', { n: (p.data.sentences || []).length }); sel.appendChild(o);
+      });
+      if(PICK.packId) sel.value = PICK.packId;
+      sel.hidden = !(PICK.packs && PICK.packs.length);
+      const cur = (PICK.packs || []).find(x => x.id === PICK.packId);
+      $('packDesc').textContent = cur ? packText(cur.data.desc, '') : '';
+    }
+
+    const have = new Set(ED.sentences.map(s => keyOf(s.trad)));
+    const items = pickItems();
+    // 已選的句子若已變成重複／超過字數，就取消選取
+    PICK.sel.forEach((s, k) => { const it = items.find(x => x.key === k); if(!it || pickState(it, have) !== 'ok') PICK.sel.delete(k); });
+    const f = $('pickFilter').value.trim().toLowerCase();
+    const show = items.filter(it => !f || [it.s.trad.join(''), it.s.simp.join(''), it.s.pinyin.join(' '), it.s.es, it.s.en].join('\n').toLowerCase().indexOf(f) >= 0);
+
+    show.forEach(it => {
+      const state = pickState(it, have), s = it.s;
+      const card = mk('label', 'sent-card pick-card' + (state === 'ok' ? '' : ' dis'));
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.disabled = state !== 'ok'; cb.checked = PICK.sel.has(it.key);
+      cb.addEventListener('change', ()=>{
+        if(cb.checked){
+          if(PICK.sel.size >= pickRoom()){
+            cb.checked = false;
+            setStatus(st, pickRoom() ? tr('pickNoRoom', { n: pickRoom() }) : tr('pickRoomFull', { max: cap() }), 'err');
+            return;
+          }
+          PICK.sel.set(it.key, s);
+        }else PICK.sel.delete(it.key);
+        setPickMsg(''); setStatus(st, ''); updatePickCount();
+      });
+      const info = mk('div');
+      info.appendChild(mk('div', 'hz', (ED.script === 'simp' ? s.simp : s.trad).join(' · ')));
+      info.appendChild(mk('div', 'py', phText(s.pinyin.join('  '), ED.phonetic)));
+      info.appendChild(mk('div', 'es', s.es));
+      info.appendChild(mk('div', 'en', s.en || tr('noEn')));
+      if(state === 'long') info.appendChild(mk('div', 'why', tr('pickLong', { max: MAX_CHARS }) + ' · ' + tr('sentCount', { n: countHan(s.trad) })));
+      if(state === 'dup') info.appendChild(mk('div', 'why', tr('pickDup')));
+      card.appendChild(cb); card.appendChild(info); list.appendChild(card);
+    });
+
+    let loading = isPack ? PICK.loadingPacks : P.loading;
+    const err = isPack ? PICK.packsErr : P.err;
+    if(!show.length && !loading && !err){
+      list.appendChild(mk('p', 'hint', isPack && !(PICK.packs && PICK.packs.length) ? tr('packNone') : tr('pickEmpty')));
+    }
+    if(!isPack && !P.done && !P.loading){ const mb = $('pickMoreBtn'); mb.textContent = tr('pickMore'); mb.hidden = false; }
+
+    if(loading) setStatus(st, tr('loading'));
+    else if(err) setStatus(st, tr(isPack ? 'packLoadFail' : 'pickPoolFail', { m: explainError(err) }), 'err');
+    else if(PICK.msg) setStatus(st, PICK.msg.text, PICK.msg.cls);
+    else if(!isPack && P.capped) setStatus(st, tr('pickPoolCap', { n: POOL_MAX }));
+    else setStatus(st, '');
+    updatePickCount();
+  }
+
+  function pickAdd(sentences){
+    if(!ED) return;
+    let room = pickRoom();
+    if(room <= 0){ setPickMsg(tr('pickRoomFull', { max: cap() }), 'err'); renderPick(); return; }
+    const have = new Set(ED.sentences.map(s => keyOf(s.trad)));
+    let added = 0, skipped = 0, cut = 0;
+    sentences.forEach(s => {
+      const k = keyOf(s.trad), han = countHan(s.trad);
+      if(han < 1 || han > MAX_CHARS || have.has(k)){ skipped++; return; }
+      if(room <= 0){ cut++; return; }
+      ED.sentences.push({ trad: s.trad.slice(), simp: s.simp.slice(), pinyin: s.pinyin.slice(), es: s.es, en: s.en || '' });
+      have.add(k); room--; added++;
+    });
+    let msg = skipped ? tr('pickAddedSkip', { n: added, skip: skipped }) : tr('pickAdded', { n: added });
+    if(cut) msg += ' ' + tr('pickCut', { max: cap() });
+    PICK.sel.clear();
+    setPickMsg(msg, added ? 'ok' : 'err');
+    if(added){ markDirty(); renderSentList(); } else renderPick();
+  }
+  function pickSetSrc(src){
+    PICK.src = PICK.src === src ? null : src;
+    PICK.sel.clear(); setPickMsg('');
+    if(PICK.src === 'pool' && !PICK.pool.items.length && !PICK.pool.done) poolLoadMore();
+    else if(PICK.src === 'pack') packsLoad();
+    renderPick();
+  }
+  function resetPick(){ PICK.src = null; PICK.sel.clear(); PICK.msg = null; $('pickFilter').value = ''; $('pickPanel').hidden = true; }
+  $('pickSrcGroup').querySelectorAll('.toggle-btn').forEach(b => b.addEventListener('click', ()=>pickSetSrc(b.dataset.value)));
+  $('pickFilter').addEventListener('input', ()=>{ setPickMsg(''); renderPick(); });
+  $('packSel').addEventListener('change', ()=>{ PICK.packId = $('packSel').value; PICK.sel.clear(); setPickMsg(''); renderPick(); });
+  $('pickMoreBtn').addEventListener('click', poolLoadMore);
+  $('pickAddBtn').addEventListener('click', ()=>{
+    if(!PICK.sel.size){ setPickMsg(tr('pickNothing'), 'err'); renderPick(); return; }
+    pickAdd(Array.from(PICK.sel.values()));
+  });
+  $('pickAllBtn').addEventListener('click', ()=>{
+    pickAdd(pickItems().map(it => it.s));
   });
 
   // ================= 語言切換 =================
