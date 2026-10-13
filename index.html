@@ -523,6 +523,7 @@
   <div class="overlay" id="startOverlay">
     <h1>跑吧！漢字</h1>
     <div class="bank-tag" id="bankTag" hidden></div>
+    <div class="bank-tag" id="classTag" hidden></div>
     <p class="subtitle" data-i18n="subtitle">¡Corre y come las palabras en el orden correcto de la frase! Cada cierto tiempo aparece un nivel jefe: escucha la frase en vez de leerla.</p>
     <p class="drag-hint" data-i18n="dragHint">👆 Arrastra el dedo por la pantalla para moverte. En computadora: flechas o WASD, o arrastra con el ratón.</p>
 
@@ -537,6 +538,7 @@
     <div class="field">
       <label data-i18n="name">Tu nombre</label>
       <input type="text" id="nameInput" maxlength="16" placeholder="Jugador" data-i18n-ph="namePh">
+      <p class="bank-err" id="classHint" hidden style="color:var(--text-dim);margin:6px 0 0"></p>
     </div>
 
     <div class="field">
@@ -572,6 +574,8 @@
     </div>
     <div class="lb-heading" id="lbHeadingOver">🏆 <span data-i18n="best">Mejores puntuaciones</span></div>
     <div class="lb-list" id="lbListOver"><p class="lb-msg">Cargando…</p></div>
+    <p id="classMsg" class="lb-msg" hidden></p>
+    <button class="link-btn" id="classRetryBtn" hidden></button>
     <p id="noRecordMsg" hidden data-i18n="noRecord">Este resultado no se guarda en la clasificación. Descarga la imagen para compartirlo.</p>
     <button class="primary-btn" id="dlBtn" hidden>⬇ <span data-i18n="download">Descargar imagen</span></button>
     <button class="primary-btn" id="restartBtn" data-i18n="again">Jugar de nuevo</button>
@@ -690,7 +694,8 @@
       teacher:'Versión para profesores', goHome:'Ir al juego normal', preview:'Vista previa',
       noRecord:'Este resultado no se guarda en la clasificación. Descarga la imagen para compartirlo.', download:'Descargar imagen',
       linkUnavailable:'Este enlace no está disponible (puede haber sido eliminado o la suscripción del profesor venció).',
-      linkError:'No se pudo cargar el banco de frases. Revisa tu conexión e inténtalo de nuevo.', speedLbl:'Velocidad', charsLbl:'Caracteres'
+      linkError:'No se pudo cargar el banco de frases. Revisa tu conexión e inténtalo de nuevo.', speedLbl:'Velocidad', charsLbl:'Caracteres',
+      classNeedName:'Escribe tu apodo para empezar.', classHint:'Escribe el apodo que tu profesor te pidió. Tu resultado se enviará automáticamente.', classSent:'✅ Resultado enviado a tu profesor', classSending:'Enviando resultado…', classFail:'No se pudo enviar el resultado.', classRetry:'Reintentar', classBoard:'Clasificación de la clase'
     },
     en:{
       order:'Eat them in order', boss:'Listen carefully!', toast:'Follow the order of the sentence!', excellent:'Excellent!',
@@ -706,7 +711,8 @@
       teacher:'For teachers', goHome:'Go to the regular game', preview:'Preview',
       noRecord:'This result is not saved on the leaderboard. Download the image to share it.', download:'Download image',
       linkUnavailable:'This link is not available (it may have been removed, or the teacher\'s subscription has expired).',
-      linkError:'Could not load the sentence bank. Check your connection and try again.', speedLbl:'Speed', charsLbl:'Characters'
+      linkError:'Could not load the sentence bank. Check your connection and try again.', speedLbl:'Speed', charsLbl:'Characters',
+      classNeedName:'Type your nickname to start.', classHint:'Type the nickname your teacher asked for. Your result is sent automatically.', classSent:'✅ Result sent to your teacher', classSending:'Sending result…', classFail:'Could not send the result.', classRetry:'Retry', classBoard:'Class leaderboard'
     }
   };
   let lang = 'es';
@@ -1126,7 +1132,10 @@
   // 一般玩家完全不受影響；只有網址帶 ?bank= 才會載入中心專案連線。
   const BANK_ID = String(QS.get('bank') || '').toLowerCase();
   const TEACHER_MODE = /^[a-z0-9]{8,32}$/.test(BANK_ID);
-  const PREVIEW = TEACHER_MODE && QS.has('preview');
+  const PREVIEW = QS.has('preview') && (TEACHER_MODE || /^[a-z0-9]{8,32}$/.test(String(QS.get('class') || '').toLowerCase()));
+  const CLASS_ID = String(QS.get('class') || '').toLowerCase();
+  const CLASS_MODE = /^[a-z0-9]{8,32}$/.test(CLASS_ID);   // 班級模式：成績自動回傳給老師
+  let classData = null;
   const MAX_BANK_CHARS = 20;      // 每句最多漢字數（編輯頁已限制，這裡再把關一次）
   let bankName = '';
   let bankBoss = true;
@@ -1187,13 +1196,62 @@
       document.head.appendChild(el);
     });
   }
+  let centralPromise = null;
+  function getCentral(){
+    if(!centralPromise) centralPromise = (async ()=>{
+      if(!window.firebase) throw { code: 'unavailable' };
+      await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');
+      const app = firebase.initializeApp(CENTRAL_CONFIG, 'central');
+      const auth = app.auth();
+      await auth.authStateReady?.();
+      if(!auth.currentUser) await auth.signInAnonymously();
+      return app;
+    })();
+    return centralPromise;
+  }
+  // 暱稱 → 16 碼雜湊（同一個暱稱，不分大小寫與空白，會對到同一筆成績）
+  async function nickHash(nick){
+    const norm = String(nick).normalize('NFKC').trim().toLowerCase().replace(/\s+/g, ' ');
+    try{
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(norm));
+      return Array.from(new Uint8Array(buf)).slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
+    }catch(e){
+      let h1 = 0x811c9dc5, h2 = 0x01000193;
+      for(const ch of norm){ const c = ch.codePointAt(0); h1 = Math.imul(h1 ^ c, 16777619) >>> 0; h2 = Math.imul(h2 + c, 2246822519) >>> 0; }
+      return h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0');
+    }
+  }
+  async function fetchClass(){
+    const app = await getCentral();
+    const snap = await app.firestore().collection('classes').doc(CLASS_ID).get();
+    if(!snap.exists) throw { code: 'not-found' };
+    return snap.data();
+  }
+  // 回傳成績：第一次建立，之後 plays+1、best 只增不減
+  async function submitClassScore(entry){
+    const app = await getCentral(), cdb = app.firestore();
+    const h = await nickHash(entry.nick);
+    const ref = cdb.collection('class_scores').doc(CLASS_ID + '_corre_' + h);
+    const ts = firebase.firestore.FieldValue.serverTimestamp();
+    const extra = { sent: entry.sentences, diff: entry.difficulty };
+    const old = await ref.get();
+    if(!old.exists){
+      await ref.set({ cid: CLASS_ID, owner: classData.owner, game: 'corre', h, nick: entry.nick, best: entry.score, plays: 1, lastAt: ts, extra });
+    }else{
+      const o = old.data(), upd = { nick: entry.nick, plays: (o.plays || 0) + 1, lastAt: ts, best: Math.max(o.best || 0, entry.score) };
+      if(entry.score > (o.best || 0)) upd.extra = extra;
+      await ref.update(upd);
+    }
+    return h;
+  }
+  async function fetchClassBoard(){
+    const app = await getCentral();
+    const snap = await app.firestore().collection('class_scores').where('cid', '==', CLASS_ID).limit(300).get();
+    return snap.docs.map(d => d.data()).filter(r => r.game === 'corre').sort((a, b) => b.best - a.best).slice(0, 10)
+      .map(r => ({ name: r.nick, score: r.best, sentences: r.extra && r.extra.sent, difficulty: r.extra && r.extra.diff }));
+  }
   async function fetchTeacherBank(){
-    if(!window.firebase) throw { code: 'unavailable' };
-    await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');
-    const app = firebase.initializeApp(CENTRAL_CONFIG, 'central');
-    const auth = app.auth();
-    await auth.authStateReady?.();
-    if(!auth.currentUser) await auth.signInAnonymously();
+    const app = await getCentral();
     const snap = await app.firestore().collection('shared_banks').doc(BANK_ID).get();
     if(!snap.exists) throw { code: 'not-found' };
     return snap.data();
@@ -1650,12 +1708,13 @@
     finalScoreEl.textContent = score;
     finalSentencesEl.textContent = sentencesDone;
     overOverlay.classList.remove('hidden');
-    if(TEACHER_MODE){
-      // 教師版：不上傳排行榜，只提供成績圖片下載
+    if(TEACHER_MODE || CLASS_MODE){
+      // 教師版／班級版：不上傳公開排行榜，只提供成績圖片下載
       document.getElementById('lbHeadingOver').hidden = true;
       document.getElementById('lbListOver').hidden = true;
-      document.getElementById('noRecordMsg').hidden = false;
+      document.getElementById('noRecordMsg').hidden = CLASS_MODE;
       document.getElementById('dlBtn').hidden = false;
+      if(CLASS_MODE && !PREVIEW) sendClassResult();
       return;
     }
     // 先等分數存好，再讀一次排行榜（以前會讀兩次，第一次還沒有這局的分數）
@@ -1664,6 +1723,30 @@
     submitScore({ name: playerName, score, sentences: sentencesDone, difficulty: diffKey, script: useSimplified?'simp':'trad' })
       .then(()=> refreshLeaderboard(lbEl));
   }
+
+  // 班級模式：把這局成績回傳給老師；老師開放排行榜的話，順便顯示班級排行
+  async function sendClassResult(){
+    const msg = document.getElementById('classMsg'), retry = document.getElementById('classRetryBtn');
+    const head = document.getElementById('lbHeadingOver'), list = document.getElementById('lbListOver');
+    const entry = { nick: playerName, score, sentences: sentencesDone, difficulty: diffKey };
+    msg.hidden = false; msg.textContent = t('classSending'); retry.hidden = true;
+    try{
+      await submitClassScore(entry);
+      msg.textContent = t('classSent');
+      if(classData && classData.showBoard){
+        head.hidden = false; list.hidden = false;
+        head.querySelector('span').textContent = t('classBoard');
+        list.innerHTML = '<p class="lb-msg">' + t('loading') + '</p>';
+        try{ renderLeaderboard(list, await fetchClassBoard()); }
+        catch(e){ list.hidden = true; head.hidden = true; }
+      }
+    }catch(e){
+      console.warn('班級成績回傳失敗', e);
+      msg.textContent = t('classFail');
+      retry.textContent = t('classRetry'); retry.hidden = false;
+    }
+  }
+  document.getElementById('classRetryBtn').addEventListener('click', ()=>{ if(CLASS_MODE) sendClassResult(); });
 
   // 成績圖片（教師版）：畫在 canvas 上，直接下載 PNG
   function downloadResult(){
@@ -1885,6 +1968,10 @@
 
   // ================= START / RESTART =================
   function startGame(){
+    if(CLASS_MODE && !(nameInput.value || '').trim()){
+      const h = document.getElementById('classHint'); h.hidden = false; h.style.color = 'var(--danger, #ff2f6d)'; h.textContent = t('classNeedName');
+      nameInput.focus(); return;
+    }
     playerName = (nameInput.value || '').trim() || t('defaultName');
     startOverlay.classList.add('hidden');
     overOverlay.classList.add('hidden');
@@ -1985,6 +2072,19 @@
     startBtn.hidden = true;
     document.getElementById('homeLink').hidden = false;
   }
+  function initClassMode(){
+    document.getElementById('showLbBtn').hidden = true;
+    document.getElementById('teacherLink').hidden = true;
+    const hint = document.getElementById('classHint'); hint.hidden = false; hint.textContent = t('classHint');
+    try{ nameInput.value = localStorage.getItem('correClassNick') || ''; }catch(e){}
+    nameInput.addEventListener('input', ()=>{ try{ localStorage.setItem('correClassNick', nameInput.value); }catch(e){} });
+    return fetchClass().then(d=>{
+      classData = d;
+      const tag = document.getElementById('classTag');
+      tag.textContent = '🏫 ' + String(d.name || '').slice(0, 40) + (PREVIEW ? ' · ' + t('preview') : '');
+      tag.hidden = false;
+    });
+  }
   function initTeacherMode(){
     document.getElementById('showLbBtn').hidden = true;
     document.getElementById('teacherLink').hidden = true;
@@ -2007,8 +2107,23 @@
     });
   }
 
-  if(TEACHER_MODE){
-    initTeacherMode();
+  if(CLASS_MODE && !TEACHER_MODE){
+    // 班級連結（用公開題庫）：先讀班級資料，再照一般流程載入題庫
+    startBtn.disabled = true;
+    startBtn.textContent = t('loadingSent');
+    initClassMode().then(()=> loadCloudSentences()).then(()=>{
+      startBtn.disabled = false; startBtn.textContent = t('start');
+    }).catch(e=>{
+      console.warn('班級載入失敗', e);
+      const c = e && e.code;
+      showBankErr((c === 'permission-denied' || c === 'not-found') ? 'linkUnavailable' : 'linkError');
+    });
+  }else if(TEACHER_MODE){
+    if(CLASS_MODE){
+      initClassMode().then(initTeacherMode).catch(e=>{
+        const c = e && e.code; showBankErr((c === 'permission-denied' || c === 'not-found') ? 'linkUnavailable' : 'linkError');
+      });
+    }else initTeacherMode();
   }else{
     // load the shared sentence bank before allowing play to start
     startBtn.disabled = true;

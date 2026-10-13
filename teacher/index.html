@@ -133,6 +133,12 @@
     display:flex;gap:8px;align-items:center;flex-wrap:wrap;
   }
   .dirty{color:var(--gold);font-size:12px;}
+  .gwrap{overflow-x:auto;}
+  table.gt{border-collapse:collapse;width:100%;font-size:13px;}
+  table.gt th,table.gt td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;white-space:nowrap;}
+  table.gt th{color:var(--text-dim);font-weight:600;font-size:12px;}
+  h3.gh{font-size:13px;color:var(--magenta);margin:14px 0 4px;}
+  select{width:100%;padding:9px 10px;background:rgba(0,0,0,.4);color:var(--text);border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;}
 </style>
 </head>
 <body>
@@ -168,6 +174,49 @@
       <h2 data-i18n="banks">我的句庫</h2>
       <div id="bankList"></div>
       <div class="status" id="listStatus"></div>
+    </section>
+    <section>
+      <h2 data-i18n="clsTitle">班級成績冊</h2>
+      <p class="hint" data-i18n="clsIntro"></p>
+      <div id="classList"></div>
+      <div class="status" id="classStatus"></div>
+    </section>
+  </div>
+
+  <!-- 班級成績冊 -->
+  <div id="viewClass" hidden>
+    <section>
+      <button class="btn ghost small" id="clsBackBtn" data-i18n="clsBack">← 回到班級列表</button>
+      <div class="notice err" id="clsExpired" style="margin-top:12px;" data-i18n="clsExpired" hidden></div>
+      <h2 style="margin-top:12px;" data-i18n="clsTitle">班級成績冊</h2>
+      <label class="lbl" data-i18n="clsName">班級名稱</label>
+      <div class="row"><input type="text" id="clsNameInput" maxlength="40" style="flex:1"><button class="btn small" id="clsRenameBtn" data-i18n="clsRename">改名</button></div>
+      <label class="lbl" data-i18n="clsBoardLbl">讓學生看到班級排行榜</label>
+      <div class="toggle-group" id="clsBoardGroup">
+        <button class="toggle-btn" data-value="1" data-i18n="on">開</button>
+        <button class="toggle-btn" data-value="0" data-i18n="off">關</button>
+      </div>
+      <h2 style="margin-top:16px;" data-i18n="clsLink">學生連結</h2>
+      <label class="lbl" data-i18n="clsSource">題目來源</label>
+      <select id="clsBankSel"></select>
+      <input type="text" id="clsLinkText" readonly style="margin-top:8px;">
+      <div class="row" style="margin-top:8px;">
+        <button class="btn small" id="clsCopyBtn" data-i18n="copyLink">複製連結</button>
+        <button class="btn ghost small" id="clsQrBtn">QR</button>
+        <button class="btn ghost small" id="clsTestBtn" data-i18n="clsTest">試玩（不回傳）</button>
+      </div>
+      <p class="hint" data-i18n="clsHelp"></p>
+    </section>
+    <section>
+      <h2 data-i18n="clsGrades">成績</h2> <span class="counter" id="clsCount"></span>
+      <div class="row" style="margin:8px 0;">
+        <button class="btn ghost small" id="clsRefreshBtn" data-i18n="clsRefresh">重新整理</button>
+        <button class="btn ghost small" id="clsCsvBtn" data-i18n="clsCsv">匯出 CSV</button>
+        <button class="btn danger small" id="clsResetBtn" data-i18n="clsReset">清空成績</button>
+        <button class="btn danger small" id="clsDelBtn" data-i18n="clsDelClass">刪除班級</button>
+      </div>
+      <div class="status" id="clsStatus"></div>
+      <div id="clsScores"></div>
     </section>
   </div>
 
@@ -297,7 +346,7 @@
       banks:'我的句庫', slotN:'句庫 {n}', slotEmpty:'空位', create:'＋ 建立句庫', locked:'🔒 訂閱後可用',
       count:'{n} / {max} 句', edit:'編輯', test:'▶ 試玩', copyLink:'🔗 複製連結', copied:'已複製連結！', del:'刪除',
       delConfirm:'確定要刪除「{name}」嗎？學生的連結也會失效。', paused:'⏸ 學生連結已暫停（訂閱已到期）',
-      qrBtn:'QR', pdfBtn:'📄 學習單', qrTitle:'QR code', qrHint:'學生掃描就能開始玩這個句庫。可下載圖片貼進簡報或印出來。', qrDownload:'下載圖片', qrShare:'分享', pdfTitle:'下載學習單 PDF', pdfNeedSub:'學習單 PDF 是訂閱版功能。', pdfLang:'翻譯語言', pdfPinyin:'顯示拼音', pdfZhuyin:'顯示注音', pdfOrder:'加入「排列句子」練習（附答案頁）', pdfMake:'產生 PDF', pdfWorking:'產生中…', pdfDone:'已下載（共 {n} 頁）', phonetic:'拼音／注音', phPinyin:'拼音', phZhuyin:'注音', phBoth:'兩者', back:'← 回到我的句庫', bankSettings:'句庫設定', bankName:'句庫名稱', speed:'速度',
+      qrBtn:'QR', pdfBtn:'📄 學習單', qrTitle:'QR code', qrHint:'學生掃描就能開始玩這個句庫。可下載圖片貼進簡報或印出來。', qrDownload:'下載圖片', qrShare:'分享', pdfTitle:'下載學習單 PDF', pdfNeedSub:'學習單 PDF 是訂閱版功能。', pdfLang:'翻譯語言', pdfPinyin:'顯示拼音', pdfZhuyin:'顯示注音', pdfOrder:'加入「排列句子」練習（附答案頁）', pdfMake:'產生 PDF', pdfWorking:'產生中…', pdfDone:'已下載（共 {n} 頁）', clsTitle:'班級成績冊', clsIntro:'學生玩完遊戲會自動把成績回傳到這裡。最多 3 個班級，人數不限（訂閱版功能）。', clsSlot:'班級 {n}', clsName:'班級名稱', clsCreate:'建立班級', clsLocked:'需要訂閱才能建立班級', clsOpen:'開啟成績冊', clsBack:'← 回到班級列表', clsBoardOn:'排行榜：開', clsBoardOff:'排行榜：關', clsBoardLbl:'讓學生看到班級排行榜', clsLink:'學生連結', clsSource:'題目來源', clsPool:'公開題庫（一般句子）', clsTest:'試玩（不回傳）', clsHelp:'學生用自己輸入的暱稱回傳成績。同一個暱稱（不分大小寫與空白）的成績會合併成一位，只顯示最高分。如果兩位學生用了同一個暱稱，成績會混在一起，請事先告訴學生要用什麼暱稱（例如「名字＋座號」）。', clsExpired:'訂閱已到期：學生暫時無法回傳新成績，但你仍可查看、匯出與刪除成績。', clsGrades:'成績', clsRefresh:'重新整理', clsCsv:'匯出 CSV', clsReset:'清空成績', clsDelClass:'刪除班級', clsRename:'改名', clsNick:'暱稱', clsBest:'最高分', clsPlays:'次數', clsDetail:'詳細', clsLast:'最近', clsSentUnit:'句', clsNoScores:'還沒有成績。把學生連結傳給學生就會出現。', clsConfirmReset:'確定要清空這個班級的所有成績嗎？無法復原。', clsConfirmDel:'確定要刪除班級「{name}」和所有成績嗎？無法復原。', clsConfirmRow:'刪除「{nick}」的成績？', clsSaved:'已儲存', clsNotReady:'成績冊功能尚未啟用（Firestore 規則還沒更新）。', clsStudents:'{n} 位學生', clsNeedName:'請輸入班級名稱。', phonetic:'拼音／注音', phPinyin:'拼音', phZhuyin:'注音', phBoth:'兩者', back:'← 回到我的句庫', bankSettings:'句庫設定', bankName:'句庫名稱', speed:'速度',
       facil:'容易', normal:'普通', dificil:'困難', script:'字體', trad:'繁體', simp:'簡體', boss:'Boss 關（聽語音）', on:'開', off:'關',
       sec1:'① 輸入句子', inputHint:'詞與詞之間用空白分開，例如：我 喜歡 吃 蘋果。每句最多 {n} 個漢字（不含標點）。',
       esLabel:'西班牙文翻譯（必填）', enLabel:'英文翻譯（選填）', autoHint:'翻譯留空會自動翻譯（機器翻譯，請務必檢查）。',
@@ -331,7 +380,7 @@
       banks:'我的句库', slotN:'句库 {n}', slotEmpty:'空位', create:'＋ 建立句库', locked:'🔒 订阅后可用',
       count:'{n} / {max} 句', edit:'编辑', test:'▶ 试玩', copyLink:'🔗 复制链接', copied:'已复制链接！', del:'删除',
       delConfirm:'确定要删除“{name}”吗？学生的链接也会失效。', paused:'⏸ 学生链接已暂停（订阅已到期）',
-      qrBtn:'QR', pdfBtn:'📄 学习单', qrTitle:'QR code', qrHint:'学生扫描就能开始玩这个句库。可下载图片贴进简报或打印出来。', qrDownload:'下载图片', qrShare:'分享', pdfTitle:'下载学习单 PDF', pdfNeedSub:'学习单 PDF 是订阅版功能。', pdfLang:'翻译语言', pdfPinyin:'显示拼音', pdfZhuyin:'显示注音', pdfOrder:'加入「排列句子」练习（附答案页）', pdfMake:'生成 PDF', pdfWorking:'生成中…', pdfDone:'已下载（共 {n} 页）', phonetic:'拼音／注音', phPinyin:'拼音', phZhuyin:'注音', phBoth:'两者', back:'← 回到我的句库', bankSettings:'句库设置', bankName:'句库名称', speed:'速度',
+      qrBtn:'QR', pdfBtn:'📄 学习单', qrTitle:'QR code', qrHint:'学生扫描就能开始玩这个句库。可下载图片贴进简报或打印出来。', qrDownload:'下载图片', qrShare:'分享', pdfTitle:'下载学习单 PDF', pdfNeedSub:'学习单 PDF 是订阅版功能。', pdfLang:'翻译语言', pdfPinyin:'显示拼音', pdfZhuyin:'显示注音', pdfOrder:'加入「排列句子」练习（附答案页）', pdfMake:'生成 PDF', pdfWorking:'生成中…', pdfDone:'已下载（共 {n} 页）', clsTitle:'班级成绩册', clsIntro:'学生玩完游戏会自动把成绩回传到这里。最多 3 个班级，人数不限（订阅版功能）。', clsSlot:'班级 {n}', clsName:'班级名称', clsCreate:'创建班级', clsLocked:'需要订阅才能创建班级', clsOpen:'打开成绩册', clsBack:'← 回到班级列表', clsBoardOn:'排行榜：开', clsBoardOff:'排行榜：关', clsBoardLbl:'让学生看到班级排行榜', clsLink:'学生链接', clsSource:'题目来源', clsPool:'公开题库（一般句子）', clsTest:'试玩（不回传）', clsHelp:'学生用自己输入的昵称回传成绩。同一个昵称（不分大小写与空格）的成绩会合并成一位，只显示最高分。如果两位学生用了同一个昵称，成绩会混在一起，请事先告诉学生要用什么昵称（例如“名字＋座号”）。', clsExpired:'订阅已到期：学生暂时无法回传新成绩，但你仍可查看、导出与删除成绩。', clsGrades:'成绩', clsRefresh:'刷新', clsCsv:'导出 CSV', clsReset:'清空成绩', clsDelClass:'删除班级', clsRename:'改名', clsNick:'昵称', clsBest:'最高分', clsPlays:'次数', clsDetail:'详细', clsLast:'最近', clsSentUnit:'句', clsNoScores:'还没有成绩。把学生链接发给学生就会出现。', clsConfirmReset:'确定要清空这个班级的所有成绩吗？无法恢复。', clsConfirmDel:'确定要删除班级“{name}”和所有成绩吗？无法恢复。', clsConfirmRow:'删除“{nick}”的成绩？', clsSaved:'已保存', clsNotReady:'成绩册功能尚未启用（Firestore 规则还没更新）。', clsStudents:'{n} 位学生', clsNeedName:'请输入班级名称。', phonetic:'拼音／注音', phPinyin:'拼音', phZhuyin:'注音', phBoth:'两者', back:'← 回到我的句库', bankSettings:'句库设置', bankName:'句库名称', speed:'速度',
       facil:'容易', normal:'普通', dificil:'困难', script:'字体', trad:'繁体', simp:'简体', boss:'Boss 关（听语音）', on:'开', off:'关',
       sec1:'① 输入句子', inputHint:'词与词之间用空格分开，例如：我 喜歡 吃 蘋果。每句最多 {n} 个汉字（不含标点）。',
       esLabel:'西班牙文翻译（必填）', enLabel:'英文翻译（选填）', autoHint:'翻译留空会自动翻译（机器翻译，请务必检查）。',
@@ -366,7 +415,7 @@
       banks:'Mis bancos', slotN:'Banco {n}', slotEmpty:'Libre', create:'＋ Crear banco', locked:'🔒 Requiere suscripción',
       count:'{n} / {max} frases', edit:'Editar', test:'▶ Probar', copyLink:'🔗 Copiar enlace', copied:'¡Enlace copiado!', del:'Eliminar',
       delConfirm:'¿Eliminar «{name}»? El enlace de los alumnos dejará de funcionar.', paused:'⏸ Enlace en pausa (suscripción vencida)',
-      qrBtn:'QR', pdfBtn:'📄 Ficha', qrTitle:'Código QR', qrHint:'Tus alumnos lo escanean y juegan este banco. Descarga la imagen para tu presentación o para imprimir.', qrDownload:'Descargar imagen', qrShare:'Compartir', pdfTitle:'Descargar ficha PDF', pdfNeedSub:'La ficha en PDF es una función de la suscripción.', pdfLang:'Idioma de la traducción', pdfPinyin:'Mostrar pinyin', pdfZhuyin:'Mostrar zhuyin', pdfOrder:'Añadir ejercicio de ordenar frases (con respuestas)', pdfMake:'Crear PDF', pdfWorking:'Creando…', pdfDone:'Descargado ({n} páginas)', phonetic:'Pinyin / Zhuyin', phPinyin:'Pinyin', phZhuyin:'Zhuyin (bopomofo)', phBoth:'Ambos', back:'← Volver a mis bancos', bankSettings:'Ajustes del banco', bankName:'Nombre del banco', speed:'Velocidad',
+      qrBtn:'QR', pdfBtn:'📄 Ficha', qrTitle:'Código QR', qrHint:'Tus alumnos lo escanean y juegan este banco. Descarga la imagen para tu presentación o para imprimir.', qrDownload:'Descargar imagen', qrShare:'Compartir', pdfTitle:'Descargar ficha PDF', pdfNeedSub:'La ficha en PDF es una función de la suscripción.', pdfLang:'Idioma de la traducción', pdfPinyin:'Mostrar pinyin', pdfZhuyin:'Mostrar zhuyin', pdfOrder:'Añadir ejercicio de ordenar frases (con respuestas)', pdfMake:'Crear PDF', pdfWorking:'Creando…', pdfDone:'Descargado ({n} páginas)', clsTitle:'Libro de notas de clase', clsIntro:'Cuando tus alumnos terminan una partida, su resultado llega aquí automáticamente. Hasta 3 clases, sin límite de alumnos (función de suscripción).', clsSlot:'Clase {n}', clsName:'Nombre de la clase', clsCreate:'Crear clase', clsLocked:'Se necesita suscripción para crear clases', clsOpen:'Abrir libro de notas', clsBack:'← Volver a las clases', clsBoardOn:'Clasificación: sí', clsBoardOff:'Clasificación: no', clsBoardLbl:'Mostrar la clasificación de la clase a los alumnos', clsLink:'Enlace para alumnos', clsSource:'Origen de las frases', clsPool:'Banco público (frases generales)', clsTest:'Probar (sin enviar)', clsHelp:'Los alumnos envían su resultado con el apodo que escriben. Los resultados con el mismo apodo (sin importar mayúsculas ni espacios) se unen en un solo alumno y solo se muestra la mejor puntuación. Si dos alumnos usan el mismo apodo, sus resultados se mezclan: dile de antemano qué apodo usar (por ejemplo, «nombre + número de lista»).', clsExpired:'La suscripción venció: los alumnos no pueden enviar nuevos resultados, pero tú aún puedes ver, exportar y borrar notas.', clsGrades:'Notas', clsRefresh:'Actualizar', clsCsv:'Exportar CSV', clsReset:'Borrar todas las notas', clsDelClass:'Eliminar clase', clsRename:'Renombrar', clsNick:'Apodo', clsBest:'Mejor', clsPlays:'Partidas', clsDetail:'Detalle', clsLast:'Última', clsSentUnit:' frases', clsNoScores:'Aún no hay resultados. Aparecerán cuando tus alumnos usen el enlace.', clsConfirmReset:'¿Borrar todas las notas de esta clase? No se puede deshacer.', clsConfirmDel:'¿Eliminar la clase «{name}» y todas sus notas? No se puede deshacer.', clsConfirmRow:'¿Borrar las notas de «{nick}»?', clsSaved:'Guardado', clsNotReady:'El libro de notas aún no está activado (faltan las reglas de Firestore).', clsStudents:'{n} alumnos', clsNeedName:'Escribe el nombre de la clase.', phonetic:'Pinyin / Zhuyin', phPinyin:'Pinyin', phZhuyin:'Zhuyin (bopomofo)', phBoth:'Ambos', back:'← Volver a mis bancos', bankSettings:'Ajustes del banco', bankName:'Nombre del banco', speed:'Velocidad',
       facil:'Fácil', normal:'Normal', dificil:'Difícil', script:'Caracteres', trad:'Tradicional', simp:'Simplificado', boss:'Nivel jefe (audio)', on:'Sí', off:'No',
       sec1:'① Escribe la frase', inputHint:'Separa las palabras con espacios, por ejemplo: 我 喜歡 吃 蘋果. Máximo {n} caracteres chinos por frase (sin puntuación).',
       esLabel:'Traducción al español (obligatoria)', enLabel:'Traducción al inglés (opcional)', autoHint:'Si dejas la traducción vacía se traduce automáticamente (traducción automática: revísala).',
@@ -401,7 +450,7 @@
       banks:'My banks', slotN:'Bank {n}', slotEmpty:'Empty', create:'＋ Create bank', locked:'🔒 Subscribers only',
       count:'{n} / {max} sentences', edit:'Edit', test:'▶ Try it', copyLink:'🔗 Copy link', copied:'Link copied!', del:'Delete',
       delConfirm:'Delete "{name}"? The student link will stop working.', paused:'⏸ Student link paused (subscription expired)',
-      qrBtn:'QR', pdfBtn:'📄 Worksheet', qrTitle:'QR code', qrHint:'Students scan it to play this bank. Download the image for slides or print-outs.', qrDownload:'Download image', qrShare:'Share', pdfTitle:'Download worksheet PDF', pdfNeedSub:'The worksheet PDF is a subscription feature.', pdfLang:'Translation language', pdfPinyin:'Show pinyin', pdfZhuyin:'Show zhuyin', pdfOrder:'Add a word-order exercise (with answers)', pdfMake:'Create PDF', pdfWorking:'Creating…', pdfDone:'Downloaded ({n} pages)', phonetic:'Pinyin / Zhuyin', phPinyin:'Pinyin', phZhuyin:'Zhuyin (bopomofo)', phBoth:'Both', back:'← Back to my banks', bankSettings:'Bank settings', bankName:'Bank name', speed:'Speed',
+      qrBtn:'QR', pdfBtn:'📄 Worksheet', qrTitle:'QR code', qrHint:'Students scan it to play this bank. Download the image for slides or print-outs.', qrDownload:'Download image', qrShare:'Share', pdfTitle:'Download worksheet PDF', pdfNeedSub:'The worksheet PDF is a subscription feature.', pdfLang:'Translation language', pdfPinyin:'Show pinyin', pdfZhuyin:'Show zhuyin', pdfOrder:'Add a word-order exercise (with answers)', pdfMake:'Create PDF', pdfWorking:'Creating…', pdfDone:'Downloaded ({n} pages)', clsTitle:'Class gradebook', clsIntro:'When students finish a game, their result arrives here automatically. Up to 3 classes, no student limit (subscription feature).', clsSlot:'Class {n}', clsName:'Class name', clsCreate:'Create class', clsLocked:'A subscription is needed to create classes', clsOpen:'Open gradebook', clsBack:'← Back to classes', clsBoardOn:'Leaderboard: on', clsBoardOff:'Leaderboard: off', clsBoardLbl:'Show the class leaderboard to students', clsLink:'Student link', clsSource:'Sentence source', clsPool:'Public pool (general sentences)', clsTest:'Try it (not sent)', clsHelp:'Students send their result under the nickname they type. Results with the same nickname (ignoring case and spaces) are merged into one student and only the best score is shown. If two students use the same nickname their results get mixed, so tell students beforehand which nickname to use (for example "name + roll number").', clsExpired:'Subscription expired: students cannot send new results, but you can still view, export and delete grades.', clsGrades:'Grades', clsRefresh:'Refresh', clsCsv:'Export CSV', clsReset:'Clear all grades', clsDelClass:'Delete class', clsRename:'Rename', clsNick:'Nickname', clsBest:'Best', clsPlays:'Plays', clsDetail:'Detail', clsLast:'Last', clsSentUnit:' sentences', clsNoScores:'No results yet. They appear once students use the link.', clsConfirmReset:'Clear all grades of this class? This cannot be undone.', clsConfirmDel:'Delete class "{name}" and all its grades? This cannot be undone.', clsConfirmRow:'Delete the grades of "{nick}"?', clsSaved:'Saved', clsNotReady:'The gradebook is not enabled yet (Firestore rules not updated).', clsStudents:'{n} students', clsNeedName:'Enter a class name.', phonetic:'Pinyin / Zhuyin', phPinyin:'Pinyin', phZhuyin:'Zhuyin (bopomofo)', phBoth:'Both', back:'← Back to my banks', bankSettings:'Bank settings', bankName:'Bank name', speed:'Speed',
       facil:'Easy', normal:'Normal', dificil:'Hard', script:'Characters', trad:'Traditional', simp:'Simplified', boss:'Boss level (audio)', on:'On', off:'Off',
       sec1:'① Enter a sentence', inputHint:'Separate words with spaces, e.g. 我 喜歡 吃 蘋果. Up to {n} Chinese characters per sentence (punctuation not counted).',
       esLabel:'Spanish translation (required)', enLabel:'English translation (optional)', autoHint:'Leave a translation empty to auto-translate (machine translation: please check it).',
@@ -629,6 +678,7 @@
           if(s.exists) BANKS[k] = { sid: s.id, data: s.data() };
         }catch(e){ console.warn('bank read failed', k, e); }
       }));
+      await loadClasses();
       setStatus($('listStatus'), '');
     }catch(e){
       console.error(e);
@@ -644,7 +694,7 @@
     $('loginBtn').hidden = real;
     $('logoutBtn').hidden = !real;
     $('viewOut').hidden = real;
-    if(!real){ $('viewList').hidden = true; $('viewEdit').hidden = true; ED = null; }
+    if(!real){ $('viewList').hidden = true; $('viewEdit').hidden = true; $('viewClass').hidden = true; ED = null; CUR = null; }
   }
   async function login(){
     if(!auth){ setStatus($('authMsg'), 'Firebase not loaded.', 'err'); return; }
@@ -699,7 +749,7 @@
   }
   function renderList(){
     if(ED) return;
-    renderPlan();
+    renderPlan(); renderClasses();
     const list = $('bankList'); list.textContent = '';
     for(let i = 0; i < PRO_SLOTS; i++){
       const key = String(i), b = BANKS[key];
@@ -1044,7 +1094,9 @@
   }
   async function showQr(i){
     const b = BANKS[String(i)]; if(!b) return;
-    const url = bankLink(b.sid), title = b.data.name || tr('slotN', { n: i + 1 });
+    return showQrFor(bankLink(b.sid), b.data.name || tr('slotN', { n: i + 1 }));
+  }
+  async function showQrFor(url, title){
     try{ await document.fonts.load('900 40px "Noto Sans TC"', title + '跑吧！漢字每天一分鐘'); }catch(e){}
     const cv = qrCanvas(url, title);
     openModal(box=>{
@@ -1263,13 +1315,187 @@
     });
   }
 
+  // ================= 班級成績冊 =================
+  const MAX_CLASSES = 3;
+  let CSLOTS = {}, CLASSES = {}, CLS_READY = true, CUR = null, SCORES = [];
+  async function loadClasses(){
+    CSLOTS = {}; CLASSES = {}; CLS_READY = true;
+    try{
+      const ix = await db.collection('teacher_classes').doc(user.uid).get();
+      CSLOTS = ix.exists ? (ix.data().slots || {}) : {};
+      await Promise.all(Object.keys(CSLOTS).map(async k=>{
+        try{
+          const s = await db.collection('classes').doc(CSLOTS[k]).get();
+          if(s.exists) CLASSES[k] = { cid: s.id, data: s.data() };
+        }catch(e){ console.warn('class read failed', k, e); }
+      }));
+    }catch(e){ console.warn('classes unavailable', e); CLS_READY = false; }
+  }
+  function renderClasses(){
+    const box = $('classList'); box.textContent = '';
+    if(!CLS_READY){ box.appendChild(mk('div', 'notice', tr('clsNotReady'))); return; }
+    for(let i = 0; i < MAX_CLASSES; i++){
+      const key = String(i), c = CLASSES[key];
+      const card = mk('div', 'bank' + (c ? '' : ' empty'));
+      if(c){
+        card.appendChild(mk('div', 't', c.data.name));
+        card.appendChild(mk('div', 'meta', tr('clsSlot', { n: i + 1 }) + ' · ' + (c.data.showBoard ? tr('clsBoardOn') : tr('clsBoardOff'))));
+        const row = mk('div', 'row');
+        const ob = mk('button', 'btn small', tr('clsOpen')); ob.addEventListener('click', ()=>openClass(i));
+        row.appendChild(ob); card.appendChild(row);
+      }else{
+        card.appendChild(mk('div', 't', tr('clsSlot', { n: i + 1 })));
+        if(!PLAN.active){ card.appendChild(mk('div', 'meta', tr('clsLocked'))); }
+        else{
+          const row = mk('div', 'row');
+          const inp = document.createElement('input'); inp.type = 'text'; inp.maxLength = 40; inp.placeholder = tr('clsName'); inp.style.flex = '1';
+          const cb = mk('button', 'btn small', tr('clsCreate'));
+          cb.addEventListener('click', ()=>createClass(i, inp.value.trim(), cb));
+          row.appendChild(inp); row.appendChild(cb); card.appendChild(row);
+        }
+      }
+      box.appendChild(card);
+    }
+  }
+  async function createClass(slot, name, btn){
+    if(!name){ setStatus($('classStatus'), tr('clsNeedName'), 'err'); return; }
+    btn.disabled = true; setStatus($('classStatus'), tr('saving'));
+    try{
+      const ts = firebase.firestore.FieldValue.serverTimestamp();
+      const cid = newSid(), slots = Object.assign({}, CSLOTS, { [String(slot)]: cid });
+      const batch = db.batch();
+      batch.set(db.collection('teacher_classes').doc(user.uid), { slots, updatedAt: ts });
+      batch.set(db.collection('classes').doc(cid), { owner: user.uid, slot, name, showBoard: false, updatedAt: ts });
+      await batch.commit();
+      setStatus($('classStatus'), '');
+      await loadClasses(); renderClasses(); openClass(slot);
+    }catch(e){ console.error(e); setStatus($('classStatus'), explainError(e), 'err'); btn.disabled = false; }
+  }
+  const classLink = (cid, sid) => baseUrl() + '?class=' + cid + (sid ? '&bank=' + sid : '');
+  function showView(name){ ['viewList', 'viewEdit', 'viewClass'].forEach(v => { $(v).hidden = v !== name; }); window.scrollTo(0, 0); }
+  async function openClass(slot){
+    CUR = String(slot);
+    showView('viewClass'); renderClassHead();
+    await loadScores();
+  }
+  function renderClassHead(){
+    const c = CLASSES[CUR]; if(!c) return;
+    $('clsNameInput').value = c.data.name;
+    setGroup('clsBoardGroup', c.data.showBoard ? '1' : '0');
+    $('clsExpired').hidden = PLAN.active;
+    // 學生連結：題目來源可選公開題庫或自己的句庫
+    const sel = $('clsBankSel'); const prev = sel.value; sel.textContent = '';
+    const o0 = document.createElement('option'); o0.value = ''; o0.textContent = tr('clsPool'); sel.appendChild(o0);
+    Object.keys(BANKS).sort().forEach(k => {
+      const o = document.createElement('option'); o.value = BANKS[k].sid; o.textContent = '📚 ' + (BANKS[k].data.name || tr('slotN', { n: +k + 1 }));
+      sel.appendChild(o);
+    });
+    sel.value = [...sel.options].some(o => o.value === prev) ? prev : '';
+    updateClassLink();
+  }
+  function updateClassLink(){
+    const c = CLASSES[CUR]; if(!c) return;
+    $('clsLinkText').value = classLink(c.cid, $('clsBankSel').value);
+  }
+  $('clsBankSel').addEventListener('change', updateClassLink);
+  $('clsBackBtn').addEventListener('click', ()=>{ CUR = null; showView('viewList'); renderClasses(); });
+  $('clsCopyBtn').addEventListener('click', ()=>copyText($('clsLinkText').value, $('clsCopyBtn')));
+  $('clsTestBtn').addEventListener('click', ()=>window.open($('clsLinkText').value + '&preview=1', '_blank'));
+  $('clsQrBtn').addEventListener('click', ()=>showQrFor($('clsLinkText').value, CLASSES[CUR].data.name));
+  async function saveClass(patch){
+    const c = CLASSES[CUR]; if(!c) return;
+    const ts = firebase.firestore.FieldValue.serverTimestamp();
+    const data = Object.assign({}, c.data, patch, { updatedAt: ts });
+    setStatus($('clsStatus'), tr('saving'));
+    try{
+      await db.collection('classes').doc(c.cid).set(data);
+      c.data = Object.assign({}, c.data, patch);
+      setStatus($('clsStatus'), tr('clsSaved'), 'ok'); renderClassHead();
+    }catch(e){ console.error(e); setStatus($('clsStatus'), explainError(e), 'err'); renderClassHead(); }
+  }
+  $('clsBoardGroup').querySelectorAll('.toggle-btn').forEach(btn => btn.addEventListener('click', ()=> saveClass({ showBoard: btn.dataset.value === '1' })));
+  $('clsRenameBtn').addEventListener('click', ()=>{ const n = $('clsNameInput').value.trim(); if(n) saveClass({ name: n }); });
+
+  async function loadScores(){
+    const c = CLASSES[CUR]; if(!c) return;
+    setStatus($('clsStatus'), tr('loading'));
+    try{
+      const snap = await db.collection('class_scores').where('owner', '==', user.uid).where('cid', '==', c.cid).limit(2000).get();
+      SCORES = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+      setStatus($('clsStatus'), '');
+    }catch(e){ console.error(e); SCORES = []; setStatus($('clsStatus'), explainError(e), 'err'); }
+    renderScores();
+  }
+  const GAME_NAMES = { corre: '跑吧！漢字', colores: '色數消消樂' };
+  const lastText = ms => { const d = new Date(ms); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+  function renderScores(){
+    const box = $('clsScores'); box.textContent = '';
+    const games = ['corre', 'colores'].filter(g => SCORES.some(r => r.game === g));
+    $('clsCount').textContent = tr('clsStudents', { n: new Set(SCORES.map(r => r.h)).size });
+    if(!games.length){ box.appendChild(mk('p', 'hint', tr('clsNoScores'))); return; }
+    games.forEach(g => {
+      box.appendChild(mk('h3', 'gh', GAME_NAMES[g]));
+      const tbl = mk('table', 'gt'); const hr = mk('tr');
+      ['#', 'clsNick', 'clsBest', 'clsPlays', 'clsDetail', 'clsLast', ''].forEach(k => hr.appendChild(mk('th', null, k && k !== '#' ? tr(k) : k)));
+      tbl.appendChild(hr);
+      SCORES.filter(r => r.game === g).sort((a, b) => b.best - a.best).forEach((r, i) => {
+        const tr_ = mk('tr');
+        const ex = r.extra || {};
+        const detail = g === 'corre' ? ((ex.sent != null ? ex.sent + tr('clsSentUnit') : '') + (ex.diff ? ' · ' + tr(ex.diff) : '')) : Object.keys(ex).map(k => k + ':' + ex[k]).join(' ');
+        [i + 1, r.nick, r.best, r.plays, detail, r.lastAt && r.lastAt.toMillis ? lastText(r.lastAt.toMillis()) : ''].forEach(v => tr_.appendChild(mk('td', null, String(v))));
+        const td = mk('td'); const del = mk('button', 'btn danger small', '✕');
+        del.addEventListener('click', async ()=>{
+          if(!confirm(tr('clsConfirmRow', { nick: r.nick }))) return;
+          try{ await db.collection('class_scores').doc(r.id).delete(); SCORES = SCORES.filter(x => x.id !== r.id); renderScores(); }
+          catch(e){ setStatus($('clsStatus'), explainError(e), 'err'); }
+        });
+        td.appendChild(del); tr_.appendChild(td); tbl.appendChild(tr_);
+      });
+      const wrap = mk('div', 'gwrap'); wrap.appendChild(tbl); box.appendChild(wrap);
+    });
+  }
+  $('clsRefreshBtn').addEventListener('click', loadScores);
+  $('clsCsvBtn').addEventListener('click', ()=>{
+    const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const rows = [['game', 'nickname', 'best', 'plays', 'detail', 'last'].map(q).join(',')];
+    SCORES.slice().sort((a, b) => a.game.localeCompare(b.game) || b.best - a.best).forEach(r => {
+      const ex = r.extra || {};
+      rows.push([GAME_NAMES[r.game] || r.game, r.nick, r.best, r.plays, Object.keys(ex).map(k => k + '=' + ex[k]).join(' '), r.lastAt && r.lastAt.toMillis ? new Date(r.lastAt.toMillis()).toISOString() : ''].map(q).join(','));
+    });
+    saveBlob(new Blob(['﻿' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'gradebook-' + safeName(CLASSES[CUR].data.name) + '.csv');
+  });
+  async function deleteScoreDocs(ids){
+    for(let i = 0; i < ids.length; i += 400){
+      const b = db.batch(); ids.slice(i, i + 400).forEach(id => b.delete(db.collection('class_scores').doc(id))); await b.commit();
+    }
+  }
+  $('clsResetBtn').addEventListener('click', async ()=>{
+    if(!confirm(tr('clsConfirmReset'))) return;
+    try{ await deleteScoreDocs(SCORES.map(r => r.id)); SCORES = []; renderScores(); }catch(e){ setStatus($('clsStatus'), explainError(e), 'err'); }
+  });
+  $('clsDelBtn').addEventListener('click', async ()=>{
+    const c = CLASSES[CUR]; if(!c) return;
+    if(!confirm(tr('clsConfirmDel', { name: c.data.name }))) return;
+    setStatus($('clsStatus'), tr('saving'));
+    try{
+      await deleteScoreDocs(SCORES.map(r => r.id));
+      const slots = Object.assign({}, CSLOTS); delete slots[CUR];
+      const ts = firebase.firestore.FieldValue.serverTimestamp();
+      const b = db.batch();
+      b.delete(db.collection('classes').doc(c.cid));
+      b.set(db.collection('teacher_classes').doc(user.uid), { slots, updatedAt: ts });
+      await b.commit();
+      CUR = null; await loadClasses(); showView('viewList'); renderClasses();
+    }catch(e){ console.error(e); setStatus($('clsStatus'), explainError(e), 'err'); }
+  });
+
   function applyLang(){
     document.documentElement.lang = HTML_LANG[LANG];
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = tr(el.dataset.i18n); });
     $('langs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.l === LANG));
     renderAuth();
     if(ED){ renderEditorMeta(); $('addSentBtn').textContent = editingIdx >= 0 ? tr('updSent') : tr('addSent'); }
-    else if(isRealUser(user)) renderList();
+    else if(isRealUser(user)){ renderList(); if(CUR){ renderClassHead(); renderScores(); } }
   }
   $('langs').querySelectorAll('button').forEach(b=>{
     b.addEventListener('click', ()=>{ LANG = b.dataset.l; try{ localStorage.setItem('correTeacherLang', LANG); }catch(e){} applyLang(); });
@@ -1277,7 +1503,7 @@
   applyLang();
 
   // 給測試用
-  window.__teacher = { get ED(){ return ED; }, makeTokens, countHan, makeWorksheet, buildPdf, qrCanvas, ZY };
+  window.__teacher = { get ED(){ return ED; }, makeTokens, countHan, makeWorksheet, buildPdf, qrCanvas, ZY, get CLASSES(){ return CLASSES; }, get SCORES(){ return SCORES; } };
 })();
 </script>
 </body>

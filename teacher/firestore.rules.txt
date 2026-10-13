@@ -67,3 +67,92 @@
         && request.resource.data.slot == resource.data.slot && okBank();
       allow delete: if realUser() && (resource.data.owner == request.auth.uid || isAdmin());
     }
+
+    // ===================================================================
+    // ===== 班級成績冊（第二批新增；貼在 shared_banks 規則之後）=====
+    // 資料：
+    //   teacher_classes/{uid} → { slots: { "0": cid, "1": cid, "2": cid }, updatedAt }   （每位老師最多 3 班）
+    //   classes/{cid}         → { owner, slot(0-2), name, showBoard, updatedAt }
+    //   class_scores/{cid}_{game}_{h} → { cid, owner, game, h, nick, best, plays, lastAt, extra }
+    // 規則：
+    //   - 建立班級需要訂閱中；到期後老師仍可讀、改名、刪除，也能讀成績
+    //   - 學生（匿名登入）回傳成績需要老師訂閱中；每次回傳 plays 只能 +1、best 只能增加
+    //   - 學生只有在老師開啟「公開排行榜」時才讀得到全班成績
+    // ===================================================================
+    function okClassSlots(s) {
+      return s is map && s.keys().hasOnly(['0','1','2']);
+    }
+
+    match /teacher_classes/{uid} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create: if realUser() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['slots','updatedAt'])
+        && request.resource.data.keys().hasAll(['slots','updatedAt'])
+        && okClassSlots(request.resource.data.slots)
+        && request.resource.data.updatedAt == request.time
+        && subActive(uid);
+      allow update: if realUser() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['slots','updatedAt'])
+        && request.resource.data.keys().hasAll(['slots','updatedAt'])
+        && okClassSlots(request.resource.data.slots)
+        && request.resource.data.updatedAt == request.time
+        && (subActive(uid) || request.resource.data.slots.keys().hasOnly(resource.data.slots.keys()));
+    }
+
+    match /classes/{cid} {
+      function okClass() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['owner','slot','name','showBoard','updatedAt'])
+          && d.keys().hasAll(['owner','slot','name','showBoard','updatedAt'])
+          && d.owner == request.auth.uid
+          && d.slot is int && d.slot >= 0 && d.slot <= 2
+          && d.name is string && d.name.size() >= 1 && d.name.size() <= 40
+          && d.showBoard is bool
+          && d.updatedAt == request.time;
+      }
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if realUser() && cid.matches('^[a-z0-9]{8,32}$') && okClass() && subActive(request.auth.uid)
+        && getAfter(/databases/$(database)/documents/teacher_classes/$(request.auth.uid))
+             .data.slots[string(request.resource.data.slot)] == cid;
+      allow update: if realUser() && resource.data.owner == request.auth.uid
+        && request.resource.data.slot == resource.data.slot && okClass();
+      allow delete: if realUser() && (resource.data.owner == request.auth.uid || isAdmin());
+    }
+
+    match /class_scores/{sid} {
+      function classDoc(cid) {
+        return get(/databases/$(database)/documents/classes/$(cid)).data;
+      }
+      function okScore() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['cid','owner','game','h','nick','best','plays','lastAt','extra'])
+          && d.keys().hasAll(['cid','owner','game','h','nick','best','plays','lastAt'])
+          && d.cid is string && d.game in ['corre','colores']
+          && d.h is string && d.h.matches('^[a-f0-9]{16}$')
+          && sid == d.cid + '_' + d.game + '_' + d.h
+          && d.owner == classDoc(d.cid).owner
+          && d.nick is string && d.nick.size() >= 1 && d.nick.size() <= 16
+          && d.best is int && d.best >= 0 && d.best <= 1000000
+          && d.plays is int
+          && d.lastAt == request.time
+          && (!('extra' in d) || (d.extra is map && d.extra.size() <= 6))
+          && subActive(d.owner);
+      }
+      // 老師讀自己的；學生只有在老師開放排行榜時才讀得到
+      // get：文件還不存在時也要放行（學生第一次回傳前要先查一次有沒有舊紀錄）
+      allow get: if signedIn() && (resource == null
+                                   || resource.data.owner == request.auth.uid
+                                   || classDoc(resource.data.cid).showBoard == true);
+      allow list: if signedIn() && (resource.data.owner == request.auth.uid
+                                    || classDoc(resource.data.cid).showBoard == true);
+      allow create: if signedIn() && okScore() && request.resource.data.plays == 1;
+      allow update: if signedIn() && okScore()
+        && request.resource.data.cid == resource.data.cid
+        && request.resource.data.game == resource.data.game
+        && request.resource.data.h == resource.data.h
+        && request.resource.data.owner == resource.data.owner
+        && request.resource.data.plays == resource.data.plays + 1
+        && request.resource.data.best >= resource.data.best;
+      allow delete: if realUser() && (resource.data.owner == request.auth.uid || isAdmin());
+    }
