@@ -133,6 +133,8 @@
     display:flex;gap:8px;align-items:center;flex-wrap:wrap;
   }
   .dirty{color:var(--gold);font-size:12px;}
+  ul.rules{margin:0;padding-left:20px;font-size:12px;color:var(--text-dim);line-height:1.6;}
+  ul.rules li{margin-bottom:4px;}
   .pick-card{justify-content:flex-start;align-items:center;gap:10px;cursor:pointer;}
   .pick-card.dis{opacity:.45;cursor:not-allowed;}
   .pick-card input[type=checkbox]{width:20px;height:20px;flex-shrink:0;accent-color:var(--magenta);}
@@ -173,6 +175,14 @@
       <h2 data-i18n="plan">方案</h2>
       <div id="planBox"></div>
       <div id="planNotice"></div>
+      <h3 data-i18n="rulesTitle">訂閱規則說明</h3>
+      <ul class="rules">
+        <li data-i18n="rules1"></li>
+        <li data-i18n="rules2"></li>
+        <li data-i18n="rules3"></li>
+        <li data-i18n="rules4"></li>
+        <li data-i18n="rules5"></li>
+      </ul>
     </section>
     <section>
       <h2 data-i18n="banks">我的句庫</h2>
@@ -403,7 +413,12 @@
       pickRoomFull:'句庫已滿（{max} 句），沒有空位了。', pickNoRoom:'最多還能再選 {n} 句。', pickNothing:'請先勾選句子。', pickDup:'已在句庫裡', pickLong:'超過 {max} 字',
       pickEmpty:'沒有符合的句子。', pickPoolCap:'為了節省讀取額度，這次最多載入 {n} 句。可用關鍵字篩選已載入的句子，或重新整理頁面換一批。',
       pickPoolFail:'讀取公開題庫失敗：{m}', packNeedSub:'主題包是訂閱版功能。訂閱後就能把整包句子複製進你的句庫。', packNone:'目前還沒有主題包。',
-      packLoadFail:'讀取主題包失敗：{m}', packCount:'{n} 句', pickCut:'句庫已滿（{max} 句），其餘沒有加入。'
+      packLoadFail:'讀取主題包失敗：{m}', packCount:'{n} 句', pickCut:'句庫已滿（{max} 句），其餘沒有加入。',
+      rulesTitle:'訂閱規則說明', rules1:'免費：1 個句庫，每庫最多 50 句；可用公開題庫、QR code 與注音顯示。',
+      rules2:'訂閱：最多 5 個句庫，每庫最多 80 句；另有學習單 PDF、班級成績冊（最多 3 個班級）與主題包。',
+      rules3:'每句最多 20 個漢字（不含標點）。',
+      rules4:'訂閱到期不會刪除任何資料：第 1 個句庫（50 句以內）的學生連結繼續有效；其他句庫與超過 50 句的句庫，連結暫停。班級成績冊學生無法再回傳新成績，但你仍可查看、匯出與刪除。',
+      rules5:'續訂，或把句庫刪減到 50 句以內，連結就會恢復。'
     },
     cn:{
       brandTag:'教师版', sub:'建立自己的句库，用链接分享给学生玩。', toGame:'← 回到游戏', login:'使用 Google 登录', logout:'退出',
@@ -444,7 +459,12 @@
       pickRoomFull:'句库已满（{max} 句），没有空位了。', pickNoRoom:'最多还能再选 {n} 句。', pickNothing:'请先勾选句子。', pickDup:'已在句库里', pickLong:'超过 {max} 字',
       pickEmpty:'没有符合的句子。', pickPoolCap:'为了节省读取额度，这次最多加载 {n} 句。可用关键字筛选已加载的句子，或刷新页面换一批。',
       pickPoolFail:'读取公开题库失败：{m}', packNeedSub:'主题包是订阅版功能。订阅后就能把整包句子复制进你的句库。', packNone:'目前还没有主题包。',
-      packLoadFail:'读取主题包失败：{m}', packCount:'{n} 句', pickCut:'句库已满（{max} 句），其余没有加入。'
+      packLoadFail:'读取主题包失败：{m}', packCount:'{n} 句', pickCut:'句库已满（{max} 句），其余没有加入。',
+      rulesTitle:'订阅规则说明', rules1:'免费：1 个句库，每库最多 50 句；可用公开题库、QR code 与注音显示。',
+      rules2:'订阅：最多 5 个句库，每库最多 80 句；另有学习单 PDF、班级成绩册（最多 3 个班级）与主题包。',
+      rules3:'每句最多 20 个汉字（不含标点）。',
+      rules4:'订阅到期不会删除任何数据：第 1 个句库（50 句以内）的学生链接继续有效；其他句库与超过 50 句的句库，链接暂停。班级成绩册学生无法再回传新成绩，但你仍可查看、导出与删除。',
+      rules5:'续订，或把句库删减到 50 句以内，链接就会恢复。'
     },
     es:{
       brandTag:'Profesores', sub:'Crea tu propio banco de frases y compártelo con tus alumnos mediante un enlace.', toGame:'← Volver al juego',
@@ -486,7 +506,12 @@
       pickRoomFull:'El banco está lleno ({max} frases): no hay espacio.', pickNoRoom:'Solo caben {n} frases más.', pickNothing:'Marca primero alguna frase.', pickDup:'Ya está en el banco', pickLong:'Más de {max} caracteres',
       pickEmpty:'No hay frases que coincidan.', pickPoolCap:'Para ahorrar lecturas, esta vez se cargan como máximo {n} frases. Filtra las ya cargadas por palabra o recarga la página para ver otras.',
       pickPoolFail:'Error al leer el banco público: {m}', packNeedSub:'Los paquetes temáticos son una función de la suscripción. Al suscribirte puedes copiar un paquete entero a tu banco.', packNone:'Todavía no hay paquetes temáticos.',
-      packLoadFail:'Error al leer los paquetes: {m}', packCount:'{n} frases', pickCut:'El banco está lleno ({max} frases): el resto no se añadió.'
+      packLoadFail:'Error al leer los paquetes: {m}', packCount:'{n} frases', pickCut:'El banco está lleno ({max} frases): el resto no se añadió.',
+      rulesTitle:'Reglas de la suscripción', rules1:'Gratis: 1 banco, hasta 50 frases por banco; incluye el banco público, el código QR y la visualización de zhuyin.',
+      rules2:'Suscripción: hasta 5 bancos, hasta 80 frases por banco; además ficha en PDF, libro de notas de clase (hasta 3 clases) y paquetes temáticos.',
+      rules3:'Máximo 20 caracteres chinos por frase (sin puntuación).',
+      rules4:'Al vencer la suscripción no se borra nada: el enlace del banco 1 (hasta 50 frases) sigue funcionando; los demás bancos, y los que superan 50 frases, quedan en pausa. En el libro de notas los alumnos ya no pueden enviar resultados nuevos, pero tú puedes verlos, exportarlos y borrarlos.',
+      rules5:'Si renuevas, o reduces el banco a 50 frases o menos, los enlaces vuelven a funcionar.'
     },
     en:{
       brandTag:'Teachers', sub:'Build your own sentence bank and share it with students via a link.', toGame:'← Back to game',
@@ -528,7 +553,12 @@
       pickRoomFull:'The bank is full ({max} sentences): no room left.', pickNoRoom:'Only {n} more sentences fit.', pickNothing:'Tick some sentences first.', pickDup:'Already in the bank', pickLong:'Over {max} characters',
       pickEmpty:'No matching sentences.', pickPoolCap:'To save read quota, at most {n} sentences are loaded this time. Filter the loaded ones by keyword, or reload the page for a different batch.',
       pickPoolFail:'Could not read the public pool: {m}', packNeedSub:'Theme packs are a subscription feature. Subscribe to copy a whole pack into your bank.', packNone:'There are no theme packs yet.',
-      packLoadFail:'Could not read theme packs: {m}', packCount:'{n} sentences', pickCut:'The bank is full ({max} sentences): the rest were not added.'
+      packLoadFail:'Could not read theme packs: {m}', packCount:'{n} sentences', pickCut:'The bank is full ({max} sentences): the rest were not added.',
+      rulesTitle:'Subscription rules', rules1:'Free: 1 bank, up to 50 sentences per bank; includes the public pool, QR codes and zhuyin display.',
+      rules2:'Subscriber: up to 5 banks, up to 80 sentences per bank; plus worksheet PDFs, the class gradebook (up to 3 classes) and theme packs.',
+      rules3:'Up to 20 Chinese characters per sentence (punctuation not counted).',
+      rules4:'When a subscription ends nothing is deleted: the link of bank 1 (up to 50 sentences) keeps working; other banks, and banks over 50 sentences, are paused. In the gradebook students can no longer send new results, but you can still view, export and delete them.',
+      rules5:'Renew, or trim the bank to 50 sentences or fewer, and the links work again.'
     }
   };
   let LANG = 'zh';
@@ -1781,9 +1811,6 @@
     b.addEventListener('click', ()=>{ LANG = b.dataset.l; try{ localStorage.setItem('correTeacherLang', LANG); }catch(e){} applyLang(); });
   });
   applyLang();
-
-  // 給測試用
-  window.__teacher = { get ED(){ return ED; }, makeTokens, countHan, makeWorksheet, buildPdf, qrCanvas, ZY, get CLASSES(){ return CLASSES; }, get SCORES(){ return SCORES; } };
 })();
 </script>
 </body>
