@@ -321,6 +321,7 @@
     white-space:nowrap;
     z-index:2;
   }
+  @supports (translate: 0){ .coin{ will-change:translate; } }
   .coin.pop-good{ animation:popGood .3s ease forwards; }
   .coin.pop-bad{ animation:popBad .35s ease forwards; }
   @keyframes popGood{ to{ transform: translateY(-50%) scale(1.7); opacity:0; box-shadow:0 0 30px rgba(57,255,136,0.9); } }
@@ -583,6 +584,30 @@
 
 <script>
 (function(){
+  // ================= 除錯／實驗開關（網址後面加參數，一般玩家不會用到） =================
+  //   ?debug=1    畫面下方顯示音訊狀態、FPS，以及每一次卡頓（>70ms）當下發生了什麼事
+  //   ?nospeech=1 關掉所有語音（用來確認卡頓是不是語音造成的）
+  //   ?nomusic=1  關掉背景音樂（用來確認卡頓是不是音樂造成的）
+  const QS = new URLSearchParams(location.search);
+  const DEBUG = QS.has('debug');
+  const NO_SPEECH = QS.has('nospeech');
+  const NO_MUSIC = QS.has('nomusic');
+  const dbgLog = [];
+  function dbg(label){
+    if(!DEBUG) return;
+    dbgLog.push([performance.now(), label]);
+    if(dbgLog.length > 300) dbgLog.shift();
+  }
+  // 量一段同步程式花了多久（超過 8ms 就記下來）——直接看出是哪一個呼叫卡住主執行緒
+  function timed(label, fn){
+    if(!DEBUG) return fn();
+    const a = performance.now();
+    const r = fn();
+    const d = performance.now() - a;
+    if(d > 8) dbg(label + ' ' + Math.round(d) + 'ms');
+    return r;
+  }
+
   // ================= FIREBASE SETUP =================
   const firebaseConfig = {
   apiKey: "AIzaSyA0jxyA3ZqWcFfsN1nu5Zol33QSxwrgq68",
@@ -749,7 +774,7 @@
   //  - 實際播放失敗（沒開始、或回報「語音不可用」）→ 不能用；之後只要又成功念出一次就恢復
   let speechState = 'unknown';   // 'unknown' | 'ok' | 'none'
   function speechUsable(){
-    if(!('speechSynthesis' in window)) return false;
+    if(NO_SPEECH || !('speechSynthesis' in window)) return false;
     loadVoices();
     if(voicesList.length > 0 && !voicesList.some(isMandarinVoice)) return false;
     return speechState !== 'none';
@@ -766,9 +791,10 @@
   let speakStartTimer = null;
   // showIndicator：是 Boss 的整句朗讀時，讓 🔊 跟著「真的在播放」跳動
   function speak(text, interrupt, showIndicator){
-    if(!('speechSynthesis' in window) || !text) return;
+    if(NO_SPEECH || !('speechSynthesis' in window) || !text) return;
     try{
       const mySeq = ++speakSeq;
+      dbg('speak:' + text.slice(0,4));
       bossBannerEl.classList.remove('speaking');
       const doSpeak = ()=>{
         if(mySeq !== speakSeq) return;   // 等待的這一小段時間裡又有更新的語音，這一個就不念了
@@ -780,6 +806,7 @@
         let started = false;
         const restore = ()=>{ if(mySeq === speakSeq){ duckMusic(false); ensureMusicRunning(); } };
         u.onstart = ()=>{
+          dbg('speech-start');
           started = true;
           speechState = 'ok';
           if(showIndicator && mySeq === speakSeq) bossBannerEl.classList.add('speaking');
@@ -793,7 +820,7 @@
         };
         clearTimeout(duckRestoreTimer);
         duckRestoreTimer = setTimeout(restore, Math.max(1100, text.length*280)); // fallback in case onend never fires
-        speechSynthesis.speak(u);
+        timed('speechSynthesis.speak()', ()=> speechSynthesis.speak(u));
         // 還沒確認過語音能用時：2.5 秒內都沒開始播，就當作沒語音
         if(speechState !== 'ok'){
           clearTimeout(speakStartTimer);
@@ -805,7 +832,7 @@
       duckMusic(true);
       // 正在念的時候又要念新的：先取消，等一下下再念（有些手機瀏覽器 cancel 後馬上 speak 會被吞掉）
       if(interrupt !== false && (speechSynthesis.speaking || speechSynthesis.pending)){
-        speechSynthesis.cancel();
+        timed('speechSynthesis.cancel()', ()=> speechSynthesis.cancel());
         setTimeout(doSpeak, 60);
       } else {
         doSpeak();
@@ -814,9 +841,16 @@
   }
 
   // ================= BACKGROUND MUSIC (synthesized, ducks under voice) =================
-  const MUSIC_VOL = 0.05;
-  const MUSIC_VOL_DUCK = 0.006;
-  let musicOn = true;
+  // 手機（觸控裝置）的喇叭放不出 200Hz 以下的低音，原本的音樂幾乎全是低音、琶音又很小聲（實測 200Hz 以上
+  // 只有約 -42 dBFS，比音效小 17dB 以上），所以手機版改用「低音整體上移一個八度、琶音放大、整體加大」的混音。
+  // 桌機維持原本的混音不變。
+  const IS_TOUCH = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  const MIX = IS_TOUCH
+    ? { vol:0.10,  duck:0.025, padF:110, cut:900, padGain:0.45, lfo:450, arp:0.35 }
+    : { vol:0.05,  duck:0.006, padF:55,  cut:420, padGain:0.55, lfo:260, arp:0.10 };
+  const MUSIC_VOL = MIX.vol;
+  const MUSIC_VOL_DUCK = MIX.duck;
+  let musicOn = !NO_MUSIC;
   let musicStarted = false;
   let musicGain = null;
   let musicNodes = [];
@@ -830,18 +864,20 @@
     musicGain = ctx.createGain();
     musicGain.gain.value = 0;
     musicGain.connect(ctx.destination);
+    // 淡入：先明確固定起點再漸變（部分 Safari 對「沒有起點的漸變」處理不一致）
+    musicGain.gain.setValueAtTime(0, ctx.currentTime);
     musicGain.gain.linearRampToValueAtTime(MUSIC_VOL, ctx.currentTime + 2.2);
 
     // low detuned pad through a slow-sweeping filter
-    const pad1 = ctx.createOscillator(); pad1.type = 'sawtooth'; pad1.frequency.value = 55;
-    const pad2 = ctx.createOscillator(); pad2.type = 'sawtooth'; pad2.frequency.value = 55.6;
-    const padFilter = ctx.createBiquadFilter(); padFilter.type = 'lowpass'; padFilter.frequency.value = 420; padFilter.Q.value = 4;
-    const padGain = ctx.createGain(); padGain.gain.value = 0.55;
+    const pad1 = ctx.createOscillator(); pad1.type = 'sawtooth'; pad1.frequency.value = MIX.padF;
+    const pad2 = ctx.createOscillator(); pad2.type = 'sawtooth'; pad2.frequency.value = MIX.padF * 1.0109;
+    const padFilter = ctx.createBiquadFilter(); padFilter.type = 'lowpass'; padFilter.frequency.value = MIX.cut; padFilter.Q.value = 4;
+    const padGain = ctx.createGain(); padGain.gain.value = MIX.padGain;
     pad1.connect(padFilter); pad2.connect(padFilter); padFilter.connect(padGain); padGain.connect(musicGain);
     pad1.start(); pad2.start();
 
     const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.055;
-    const lfoGain = ctx.createGain(); lfoGain.gain.value = 260;
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = MIX.lfo;
     lfo.connect(lfoGain); lfoGain.connect(padFilter.frequency); lfo.start();
 
     musicNodes.push(pad1, pad2, lfo);
@@ -851,16 +887,18 @@
     let step = 0;
     musicArpInterval = setInterval(()=>{
       if(!musicOn || !musicStarted || !musicGain || paused) return;
-      const freq = scale[step % scale.length] * ((step % 8) < 4 ? 1 : 2);
-      step++;
-      const o = ctx.createOscillator(); o.type = 'square';
-      const g = ctx.createGain(); g.gain.value = 0.0001;
-      o.frequency.value = freq;
-      o.connect(g); g.connect(musicGain);
-      o.start();
-      g.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
-      o.stop(ctx.currentTime + 0.2);
+      timed('music-note', ()=>{
+        const freq = scale[step % scale.length] * ((step % 8) < 4 ? 1 : 2);
+        step++;
+        const o = ctx.createOscillator(); o.type = 'square';
+        const g = ctx.createGain(); g.gain.value = 0.0001;
+        o.frequency.value = freq;
+        o.connect(g); g.connect(musicGain);
+        o.start();
+        g.gain.linearRampToValueAtTime(MIX.arp, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+        o.stop(ctx.currentTime + 0.2);
+      });
     }, 260);
   }
 
@@ -891,14 +929,15 @@
   function duckMusic(down){
     if(!musicGain || !actx) return;
     const target = down ? MUSIC_VOL_DUCK : (musicOn ? MUSIC_VOL : 0);
+    // setTargetAtTime 不需要知道目前音量也能平順地往目標靠近，各家瀏覽器行為一致
     musicGain.gain.cancelScheduledValues(actx.currentTime);
-    musicGain.gain.linearRampToValueAtTime(target, actx.currentTime + 0.15);
+    musicGain.gain.setTargetAtTime(target, actx.currentTime, 0.05);
   }
 
   function setMusicVolume(){
     if(!musicGain || !actx) return;
     musicGain.gain.cancelScheduledValues(actx.currentTime);
-    musicGain.gain.linearRampToValueAtTime(musicOn ? MUSIC_VOL : 0, actx.currentTime + 0.25);
+    musicGain.gain.setTargetAtTime(musicOn ? MUSIC_VOL : 0, actx.currentTime, 0.08);
   }
 
   function toggleMusic(){
@@ -1203,6 +1242,7 @@
 
   function loadSentence(excludeId){
     sentence = pickNextSentence(excludeId);
+    dbg('new-sentence');
     usedIds.add(sentence.id);
     // 還沒玩過的句子快用完了，就在背景再抽下一批
     if(usingCloud && !noMoreCloud && SENTENCES.filter(s=>!usedIds.has(s.id)).length <= REFILL_WHEN_LEFT){
@@ -1281,6 +1321,7 @@
   }
 
   function spawnWave(){
+    dbg('wave');
     measure();
     const tokens = getTokens(sentence);
     if(targetIndex >= tokens.length) return;
@@ -1341,10 +1382,18 @@
     el.style.width = size.w + 'px';
     if(size.fontPx !== 23) el.style.fontSize = size.fontPx + 'px';
     el.textContent = text;
-    el.style.left = trackW + 'px';
+    if(USE_TRANSLATE){ el.style.left = '0px'; el.style.translate = trackW + 'px 0'; }
+    else { el.style.left = trackW + 'px'; }
     el.style.top = laneY[laneIdx] + '%';
     trackEl.appendChild(el);
     coins.push({ el, x: trackW, lane: laneIdx, text, resolved:false, width: size.w });
+  }
+  // 金幣每一幀都要橫向移動。改用 translate（交給 GPU 合成）而不是 left（每一幀都重新排版＋重繪），
+  // 手機上比較不吃力。translate 與 pop 動畫用的 transform 互不干擾；不支援的舊瀏覽器退回 left。
+  const USE_TRANSLATE = !!(window.CSS && CSS.supports && CSS.supports('translate', '1px 0'));
+  function placeCoin(c){
+    if(USE_TRANSLATE) c.el.style.translate = c.x + 'px 0';
+    else c.el.style.left = c.x + 'px';
   }
 
   function floatText(x,y,txt,color){
@@ -1365,6 +1414,7 @@
 
   function resolveCoin(coin){
     coin.resolved = true;
+    dbg('eat:' + coin.text);
     const tokens = getTokens(sentence);
     speak(coin.text);
 
@@ -1456,6 +1506,7 @@
   // ================= LOOP =================
   function loop(t){
     if(!running) return;
+    const frameStart = DEBUG ? performance.now() : 0;
     const dt = Math.min(0.05,(t-lastTime)/1000);
     lastTime = t;
 
@@ -1477,7 +1528,7 @@
         continue;
       }
       c.x -= speed*dt;
-      c.el.style.left = c.x + 'px';
+      placeCoin(c);
       const coinY = laneY[c.lane];
       const cw = c.width || 60;
       const cx = c.x + cw/2;            // 金幣的中心點（c.x 是左邊緣），寬金幣才不會太早被吃到
@@ -1493,6 +1544,7 @@
         coins.splice(i,1);
       }
     }
+    if(DEBUG){ const d = performance.now() - frameStart; if(d > 12) dbg('loop ' + Math.round(d) + 'ms'); }
     rafId = requestAnimationFrame(loop);
   }
 
@@ -1589,7 +1641,7 @@
   });
   pinyinToggle.classList.add('on');
 
-  musicToggleEl.classList.add('on');
+  musicToggleEl.classList.toggle('on', musicOn);
   musicToggleEl.addEventListener('click', toggleMusic);
 
   // ---- setup screen toggles ----
@@ -1658,6 +1710,42 @@
   const startBtn = document.getElementById('startBtn');
   startBtn.addEventListener('click', startGame);
   document.getElementById('restartBtn').addEventListener('click', startGame);
+
+  // ================= 除錯面板（?debug=1 才會出現） =================
+  function initDebugHud(){
+    if(!DEBUG) return;
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99;background:rgba(0,0,0,.85);color:#9ff;' +
+      'font:10px/1.35 monospace;padding:4px 6px;pointer-events:none;white-space:pre-wrap;max-height:36vh;overflow:hidden;';
+    document.body.appendChild(el);
+    const lags = [];
+    let last = performance.now(), worst = 0, frames = 0, winStart = last, lastShow = 0;
+    const t0 = last;
+    (function mon(t){
+      const d = t - last;
+      if(d > 70 && d < 3000 && !document.hidden){
+        const evs = dbgLog.filter(e => e[0] >= last - 25 && e[0] <= t).map(e => e[1]);
+        lags.push(((t - t0)/1000).toFixed(1) + 's  ' + Math.round(d) + 'ms  <- ' + (evs.join(', ') || '(沒有記錄到事件)'));
+        if(lags.length > 7) lags.shift();
+        if(d > worst) worst = d;
+      }
+      last = t; frames++;
+      if(t - lastShow > 400){
+        const fps = Math.round(frames * 1000 / (t - winStart));
+        frames = 0; winStart = t; lastShow = t;
+        const speaking = ('speechSynthesis' in window) ? speechSynthesis.speaking : 'n/a';
+        el.textContent =
+          'audio:' + (actx ? actx.state : '-') +
+          '  gain:' + (musicGain ? musicGain.gain.value.toFixed(3) : '-') +
+          '  music:' + (musicOn ? 'on' : 'off') + (IS_TOUCH ? '(touch mix)' : '') +
+          '  speech:' + speechState + '  speaking:' + speaking +
+          '  fps:' + fps + '  worst:' + Math.round(worst) + 'ms\n' +
+          (lags.length ? lags.join('\n') : '(尚無卡頓)');
+      }
+      requestAnimationFrame(mon);
+    })(performance.now());
+  }
+  initDebugHud();
 
   // initial paint
   measure();
