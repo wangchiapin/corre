@@ -1,0 +1,68 @@
+    // ===================================================================
+    // ===== 跑吧！漢字 教師句庫（新增；貼在 shared_configs 規則之後、最後兩個 } 之前）=====
+    // 依賴既有函式：signedIn() / realUser() / isAdmin() / subActive(uid)
+    // 資料：
+    //   teacher_banks/{uid}  → { slots: { "0": sid, "1": sid, ... "4": sid }, updatedAt }
+    //   shared_banks/{sid}   → { owner, slot(0-4), name, speed, script, boss, sentences[], pro, updatedAt }
+    // 規則：
+    //   - 位置 0 = 免費庫（最多 50 句）；位置 1–4 = 訂閱庫；任何庫超過 50 句也算訂閱
+    //   - 每庫最多 80 句；訂閱到期後 pro 庫無法被學生讀取，也無法被老師修改（只能刪除）
+    //   - 每句的字數（20 字）規則檢查不到，由編輯頁與遊戲載入時把關
+    // ===================================================================
+
+    // 老師的庫位置索引：決定這位老師有哪些庫（最多 5 個位置）
+    function okSlotKeys(s) {
+      return s is map && s.keys().hasOnly(['0','1','2','3','4']);
+    }
+
+    match /teacher_banks/{uid} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create: if realUser() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['slots','updatedAt'])
+        && request.resource.data.keys().hasAll(['slots','updatedAt'])
+        && okSlotKeys(request.resource.data.slots)
+        && request.resource.data.updatedAt == request.time
+        && (subActive(uid) || !request.resource.data.slots.keys().hasAny(['1','2','3','4']));
+      // 更新：訂閱中可任意；已到期只能「不新增位置」（能移除、不能增加）
+      allow update: if realUser() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['slots','updatedAt'])
+        && request.resource.data.keys().hasAll(['slots','updatedAt'])
+        && okSlotKeys(request.resource.data.slots)
+        && request.resource.data.updatedAt == request.time
+        && (subActive(uid) || request.resource.data.slots.keys().hasOnly(resource.data.slots.keys()));
+    }
+
+    match /shared_banks/{id} {
+      function okBank() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['owner','slot','name','speed','script','boss','sentences','pro','updatedAt'])
+          && d.keys().hasAll(['owner','slot','name','speed','script','boss','sentences','pro','updatedAt'])
+          && d.owner == request.auth.uid
+          && d.slot is int && d.slot >= 0 && d.slot <= 4
+          && d.name is string && d.name.size() >= 1 && d.name.size() <= 40
+          && d.speed in ['facil','normal','dificil']
+          && d.script in ['trad','simp']
+          && d.boss is bool
+          && d.sentences is list && d.sentences.size() >= 1 && d.sentences.size() <= 80
+          && d.pro is bool
+          && d.pro == (d.slot > 0 || d.sentences.size() > 50)
+          && (!d.pro || subActive(request.auth.uid))
+          && d.updatedAt == request.time;
+      }
+
+      // 學生（匿名登入）知道連結碼才讀得到；老師本人永遠讀得到自己的庫；
+      // 訂閱庫在老師訂閱到期後對學生失效
+      allow get: if signedIn() && (resource.data.owner == request.auth.uid
+                                   || !resource.data.pro
+                                   || subActive(resource.data.owner));
+      allow list: if false;
+
+      // 建立：連結碼格式正確，且這個碼已登記在自己的 teacher_banks 位置上（同一個批次寫入）
+      allow create: if realUser() && id.matches('^[a-z0-9]{8,32}$') && okBank()
+        && getAfter(/databases/$(database)/documents/teacher_banks/$(request.auth.uid))
+             .data.slots[string(request.resource.data.slot)] == id;
+      // 更新：本人，位置不可改
+      allow update: if realUser() && resource.data.owner == request.auth.uid
+        && request.resource.data.slot == resource.data.slot && okBank();
+      allow delete: if realUser() && (resource.data.owner == request.auth.uid || isAdmin());
+    }

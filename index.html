@@ -423,6 +423,13 @@
     text-decoration:underline; font-size:13px; cursor:pointer;
     margin-top:2px; font-family:'Work Sans'; padding:4px;
   }
+  [hidden]{ display:none !important; }
+  .bank-tag{
+    font-family:'Noto Sans TC','Work Sans',sans-serif; font-weight:700; font-size:15px; color:var(--magenta);
+    border:1.5px solid var(--magenta); border-radius:20px; padding:5px 14px; max-width:300px;
+    background:rgba(255,47,208,0.10); box-shadow:0 0 10px rgba(255,47,208,0.3); word-break:break-word;
+  }
+  .bank-err{ color:var(--danger) !important; font-size:14px; max-width:300px; }
   .stat-row{ display:flex; gap:18px; font-family:'Orbitron',sans-serif; margin-top:2px; }
   .stat-row div{ font-size:11px; color:var(--text-dim); letter-spacing:.5px; }
   .stat-row b{ display:block; font-size:22px; color:var(--cyan); text-shadow:0 0 8px var(--cyan); }
@@ -513,6 +520,7 @@
   <!-- START / SETUP -->
   <div class="overlay" id="startOverlay">
     <h1>跑吧！漢字</h1>
+    <div class="bank-tag" id="bankTag" hidden></div>
     <p class="subtitle" data-i18n="subtitle">¡Corre y come las palabras en el orden correcto de la frase! Cada cierto tiempo aparece un nivel jefe: escucha la frase en vez de leerla.</p>
     <p class="drag-hint" data-i18n="dragHint">👆 Arrastra el dedo por la pantalla para moverte. En computadora: flechas o WASD, o arrastra con el ratón.</p>
 
@@ -546,8 +554,11 @@
       </div>
     </div>
 
+    <p class="bank-err" id="bankErr" hidden></p>
     <button class="primary-btn" id="startBtn" data-i18n="start">Empezar</button>
     <button class="link-btn" id="showLbBtn">🏆 <span data-i18n="viewLb">Ver clasificación</span></button>
+    <a class="link-btn" id="teacherLink" href="teacher/">👩‍🏫 <span data-i18n="teacher">Versión para profesores</span></a>
+    <a class="link-btn" id="homeLink" href="./" hidden><span data-i18n="goHome">Ir al juego normal</span></a>
   </div>
 
   <!-- GAME OVER -->
@@ -557,8 +568,10 @@
       <div><b id="finalScore">0</b><span data-i18n="points">Puntos</span></div>
       <div><b id="finalSentences">0</b><span data-i18n="sentences">Frases</span></div>
     </div>
-    <div class="lb-heading">🏆 <span data-i18n="best">Mejores puntuaciones</span></div>
+    <div class="lb-heading" id="lbHeadingOver">🏆 <span data-i18n="best">Mejores puntuaciones</span></div>
     <div class="lb-list" id="lbListOver"><p class="lb-msg">Cargando…</p></div>
+    <p id="noRecordMsg" hidden data-i18n="noRecord">Este resultado no se guarda en la clasificación. Descarga la imagen para compartirlo.</p>
+    <button class="primary-btn" id="dlBtn" hidden>⬇ <span data-i18n="download">Descargar imagen</span></button>
     <button class="primary-btn" id="restartBtn" data-i18n="again">Jugar de nuevo</button>
   </div>
 
@@ -671,7 +684,11 @@
       pause:'Pausa', pauseTitle:'Pausa (P)', resume:'Continuar', quit:'Terminar partida', lbTitle:'Clasificación', close:'Cerrar',
       loading:'Cargando…', noScores:'Todavía no hay puntuaciones. ¡Sé el primero!',
       noFirebase:'Configura Firebase en el código para activar la clasificación en línea.', bossDefeated:'+1 ♥ ¡Jefe derrotado!', defaultName:'Jugador',
-      replay:'Escuchar otra vez', bossNoVoice:'Sin audio: mira el pinyin'
+      replay:'Escuchar otra vez', bossNoVoice:'Sin audio: mira el pinyin',
+      teacher:'Versión para profesores', goHome:'Ir al juego normal', preview:'Vista previa',
+      noRecord:'Este resultado no se guarda en la clasificación. Descarga la imagen para compartirlo.', download:'Descargar imagen',
+      linkUnavailable:'Este enlace no está disponible (puede haber sido eliminado o la suscripción del profesor venció).',
+      linkError:'No se pudo cargar el banco de frases. Revisa tu conexión e inténtalo de nuevo.', speedLbl:'Velocidad', charsLbl:'Caracteres'
     },
     en:{
       order:'Eat them in order', boss:'Listen carefully!', toast:'Follow the order of the sentence!', excellent:'Excellent!',
@@ -683,7 +700,11 @@
       pause:'Pause', pauseTitle:'Pause (P)', resume:'Resume', quit:'End game', lbTitle:'Leaderboard', close:'Close',
       loading:'Loading…', noScores:'No scores yet. Be the first!',
       noFirebase:'Set up Firebase in the code to enable the online leaderboard.', bossDefeated:'+1 ♥ Boss defeated!', defaultName:'Player',
-      replay:'Listen again', bossNoVoice:'No audio: follow the pinyin'
+      replay:'Listen again', bossNoVoice:'No audio: follow the pinyin',
+      teacher:'For teachers', goHome:'Go to the regular game', preview:'Preview',
+      noRecord:'This result is not saved on the leaderboard. Download the image to share it.', download:'Download image',
+      linkUnavailable:'This link is not available (it may have been removed, or the teacher\'s subscription has expired).',
+      linkError:'Could not load the sentence bank. Check your connection and try again.', speedLbl:'Speed', charsLbl:'Characters'
     }
   };
   let lang = 'es';
@@ -700,6 +721,7 @@
       if(el.tagName === 'BUTTON') el.setAttribute('aria-label', el.title);
     });
     document.title = '跑吧！漢字 · ' + (lang === 'en' ? 'A Few Minutes a Day' : 'Cada día unos minutos');
+    if(bankErrKey){ document.getElementById('bankErr').textContent = t(bankErrKey); }
   }
 
   const diffLabel = k => ({ facil:t('facil'), normal:t('normal'), dificil:t('dificil') }[k] || '');
@@ -1098,6 +1120,58 @@
     ALL_WORDS_SIMP = Array.from(simpSet);
   }
 
+  // ================= 教師版（?bank=連結碼）：讀老師在中心專案建立的句庫 =================
+  // 一般玩家完全不受影響；只有網址帶 ?bank= 才會載入中心專案連線。
+  const BANK_ID = String(QS.get('bank') || '').toLowerCase();
+  const TEACHER_MODE = /^[a-z0-9]{8,32}$/.test(BANK_ID);
+  const PREVIEW = TEACHER_MODE && QS.has('preview');
+  const MAX_BANK_CHARS = 20;      // 每句最多漢字數（編輯頁已限制，這裡再把關一次）
+  let bankName = '';
+  let bankBoss = true;
+  let bankErrKey = '';
+  const CENTRAL_CONFIG = {
+    apiKey: "AIzaSyCHZz8Hh7m45bJfZC9aK_f_NvUD-aUeuzU",
+    authDomain: "subscription-48d3c.firebaseapp.com",
+    projectId: "subscription-48d3c",
+    storageBucket: "subscription-48d3c.firebasestorage.app",
+    messagingSenderId: "276281656991",
+    appId: "1:276281656991:web:de242ba22373816c3044aa"
+  };
+  const HAN_RE = /[㐀-鿿]/;
+  const countHan = arr => Array.from((arr || []).join('')).filter(c => HAN_RE.test(c)).length;
+  function loadScriptOnce(src){
+    return new Promise((resolve, reject)=>{
+      const el = document.createElement('script');
+      el.src = src; el.onload = resolve; el.onerror = () => reject(new Error('script failed: ' + src));
+      document.head.appendChild(el);
+    });
+  }
+  async function fetchTeacherBank(){
+    if(!window.firebase) throw { code: 'unavailable' };
+    await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');
+    const app = firebase.initializeApp(CENTRAL_CONFIG, 'central');
+    const auth = app.auth();
+    await auth.authStateReady?.();
+    if(!auth.currentUser) await auth.signInAnonymously();
+    const snap = await app.firestore().collection('shared_banks').doc(BANK_ID).get();
+    if(!snap.exists) throw { code: 'not-found' };
+    return snap.data();
+  }
+  function applyTeacherBank(d){
+    const rows = (Array.isArray(d.sentences) ? d.sentences : []).slice(0, 80)
+      .map((s, i) => Object.assign({ id: 'bank-' + i }, s))
+      .filter(isValidSentence)
+      .filter(s => { const n = countHan(s.trad); return n >= 1 && n <= MAX_BANK_CHARS; });
+    if(rows.length === 0) throw { code: 'not-found' };
+    SENTENCES = rows;
+    usingCloud = false; noMoreCloud = true;
+    rebuildWordPools();
+    bankName = String(d.name || '').slice(0, 40);
+    bankBoss = d.boss !== false;
+    diffKey = (d.speed === 'facil' || d.speed === 'dificil') ? d.speed : 'normal';
+    useSimplified = d.script === 'simp';
+  }
+
   const DIFF = {
     facil:   { speed:95,  interval:2000, cap:220, inc:4 },
     normal:  { speed:135, interval:1750, cap:300, inc:6 },
@@ -1280,7 +1354,7 @@
     targetIndex = 0;
     targetMissWaves = 0;
     bag = [];
-    isBoss = sentencesDone > 0 && sentencesDone % BOSS_EVERY === 0;
+    isBoss = bankBoss && sentencesDone > 0 && sentencesDone % BOSS_EVERY === 0;
     bossTimer = 0;
     bannerWrapEl.classList.toggle('boss-mode', isBoss);
     bossBannerEl.style.display = isBoss ? 'flex' : 'none';
@@ -1525,11 +1599,57 @@
     finalScoreEl.textContent = score;
     finalSentencesEl.textContent = sentencesDone;
     overOverlay.classList.remove('hidden');
+    if(TEACHER_MODE){
+      // 教師版：不上傳排行榜，只提供成績圖片下載
+      document.getElementById('lbHeadingOver').hidden = true;
+      document.getElementById('lbListOver').hidden = true;
+      document.getElementById('noRecordMsg').hidden = false;
+      document.getElementById('dlBtn').hidden = false;
+      return;
+    }
     // 先等分數存好，再讀一次排行榜（以前會讀兩次，第一次還沒有這局的分數）
     const lbEl = document.getElementById('lbListOver');
     lbEl.innerHTML = '<p class="lb-msg">' + t('loading') + '</p>';
     submitScore({ name: playerName, score, sentences: sentencesDone, difficulty: diffKey, script: useSimplified?'simp':'trad' })
       .then(()=> refreshLeaderboard(lbEl));
+  }
+
+  // 成績圖片（教師版）：畫在 canvas 上，直接下載 PNG
+  function downloadResult(){
+    const W = 720, H = 900, cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const x = cv.getContext('2d');
+    const F = '"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif';
+    x.fillStyle = '#060911'; x.fillRect(0, 0, W, H);
+    x.strokeStyle = '#00fff2'; x.lineWidth = 3; x.strokeRect(18, 18, W - 36, H - 36);
+    x.strokeStyle = 'rgba(255,47,208,0.6)'; x.lineWidth = 2; x.strokeRect(30, 30, W - 60, H - 60);
+    x.textAlign = 'center';
+    x.shadowColor = '#00fff2'; x.shadowBlur = 18;
+    x.fillStyle = '#00fff2'; x.font = '900 64px ' + F; x.fillText('跑吧！漢字', W / 2, 120);
+    x.shadowBlur = 0;
+    x.fillStyle = '#7fa3ac'; x.font = '26px ' + F; x.fillText('Cada día unos minutos', W / 2, 165);
+    x.fillStyle = '#eafcff'; x.font = '700 46px ' + F;
+    x.fillText(Array.from(playerName || '').slice(0, 16).join(''), W / 2, 260);
+    if(bankName){
+      x.fillStyle = '#ff2fd0'; x.font = '700 30px ' + F;
+      x.fillText(Array.from(bankName).slice(0, 22).join(''), W / 2, 312);
+    }
+    x.shadowColor = '#00fff2'; x.shadowBlur = 24;
+    x.fillStyle = '#00fff2'; x.font = '900 170px ' + F; x.fillText(String(score), W / 2, 500);
+    x.shadowBlur = 0;
+    x.fillStyle = '#7fa3ac'; x.font = '28px ' + F; x.fillText(t('points').toUpperCase(), W / 2, 548);
+    x.fillStyle = '#eafcff'; x.font = '34px ' + F;
+    x.fillText(t('sentences') + ': ' + sentencesDone, W / 2, 640);
+    x.fillText(t('speedLbl') + ': ' + diffLabel(diffKey) + ' · ' + (useSimplified ? '簡體' : '繁體'), W / 2, 700);
+    x.fillStyle = '#7fa3ac'; x.font = '24px ' + F;
+    x.fillText(new Date().toLocaleString(), W / 2, H - 70);
+    cv.toBlob(b=>{
+      if(!b) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b); a.download = 'corre-hanzi-score.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+    }, 'image/png');
   }
 
   // ================= LOOP =================
@@ -1796,13 +1916,48 @@
   resetPlayerPosition();
   renderHearts();
 
-  // load the shared sentence bank before allowing play to start
-  startBtn.disabled = true;
-  startBtn.textContent = t('loadingSent');
-  loadCloudSentences().finally(()=>{
-    startBtn.disabled = false;
-    startBtn.textContent = t('start');
-  });
+  document.getElementById('dlBtn').addEventListener('click', downloadResult);
+
+  // ---- 教師版：載入老師的句庫，鎖定速度／字體，隱藏排行榜 ----
+  function showBankErr(key){
+    bankErrKey = key;
+    const el = document.getElementById('bankErr');
+    el.textContent = t(key); el.hidden = false;
+    startBtn.hidden = true;
+    document.getElementById('homeLink').hidden = false;
+  }
+  function initTeacherMode(){
+    document.getElementById('showLbBtn').hidden = true;
+    document.getElementById('teacherLink').hidden = true;
+    document.getElementById('scriptGroup').parentElement.hidden = true;
+    document.getElementById('diffGroup').parentElement.hidden = true;
+    startBtn.disabled = true;
+    startBtn.textContent = t('loadingSent');
+    fetchTeacherBank().then(d=>{
+      applyTeacherBank(d);
+      const tag = document.getElementById('bankTag');
+      tag.textContent = '📚 ' + bankName + (PREVIEW ? ' · ' + t('preview') : '');
+      tag.hidden = false;
+      startBtn.disabled = false;
+      startBtn.textContent = t('start');
+    }).catch(e=>{
+      console.warn('教師句庫載入失敗', e);
+      const c = e && e.code;
+      showBankErr((c === 'permission-denied' || c === 'not-found') ? 'linkUnavailable' : 'linkError');
+    });
+  }
+
+  if(TEACHER_MODE){
+    initTeacherMode();
+  }else{
+    // load the shared sentence bank before allowing play to start
+    startBtn.disabled = true;
+    startBtn.textContent = t('loadingSent');
+    loadCloudSentences().finally(()=>{
+      startBtn.disabled = false;
+      startBtn.textContent = t('start');
+    });
+  }
 })();
 </script>
 </body>

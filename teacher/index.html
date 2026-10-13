@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>跑吧！漢字 · 教師版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Noto+Sans+TC:wght@500;700;900&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#060911; --panel:rgba(8,14,24,0.94);
+    --cyan:#00fff2; --cyan-dim:rgba(0,255,242,0.35);
+    --magenta:#ff2fd0; --purple:#b537f2; --green:#39ff88; --danger:#ff2f6d; --gold:#ffd54f;
+    --text:#eafcff; --text-dim:#7fa3ac; --line:rgba(0,255,242,0.28);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  [hidden]{display:none !important;}
+  html,body{margin:0;background:#000;}
+  body{font-family:'Work Sans','Noto Sans TC',sans-serif;color:var(--text);}
+  #page{
+    max-width:720px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;
+    border-left:1px solid var(--cyan-dim);border-right:1px solid var(--cyan-dim);
+    box-shadow:0 0 40px rgba(0,255,242,0.12),0 0 90px rgba(255,47,208,0.08);
+    padding-bottom:60px;
+  }
+  #page::before{
+    content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;z-index:0;
+    background-image:repeating-linear-gradient(180deg,rgba(0,255,242,0.03) 0 1px,transparent 1px 3px),
+      radial-gradient(circle at 20% 10%,rgba(181,55,242,0.10) 0,transparent 45%),
+      radial-gradient(circle at 85% 85%,rgba(0,255,242,0.08) 0,transparent 45%);
+  }
+  #page > *{position:relative;z-index:1;}
+
+  header{padding:18px 18px 12px;border-bottom:1px solid var(--line);}
+  .brand{
+    font-family:'Orbitron','Noto Sans TC',sans-serif;font-weight:900;font-size:24px;margin:0;color:var(--cyan);
+    text-shadow:0 0 8px var(--cyan),0 0 22px rgba(0,255,242,0.5),2px 0 var(--magenta);
+  }
+  .brand small{font-size:13px;color:var(--magenta);text-shadow:none;margin-left:6px;font-weight:700;}
+  .sub{margin:6px 0 0;color:var(--text-dim);font-size:13px;}
+  .toprow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+  .langs{display:flex;gap:4px;margin-left:auto;}
+  .langs button{
+    padding:5px 9px;border-radius:6px;border:1.5px solid var(--line);background:rgba(0,255,242,0.04);
+    color:var(--text);font-size:12px;cursor:pointer;font-family:inherit;
+  }
+  .langs button.on{background:rgba(255,47,208,0.18);color:var(--magenta);border-color:var(--magenta);}
+  .who{font-size:12.5px;color:var(--text-dim);word-break:break-all;}
+  .who.ok{color:var(--green);}
+
+  section{padding:16px 18px;border-bottom:1px solid var(--line);}
+  h2{font-family:'Orbitron','Noto Sans TC',sans-serif;font-size:14px;letter-spacing:.5px;color:var(--cyan);margin:0 0 8px;}
+  h3{font-size:13px;color:var(--text);margin:14px 0 4px;}
+  .hint{font-size:12px;color:var(--text-dim);margin:0 0 8px;line-height:1.5;}
+
+  .btn{
+    padding:9px 18px;border-radius:22px;border:1.5px solid var(--cyan);cursor:pointer;
+    background:linear-gradient(90deg,rgba(0,255,242,0.18),rgba(255,47,208,0.18));
+    color:var(--text);font-family:'Orbitron','Noto Sans TC',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.4px;
+    box-shadow:0 0 12px rgba(0,255,242,0.3);
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .btn.ghost{background:transparent;border-color:var(--line);box-shadow:none;color:var(--text-dim);font-family:inherit;font-weight:600;}
+  .btn.danger{border-color:var(--danger);color:var(--danger);background:transparent;box-shadow:none;font-family:inherit;}
+  .btn.small{padding:6px 12px;font-size:12px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center;}
+
+  textarea,input[type=text]{
+    width:100%;font-family:'Noto Sans TC','Work Sans',sans-serif;font-size:15px;color:var(--text);
+    border:1.5px solid var(--line);border-radius:8px;padding:9px 11px;background:rgba(0,255,242,0.04);resize:vertical;
+  }
+  textarea{min-height:48px;}
+  textarea:focus,input[type=text]:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 8px rgba(0,255,242,0.4);}
+  label.lbl{display:block;font-size:11px;color:var(--text-dim);margin:10px 0 4px;font-weight:600;letter-spacing:.4px;font-family:'Orbitron','Noto Sans TC',sans-serif;}
+  .toggle-group{display:flex;gap:6px;}
+  .toggle-btn{
+    flex:1;padding:9px 4px;border-radius:6px;border:1.5px solid var(--line);background:rgba(0,255,242,0.04);
+    font-size:12.5px;font-family:inherit;cursor:pointer;color:var(--text);
+  }
+  .toggle-btn.active{background:rgba(255,47,208,0.18);color:var(--magenta);border-color:var(--magenta);box-shadow:0 0 10px rgba(255,47,208,0.35);}
+
+  .status{font-size:12.5px;color:var(--text-dim);margin-top:8px;min-height:16px;line-height:1.45;}
+  .status.err{color:var(--danger);}
+  .status.ok{color:var(--green);}
+  .notice{
+    margin:0 0 12px;padding:10px 12px;border-radius:8px;font-size:12.5px;line-height:1.5;
+    border:1.5px solid var(--gold);background:rgba(255,213,79,0.08);color:var(--gold);
+  }
+  .notice.err{border-color:var(--danger);background:rgba(255,47,109,0.08);color:#ff9bb5;}
+
+  .badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(0,255,242,0.14);color:var(--cyan);}
+  .badge.pro{background:var(--gold);color:#3b2b00;}
+
+  .bank{
+    border:1.5px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--panel);
+  }
+  .bank.empty{border-style:dashed;}
+  .bank.locked{opacity:.55;}
+  .bank .t{font-weight:700;font-size:15px;}
+  .bank .meta{font-size:12px;color:var(--text-dim);margin-top:3px;}
+  .bank .paused{font-size:12px;color:var(--danger);margin-top:4px;}
+
+  #tokenTable{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+  .token-row,.col-labels{display:grid;grid-template-columns:22px 1fr 1fr 1fr 28px;gap:6px;align-items:center;}
+  .col-labels{font-size:10.5px;color:var(--text-dim);margin-top:10px;}
+  .token-row .idx{font-size:12px;color:var(--text-dim);text-align:center;}
+  .token-row input{font-size:14px;padding:7px 8px;border-radius:6px;border:1.5px solid var(--line);background:rgba(0,255,242,0.04);color:var(--text);width:100%;min-width:0;}
+  .token-row .rm{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);background:transparent;color:var(--danger);cursor:pointer;font-size:13px;}
+
+  .sent-card{
+    border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;margin-top:8px;background:var(--panel);
+    display:flex;justify-content:space-between;gap:10px;align-items:flex-start;
+  }
+  .sent-card .hz{font-weight:700;font-size:16px;}
+  .sent-card .py{font-size:11.5px;color:var(--text-dim);margin-top:2px;}
+  .sent-card .es{font-size:12.5px;color:var(--green);margin-top:3px;}
+  .sent-card .en{font-size:12.5px;color:var(--text-dim);font-style:italic;margin-top:2px;}
+  .sent-card .n{font-size:11px;color:var(--text-dim);margin-top:2px;}
+  .sent-card .acts{display:flex;flex-direction:column;flex-shrink:0;}
+  .sent-card .acts button{background:none;border:none;cursor:pointer;font-size:18px;padding:2px 6px;}
+  .counter{font-family:'Orbitron',sans-serif;font-size:12px;color:var(--cyan);}
+  .counter.warn{color:var(--gold);}
+  .counter.bad{color:var(--danger);}
+  .savebar{
+    position:sticky;bottom:0;z-index:5;padding:10px 18px;background:rgba(6,9,17,0.96);border-top:1px solid var(--line);
+    display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  }
+  .dirty{color:var(--gold);font-size:12px;}
+</style>
+</head>
+<body>
+<div id="page">
+  <header>
+    <p class="brand">跑吧！漢字<small data-i18n="brandTag">教師版</small></p>
+    <p class="sub" data-i18n="sub">建立自己的句庫，用連結分享給學生玩。</p>
+    <div class="toprow">
+      <a class="btn ghost small" id="homeLink" href="../" style="text-decoration:none;" data-i18n="toGame">← 回到遊戲</a>
+      <span class="who" id="who"></span>
+      <button class="btn small" id="loginBtn" data-i18n="login">使用 Google 登入</button>
+      <button class="btn ghost small" id="logoutBtn" hidden data-i18n="logout">登出</button>
+      <div class="langs" id="langs">
+        <button data-l="zh">繁</button><button data-l="cn">简</button><button data-l="es">ES</button><button data-l="en">EN</button>
+      </div>
+    </div>
+    <div class="status" id="authMsg"></div>
+  </header>
+
+  <!-- 未登入 -->
+  <section id="viewOut">
+    <p class="hint" data-i18n="loginHint">請先登入。登入後可以建立句庫，並取得給學生的連結。</p>
+  </section>
+
+  <!-- 我的句庫 -->
+  <div id="viewList" hidden>
+    <section>
+      <h2 data-i18n="plan">方案</h2>
+      <div id="planBox"></div>
+      <div id="planNotice"></div>
+    </section>
+    <section>
+      <h2 data-i18n="banks">我的句庫</h2>
+      <div id="bankList"></div>
+      <div class="status" id="listStatus"></div>
+    </section>
+  </div>
+
+  <!-- 編輯句庫 -->
+  <div id="viewEdit" hidden>
+    <section>
+      <button class="btn ghost small" id="backBtn" data-i18n="back">← 回到我的句庫</button>
+      <div id="editNotice" style="margin-top:12px;"></div>
+      <h2 style="margin-top:12px;" data-i18n="bankSettings">句庫設定</h2>
+      <label class="lbl" data-i18n="bankName">句庫名稱</label>
+      <input type="text" id="bankName" maxlength="40">
+      <label class="lbl" data-i18n="speed">速度</label>
+      <div class="toggle-group" id="speedGroup">
+        <button class="toggle-btn" data-value="facil" data-i18n="facil">容易</button>
+        <button class="toggle-btn" data-value="normal" data-i18n="normal">普通</button>
+        <button class="toggle-btn" data-value="dificil" data-i18n="dificil">困難</button>
+      </div>
+      <label class="lbl" data-i18n="script">字體</label>
+      <div class="toggle-group" id="scriptGroup">
+        <button class="toggle-btn" data-value="trad" data-i18n="trad">繁體</button>
+        <button class="toggle-btn" data-value="simp" data-i18n="simp">簡體</button>
+      </div>
+      <label class="lbl" data-i18n="boss">Boss 關（聽語音）</label>
+      <div class="toggle-group" id="bossGroup">
+        <button class="toggle-btn" data-value="1" data-i18n="on">開</button>
+        <button class="toggle-btn" data-value="0" data-i18n="off">關</button>
+      </div>
+    </section>
+
+    <section>
+      <h2 data-i18n="sec1">① 輸入句子</h2>
+      <p class="hint" id="inputHint"></p>
+      <textarea id="sentInput" placeholder="我 喜歡 吃 蘋果"></textarea>
+      <label class="lbl" data-i18n="esLabel">西班牙文翻譯（必填）</label>
+      <textarea id="esTop" placeholder="Me gusta comer manzanas."></textarea>
+      <label class="lbl" data-i18n="enLabel">英文翻譯（選填）</label>
+      <textarea id="enTop" placeholder="I like eating apples."></textarea>
+      <p class="hint" style="margin-top:6px;" data-i18n="autoHint">翻譯留空會自動翻譯（機器翻譯，請務必檢查）。</p>
+      <div class="row"><button class="btn" id="genBtn" data-i18n="gen">⚙️ 自動產生簡體 / 拼音 / 翻譯</button></div>
+      <div class="status" id="genStatus"></div>
+    </section>
+
+    <section id="previewSection" hidden>
+      <h2 data-i18n="sec2">② 檢查與微調</h2>
+      <p class="hint" data-i18n="checkHint">簡體與拼音是自動轉換的（台灣讀音）。多音字或特殊唸法請自行核對修改。</p>
+      <div class="col-labels"><span></span><span data-i18n="cTrad">繁體</span><span data-i18n="cSimp">簡體</span><span data-i18n="cPy">拼音</span><span></span></div>
+      <div id="tokenTable"></div>
+      <div class="row"><button class="btn ghost small" id="addTokenBtn" data-i18n="addCell">+ 新增一格</button></div>
+      <label class="lbl" data-i18n="esLabel">西班牙文翻譯（必填）</label>
+      <textarea id="esInput"></textarea>
+      <label class="lbl" data-i18n="enLabel">英文翻譯（選填）</label>
+      <textarea id="enInput"></textarea>
+      <div class="row">
+        <button class="btn" id="addSentBtn"></button>
+        <button class="btn ghost" id="cancelEditBtn" hidden data-i18n="cancelEdit">取消編輯</button>
+      </div>
+      <div class="status" id="addStatus"></div>
+    </section>
+
+    <section>
+      <h2 data-i18n="bulk">批次匯入</h2>
+      <p class="hint" data-i18n="bulkHint">一行一句：詞 詞 詞 | 西班牙文 | 英文（用 | 分隔）。沒寫的翻譯會自動翻譯。</p>
+      <textarea id="bulkInput" style="min-height:120px;" placeholder="我 喜歡 吃 蘋果 | Me gusta comer manzanas. | I like eating apples."></textarea>
+      <div class="row">
+        <button class="btn ghost" id="bulkCheckBtn" data-i18n="bulkCheck">檢查並預覽</button>
+        <button class="btn" id="bulkGoBtn" hidden data-i18n="bulkGo">確認加入</button>
+      </div>
+      <div class="status" id="bulkStatus"></div>
+      <div id="bulkPreview"></div>
+    </section>
+
+    <section>
+      <h2><span data-i18n="inBank">句庫內的句子</span> <span class="counter" id="counter"></span></h2>
+      <div id="sentList"></div>
+    </section>
+
+    <div class="savebar">
+      <button class="btn" id="saveBankBtn" data-i18n="saveBank">💾 儲存句庫（上傳）</button>
+      <span class="dirty" id="dirtyMark" hidden data-i18n="unsaved">有尚未上傳的修改</span>
+      <span class="status" id="saveStatus" style="margin:0;"></span>
+    </div>
+  </div>
+</div>
+
+<!-- 繁簡轉換與拼音函式庫（版本固定） -->
+<script src="https://cdn.jsdelivr.net/npm/opencc-js@1.4.1/dist/umd/full.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.20.0/dist/index.js"></script>
+<!-- Firebase (compat SDK)：教師登入、方案、句庫都在中心專案 subscription-48d3c -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+(function(){
+  'use strict';
+
+  // ================= 設定 =================
+  const centralConfig = {
+    apiKey: "AIzaSyCHZz8Hh7m45bJfZC9aK_f_NvUD-aUeuzU",
+    authDomain: "subscription-48d3c.firebaseapp.com",
+    projectId: "subscription-48d3c",
+    storageBucket: "subscription-48d3c.firebasestorage.app",
+    messagingSenderId: "276281656991",
+    appId: "1:276281656991:web:de242ba22373816c3044aa"
+  };
+  const PORTAL_URL = 'https://wangchiapin.github.io/cadadiaunosminutos-share-zone/';
+  const MAX_CHARS = 20;     // 每句最多漢字數（不含標點）
+  const FREE_SENT = 50, PRO_SENT = 80, FREE_SLOTS = 1, PRO_SLOTS = 5;
+
+  // ================= 介面語言（繁／簡／西／英） =================
+  const T = {
+    zh:{
+      brandTag:'教師版', sub:'建立自己的句庫，用連結分享給學生玩。', toGame:'← 回到遊戲', login:'使用 Google 登入', logout:'登出',
+      loginHint:'請先登入。登入後可以建立句庫，並取得給學生的連結。', signedIn:'已登入：{email}',
+      plan:'方案', planFree:'免費', planPro:'訂閱', until:'到期', limitsFree:'免費版：1 個句庫，每庫最多 50 句。',
+      limitsPro:'訂閱版：最多 5 個句庫，每庫最多 80 句。', subscribe:'了解訂閱 →',
+      expiredNotice:'你的訂閱已到期。第 1 個句庫（50 句以內）仍可使用；其他句庫，以及超過 50 句的庫，學生連結已暫停。請續訂；或把第 1 個句庫刪減到 50 句以內，連結就會恢復。',
+      soonNotice:'訂閱將在 {d} 到期（剩 {n} 天）。到期後第 1 個句庫（50 句以內）仍可使用，其餘句庫的學生連結會暫停。',
+      banks:'我的句庫', slotN:'句庫 {n}', slotEmpty:'空位', create:'＋ 建立句庫', locked:'🔒 訂閱後可用',
+      count:'{n} / {max} 句', edit:'編輯', test:'▶ 試玩', copyLink:'🔗 複製連結', copied:'已複製連結！', del:'刪除',
+      delConfirm:'確定要刪除「{name}」嗎？學生的連結也會失效。', paused:'⏸ 學生連結已暫停（訂閱已到期）',
+      back:'← 回到我的句庫', bankSettings:'句庫設定', bankName:'句庫名稱', speed:'速度',
+      facil:'容易', normal:'普通', dificil:'困難', script:'字體', trad:'繁體', simp:'簡體', boss:'Boss 關（聽語音）', on:'開', off:'關',
+      sec1:'① 輸入句子', inputHint:'詞與詞之間用空白分開，例如：我 喜歡 吃 蘋果。每句最多 {n} 個漢字（不含標點）。',
+      esLabel:'西班牙文翻譯（必填）', enLabel:'英文翻譯（選填）', autoHint:'翻譯留空會自動翻譯（機器翻譯，請務必檢查）。',
+      gen:'⚙️ 自動產生簡體 / 拼音 / 翻譯', sec2:'② 檢查與微調',
+      checkHint:'簡體與拼音是自動轉換的（台灣讀音）。多音字或特殊唸法請自行核對修改。',
+      cTrad:'繁體', cSimp:'簡體', cPy:'拼音', addCell:'+ 新增一格', addSent:'＋ 加入句庫', updSent:'💾 更新這一句', cancelEdit:'取消編輯',
+      bulk:'批次匯入', bulkHint:'一行一句：詞 詞 詞 | 西班牙文 | 英文（用 | 分隔）。沒寫的翻譯會自動翻譯。',
+      bulkCheck:'檢查並預覽', bulkGo:'確認加入', inBank:'句庫內的句子', saveBank:'💾 儲存句庫（上傳）', unsaved:'有尚未上傳的修改',
+      genWorking:'產生中…', genTranslating:'翻譯中…', genDone:'已自動產生，翻譯是機器翻的，請務必檢查！', genDoneNoAuto:'已產生，請檢查簡體與拼音。',
+      enFailed:'（英文翻譯失敗，可自行輸入或留空。）',
+      needInput:'請先輸入句子。', tooLong:'這句有 {n} 個漢字，最多 {max} 個。', needEs:'請填寫西班牙文翻譯。',
+      mismatch:'繁體、簡體、拼音的格數必須一樣多。', emptyCells:'繁體／簡體／拼音都不能是空的。', dup:'句庫裡已經有這一句了。',
+      full:'句庫已滿（{max} 句）。', added:'已加入（尚未上傳）。', updated:'已更新（尚未上傳）。',
+      bulkRes:'可加入 {ok} 句，略過 {skip} 句。請檢查後按「確認加入」。', bulkAdded:'已加入 {n} 句（尚未上傳）。',
+      skipDup:'重複，略過', skipLong:'超過 {max} 字，略過', skipFull:'句庫已滿，略過', skipTr:'翻譯失敗，略過', autoTr:'（自動翻譯，請檢查）',
+      needName:'請輸入句庫名稱。', needOne:'句庫至少要有 1 句才能上傳。', needSub:'需要有效的訂閱才能這樣儲存（訂閱庫，或超過 50 句）。',
+      over50:'⚠ 超過 50 句：訂閱到期後，這個句庫的學生連結會暫停（刪到 50 句以內就會恢復）。',
+      saving:'上傳中…', saved:'已上傳！學生用連結就能玩。', saveFail:'上傳失敗：{m}',
+      permDenied:'沒有權限，或訂閱已到期。', network:'網路連線有問題，請稍後再試。', needLogin:'請先登入。',
+      loading:'載入中…', loadFail:'讀取失敗：{m}', confirmLeave:'有尚未上傳的修改，確定要離開嗎？', saveFirst:'請先儲存句庫，才能取得連結與試玩。',
+      pickPlace:'句庫位置', autoNameDefault:'我的句庫', delFail:'刪除失敗：{m}', sentCount:'{n} 個漢字', noEn:'（無英文）',
+      linkHint:'學生連結：', unsavedChanges:'尚未上傳'
+    },
+    cn:{
+      brandTag:'教师版', sub:'建立自己的句库，用链接分享给学生玩。', toGame:'← 回到游戏', login:'使用 Google 登录', logout:'退出',
+      loginHint:'请先登录。登录后可以建立句库，并获得给学生的链接。', signedIn:'已登录：{email}',
+      plan:'方案', planFree:'免费', planPro:'订阅', until:'到期', limitsFree:'免费版：1 个句库，每库最多 50 句。',
+      limitsPro:'订阅版：最多 5 个句库，每库最多 80 句。', subscribe:'了解订阅 →',
+      expiredNotice:'你的订阅已到期。第 1 个句库（50 句以内）仍可使用；其他句库，以及超过 50 句的库，学生链接已暂停。请续订；或把第 1 个句库删减到 50 句以内，链接就会恢复。',
+      soonNotice:'订阅将在 {d} 到期（剩 {n} 天）。到期后第 1 个句库（50 句以内）仍可使用，其余句库的学生链接会暂停。',
+      banks:'我的句库', slotN:'句库 {n}', slotEmpty:'空位', create:'＋ 建立句库', locked:'🔒 订阅后可用',
+      count:'{n} / {max} 句', edit:'编辑', test:'▶ 试玩', copyLink:'🔗 复制链接', copied:'已复制链接！', del:'删除',
+      delConfirm:'确定要删除“{name}”吗？学生的链接也会失效。', paused:'⏸ 学生链接已暂停（订阅已到期）',
+      back:'← 回到我的句库', bankSettings:'句库设置', bankName:'句库名称', speed:'速度',
+      facil:'容易', normal:'普通', dificil:'困难', script:'字体', trad:'繁体', simp:'简体', boss:'Boss 关（听语音）', on:'开', off:'关',
+      sec1:'① 输入句子', inputHint:'词与词之间用空格分开，例如：我 喜歡 吃 蘋果。每句最多 {n} 个汉字（不含标点）。',
+      esLabel:'西班牙文翻译（必填）', enLabel:'英文翻译（选填）', autoHint:'翻译留空会自动翻译（机器翻译，请务必检查）。',
+      gen:'⚙️ 自动生成简体 / 拼音 / 翻译', sec2:'② 检查与微调',
+      checkHint:'简体与拼音是自动转换的（台湾读音）。多音字或特殊读法请自行核对修改。',
+      cTrad:'繁体', cSimp:'简体', cPy:'拼音', addCell:'+ 新增一格', addSent:'＋ 加入句库', updSent:'💾 更新这一句', cancelEdit:'取消编辑',
+      bulk:'批量导入', bulkHint:'一行一句：词 词 词 | 西班牙文 | 英文（用 | 分隔）。没写的翻译会自动翻译。',
+      bulkCheck:'检查并预览', bulkGo:'确认加入', inBank:'句库内的句子', saveBank:'💾 保存句库（上传）', unsaved:'有尚未上传的修改',
+      genWorking:'生成中…', genTranslating:'翻译中…', genDone:'已自动生成，翻译是机器翻的，请务必检查！', genDoneNoAuto:'已生成，请检查简体与拼音。',
+      enFailed:'（英文翻译失败，可自行输入或留空。）',
+      needInput:'请先输入句子。', tooLong:'这句有 {n} 个汉字，最多 {max} 个。', needEs:'请填写西班牙文翻译。',
+      mismatch:'繁体、简体、拼音的格数必须一样多。', emptyCells:'繁体／简体／拼音都不能是空的。', dup:'句库里已经有这一句了。',
+      full:'句库已满（{max} 句）。', added:'已加入（尚未上传）。', updated:'已更新（尚未上传）。',
+      bulkRes:'可加入 {ok} 句，跳过 {skip} 句。请检查后按“确认加入”。', bulkAdded:'已加入 {n} 句（尚未上传）。',
+      skipDup:'重复，跳过', skipLong:'超过 {max} 字，跳过', skipFull:'句库已满，跳过', skipTr:'翻译失败，跳过', autoTr:'（自动翻译，请检查）',
+      needName:'请输入句库名称。', needOne:'句库至少要有 1 句才能上传。', needSub:'需要有效的订阅才能这样保存（订阅库，或超过 50 句）。',
+      over50:'⚠ 超过 50 句：订阅到期后，这个句库的学生链接会暂停（删到 50 句以内就会恢复）。',
+      saving:'上传中…', saved:'已上传！学生用链接就能玩。', saveFail:'上传失败：{m}',
+      permDenied:'没有权限，或订阅已到期。', network:'网络连接有问题，请稍后再试。', needLogin:'请先登录。',
+      loading:'加载中…', loadFail:'读取失败：{m}', confirmLeave:'有尚未上传的修改，确定要离开吗？', saveFirst:'请先保存句库，才能获得链接与试玩。',
+      pickPlace:'句库位置', autoNameDefault:'我的句库', delFail:'删除失败：{m}', sentCount:'{n} 个汉字', noEn:'（无英文）',
+      linkHint:'学生链接：', unsavedChanges:'尚未上传'
+    },
+    es:{
+      brandTag:'Profesores', sub:'Crea tu propio banco de frases y compártelo con tus alumnos mediante un enlace.', toGame:'← Volver al juego',
+      login:'Iniciar sesión con Google', logout:'Salir', loginHint:'Inicia sesión para crear bancos de frases y obtener el enlace para tus alumnos.',
+      signedIn:'Sesión iniciada: {email}',
+      plan:'Plan', planFree:'Gratis', planPro:'Suscripción', until:'Vence', limitsFree:'Plan gratis: 1 banco, hasta 50 frases por banco.',
+      limitsPro:'Suscripción: hasta 5 bancos, hasta 80 frases por banco.', subscribe:'Conocer la suscripción →',
+      expiredNotice:'Tu suscripción venció. El banco 1 (hasta 50 frases) sigue disponible; los demás bancos, y los que superan 50 frases, tienen el enlace en pausa. Renueva, o reduce el banco 1 a 50 frases o menos y su enlace volverá a funcionar.',
+      soonNotice:'Tu suscripción vence el {d} (faltan {n} días). Al vencer, el banco 1 (hasta 50 frases) sigue disponible y los enlaces de los demás bancos quedan en pausa.',
+      banks:'Mis bancos', slotN:'Banco {n}', slotEmpty:'Libre', create:'＋ Crear banco', locked:'🔒 Requiere suscripción',
+      count:'{n} / {max} frases', edit:'Editar', test:'▶ Probar', copyLink:'🔗 Copiar enlace', copied:'¡Enlace copiado!', del:'Eliminar',
+      delConfirm:'¿Eliminar «{name}»? El enlace de los alumnos dejará de funcionar.', paused:'⏸ Enlace en pausa (suscripción vencida)',
+      back:'← Volver a mis bancos', bankSettings:'Ajustes del banco', bankName:'Nombre del banco', speed:'Velocidad',
+      facil:'Fácil', normal:'Normal', dificil:'Difícil', script:'Caracteres', trad:'Tradicional', simp:'Simplificado', boss:'Nivel jefe (audio)', on:'Sí', off:'No',
+      sec1:'① Escribe la frase', inputHint:'Separa las palabras con espacios, por ejemplo: 我 喜歡 吃 蘋果. Máximo {n} caracteres chinos por frase (sin puntuación).',
+      esLabel:'Traducción al español (obligatoria)', enLabel:'Traducción al inglés (opcional)', autoHint:'Si dejas la traducción vacía se traduce automáticamente (traducción automática: revísala).',
+      gen:'⚙️ Generar simplificado / pinyin / traducción', sec2:'② Revisa y ajusta',
+      checkHint:'El simplificado y el pinyin se generan automáticamente (lectura de Taiwán). Revisa las palabras con varias lecturas.',
+      cTrad:'Tradicional', cSimp:'Simplif.', cPy:'Pinyin', addCell:'+ Añadir celda', addSent:'＋ Añadir al banco', updSent:'💾 Actualizar frase', cancelEdit:'Cancelar edición',
+      bulk:'Importar en lote', bulkHint:'Una frase por línea: palabra palabra | español | inglés (separado por |). Lo que falte se traduce automáticamente.',
+      bulkCheck:'Revisar y previsualizar', bulkGo:'Confirmar y añadir', inBank:'Frases del banco', saveBank:'💾 Guardar banco (subir)', unsaved:'Cambios sin subir',
+      genWorking:'Generando…', genTranslating:'Traduciendo…', genDone:'Generado. La traducción es automática: ¡revísala!', genDoneNoAuto:'Generado. Revisa el simplificado y el pinyin.',
+      enFailed:'(Falló la traducción al inglés: escríbela o déjala vacía.)',
+      needInput:'Escribe primero la frase.', tooLong:'Esta frase tiene {n} caracteres; el máximo es {max}.', needEs:'Escribe la traducción al español.',
+      mismatch:'Tradicional, simplificado y pinyin deben tener el mismo número de celdas.', emptyCells:'Tradicional, simplificado y pinyin no pueden estar vacíos.',
+      dup:'Esta frase ya está en el banco.', full:'El banco está lleno ({max} frases).', added:'Añadida (aún sin subir).', updated:'Actualizada (aún sin subir).',
+      bulkRes:'Se pueden añadir {ok}, se omiten {skip}. Revisa y pulsa «Confirmar y añadir».', bulkAdded:'Se añadieron {n} frases (aún sin subir).',
+      skipDup:'Repetida, omitida', skipLong:'Más de {max} caracteres, omitida', skipFull:'Banco lleno, omitida', skipTr:'Falló la traducción, omitida', autoTr:'(traducción automática, revisa)',
+      needName:'Escribe el nombre del banco.', needOne:'El banco necesita al menos 1 frase para subirlo.', needSub:'Se necesita una suscripción activa para guardar así (banco de suscripción o más de 50 frases).',
+      over50:'⚠ Más de 50 frases: al vencer la suscripción, el enlace de este banco quedará en pausa (con 50 o menos vuelve a funcionar).',
+      saving:'Subiendo…', saved:'¡Subido! Tus alumnos ya pueden jugar con el enlace.', saveFail:'Error al subir: {m}',
+      permDenied:'Sin permiso, o la suscripción venció.', network:'Problema de conexión. Inténtalo más tarde.', needLogin:'Inicia sesión primero.',
+      loading:'Cargando…', loadFail:'Error al leer: {m}', confirmLeave:'Hay cambios sin subir. ¿Salir de todos modos?', saveFirst:'Guarda primero el banco para obtener el enlace y probarlo.',
+      pickPlace:'Posición', autoNameDefault:'Mi banco', delFail:'Error al eliminar: {m}', sentCount:'{n} caracteres', noEn:'(sin inglés)',
+      linkHint:'Enlace para alumnos:', unsavedChanges:'Sin subir'
+    },
+    en:{
+      brandTag:'Teachers', sub:'Build your own sentence bank and share it with students via a link.', toGame:'← Back to game',
+      login:'Sign in with Google', logout:'Sign out', loginHint:'Sign in to create sentence banks and get a link for your students.',
+      signedIn:'Signed in: {email}',
+      plan:'Plan', planFree:'Free', planPro:'Subscriber', until:'Until', limitsFree:'Free plan: 1 bank, up to 50 sentences per bank.',
+      limitsPro:'Subscriber: up to 5 banks, up to 80 sentences per bank.', subscribe:'About the subscription →',
+      expiredNotice:'Your subscription has expired. Bank 1 (up to 50 sentences) still works; other banks, and any bank over 50 sentences, have their student links paused. Renew, or trim bank 1 to 50 sentences or fewer and its link works again.',
+      soonNotice:'Your subscription ends on {d} ({n} days left). After that, bank 1 (up to 50 sentences) keeps working and the other banks\' links are paused.',
+      banks:'My banks', slotN:'Bank {n}', slotEmpty:'Empty', create:'＋ Create bank', locked:'🔒 Subscribers only',
+      count:'{n} / {max} sentences', edit:'Edit', test:'▶ Try it', copyLink:'🔗 Copy link', copied:'Link copied!', del:'Delete',
+      delConfirm:'Delete "{name}"? The student link will stop working.', paused:'⏸ Student link paused (subscription expired)',
+      back:'← Back to my banks', bankSettings:'Bank settings', bankName:'Bank name', speed:'Speed',
+      facil:'Easy', normal:'Normal', dificil:'Hard', script:'Characters', trad:'Traditional', simp:'Simplified', boss:'Boss level (audio)', on:'On', off:'Off',
+      sec1:'① Enter a sentence', inputHint:'Separate words with spaces, e.g. 我 喜歡 吃 蘋果. Up to {n} Chinese characters per sentence (punctuation not counted).',
+      esLabel:'Spanish translation (required)', enLabel:'English translation (optional)', autoHint:'Leave a translation empty to auto-translate (machine translation: please check it).',
+      gen:'⚙️ Generate simplified / pinyin / translation', sec2:'② Check and adjust',
+      checkHint:'Simplified and pinyin are generated automatically (Taiwan readings). Please check words with several readings.',
+      cTrad:'Traditional', cSimp:'Simplified', cPy:'Pinyin', addCell:'+ Add cell', addSent:'＋ Add to bank', updSent:'💾 Update sentence', cancelEdit:'Cancel editing',
+      bulk:'Bulk import', bulkHint:'One sentence per line: word word word | Spanish | English (separated by |). Missing translations are filled in automatically.',
+      bulkCheck:'Check and preview', bulkGo:'Confirm and add', inBank:'Sentences in this bank', saveBank:'💾 Save bank (upload)', unsaved:'Changes not uploaded yet',
+      genWorking:'Generating…', genTranslating:'Translating…', genDone:'Generated. The translation is automatic: please check it!', genDoneNoAuto:'Generated. Please check the simplified text and pinyin.',
+      enFailed:'(English translation failed: type it or leave it empty.)',
+      needInput:'Enter a sentence first.', tooLong:'This sentence has {n} characters; the maximum is {max}.', needEs:'Please enter the Spanish translation.',
+      mismatch:'Traditional, simplified and pinyin must have the same number of cells.', emptyCells:'Traditional, simplified and pinyin cannot be empty.',
+      dup:'This sentence is already in the bank.', full:'The bank is full ({max} sentences).', added:'Added (not uploaded yet).', updated:'Updated (not uploaded yet).',
+      bulkRes:'{ok} can be added, {skip} skipped. Check them, then press "Confirm and add".', bulkAdded:'Added {n} sentences (not uploaded yet).',
+      skipDup:'Duplicate, skipped', skipLong:'Over {max} characters, skipped', skipFull:'Bank full, skipped', skipTr:'Translation failed, skipped', autoTr:'(auto-translated, please check)',
+      needName:'Enter a bank name.', needOne:'A bank needs at least 1 sentence to upload.', needSub:'An active subscription is needed to save this (subscriber bank, or over 50 sentences).',
+      over50:'⚠ Over 50 sentences: when your subscription ends, this bank\'s student link will be paused (trim to 50 or fewer to restore it).',
+      saving:'Uploading…', saved:'Uploaded! Students can play with the link.', saveFail:'Upload failed: {m}',
+      permDenied:'No permission, or the subscription has expired.', network:'Connection problem. Please try again later.', needLogin:'Please sign in first.',
+      loading:'Loading…', loadFail:'Could not load: {m}', confirmLeave:'You have changes that are not uploaded. Leave anyway?', saveFirst:'Save the bank first to get the link and try it.',
+      pickPlace:'Slot', autoNameDefault:'My bank', delFail:'Delete failed: {m}', sentCount:'{n} characters', noEn:'(no English)',
+      linkHint:'Student link:', unsavedChanges:'Not uploaded'
+    }
+  };
+  let LANG = 'zh';
+  try{ const l = localStorage.getItem('correTeacherLang'); if(T[l]) LANG = l; }catch(e){}
+  const HTML_LANG = { zh:'zh-Hant', cn:'zh-Hans', es:'es', en:'en' };
+  function tr(key, vars){
+    let s = (T[LANG] && T[LANG][key]) || T.zh[key] || key;
+    if(vars) Object.keys(vars).forEach(k=>{ s = s.split('{'+k+'}').join(vars[k]); });
+    return s;
+  }
+
+  // ================= 小工具 =================
+  const $ = id => document.getElementById(id);
+  function mk(tag, cls, text){
+    const el = document.createElement(tag);
+    if(cls) el.className = cls;
+    if(text != null) el.textContent = text;
+    return el;
+  }
+  function setStatus(el, msg, cls){ el.textContent = msg || ''; el.className = 'status' + (cls ? ' '+cls : ''); }
+  function explainError(e){
+    const c = e && e.code;
+    if(c === 'permission-denied') return tr('permDenied');
+    if(c === 'unavailable' || c === 'network-request-failed') return tr('network');
+    return (e && e.message) || String(e);
+  }
+  function newSid(){
+    const a = 'abcdefghijklmnopqrstuvwxyz0123456789', r = new Uint8Array(14);
+    (window.crypto || window.msCrypto).getRandomValues(r);
+    return Array.from(r, x => a[x % a.length]).join('');
+  }
+  function baseUrl(){ return location.origin + location.pathname.replace(/teacher\/(index\.html)?$/, ''); }
+  function bankLink(sid){ return baseUrl() + '?bank=' + sid; }
+  function fdate(ms){ const d = new Date(ms); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+  // ================= 繁簡轉換與拼音（台灣讀音） =================
+  // 讀音以教育部《重編國語辭典修訂本》為準。pinyin-pro 預設是大陸讀音，
+  // 所以這裡先放一份「台灣讀音例外表」。發現哪個詞讀錯了，把它加進這張表就好。
+  // 做法：'詞': '拼音（每個字之間空一格，輕聲不標調）'
+  const TW_PINYIN = {
+    '還是': 'hái shì', '還有': 'hái yǒu', '還要': 'hái yào', '還沒': 'hái méi', '還差': 'hái chà',
+    '嗎': 'ma', '誰': 'shéi', '幾': 'jǐ', '喔': 'ō', '唷': 'yō', '耶': 'ye', '啦': 'la', '囉': 'luo',
+    '什麼': 'shén me', '謝謝': 'xiè xie', '麻煩': 'má fan', '我們': 'wǒ men', '你們': 'nǐ men',
+    '東西': 'dōng xi', '朋友': 'péng yǒu', '覺得': 'jué de', '著': 'zhe', '只': 'zhǐ',
+    '著急': 'zháo jí',
+    '同事': 'tóng shì', '冰塊': 'bīng kuài', '加料': 'jiā liào', '找您': 'zhǎo nín',
+    '會不會': 'huì bú huì', '算啊': 'suàn a', '了啦': 'le la', '做得': 'zuò de', '時候': 'shí hou', '記得': 'jì de',
+    '蘋果': 'píng guǒ', '名字': 'míng zi', '這個': 'zhè ge',
+    '垃圾': 'lè sè', '星期': 'xīng qí',
+    '睡覺': 'shuì jiào', '公車': 'gōng chē', '公車站': 'gōng chē zhàn', '休息': 'xiū xí', '衣服': 'yī fú',
+    '意思': 'yì si', '媽媽': 'mā ma', '對不起': 'duì bu qǐ', '有空': 'yǒu kòng', '便宜': 'pián yí'
+  };
+  // 整格只有這一個字時才套用（避免影響「和平」「暖和」這類詞）
+  const TW_WHOLE_CELL = { '和': 'hàn', '了': 'le' };
+
+  if(window.pinyinPro && typeof pinyinPro.customPinyin === 'function'){
+    pinyinPro.customPinyin(TW_PINYIN);
+  }
+
+  let simplifiedConverter = null;
+  function ensureConverter(){
+    if(!simplifiedConverter){
+      if(!window.OpenCC){ throw new Error('繁簡轉換函式庫尚未載入完成，請稍等一下再試一次。'); }
+      simplifiedConverter = OpenCC.Converter({ from: 'tw', to: 'cn' });
+    }
+    return simplifiedConverter;
+  }
+  function toSimplified(text){
+    return ensureConverter()(text);
+  }
+  const isDigits = s => /^[零一二三四五六七八九]+$/.test(s);
+  const HAS_HAN = /[㐀-鿿]/;
+  function toPinyinTW(trad, simp){
+    if(!window.pinyinPro){ throw new Error('拼音函式庫尚未載入完成，請稍等一下再試一次。'); }
+    if(Object.prototype.hasOwnProperty.call(TW_WHOLE_CELL, trad)) return TW_WHOLE_CELL[trad];
+    const opt = { toneType: 'symbol', toneSandhi: !isDigits(trad) };
+    let py = pinyinPro.pinyin(trad, opt);
+    // 極少數冷僻繁體字函式庫不認得，會原樣輸出漢字；這時改用簡體字再算一次
+    if(HAS_HAN.test(py)) py = pinyinPro.pinyin(simp, opt);
+    return py;
+  }
+  const translateZhToEs = text => translateZh(text, 'es');
+  async function translateZh(text, target){
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=zh-CN|${target}`;
+    const resp = await fetch(url);
+    if(!resp.ok) throw new Error('翻譯服務暫時無法使用，請自行輸入翻譯。');
+    const data = await resp.json();
+    const translated = data && data.responseData && data.responseData.translatedText;
+    if(!translated || /MYMEMORY WARNING/i.test(translated)){
+      throw new Error('翻譯額度暫時用完或失敗，請自行輸入翻譯。');
+    }
+    return translated;
+  }
+
+  // ================= 產生 =================
+  // 「一」「不」單獨成一格時，函式庫看不到後面的字，變調要自己補：
+  // 後面是第四聲 → 不 bú / 一 yí；其他聲調 → 不 bù / 一 yì；後面是數字或句尾 → 不 bù / 一 yī
+  function toneOf(py){
+    const m = (py || '').split(' ')[0];
+    if(/[āēīōūǖ]/.test(m)) return 1;
+    if(/[áéíóúǘ]/.test(m)) return 2;
+    if(/[ǎěǐǒǔǚ]/.test(m)) return 3;
+    if(/[àèìòùǜ]/.test(m)) return 4;
+    return 0;
+  }
+  function fixYiBu(trad, pinyinArr){
+    return pinyinArr.map((py,i)=>{
+      const t = trad[i], next = pinyinArr[i+1], nextTrad = trad[i+1];
+      if(t !== '不' && t !== '一') return py;
+      if(!next) return py;
+      const nt = toneOf(next);
+      if(t === '不') return nt === 4 ? 'bú' : 'bù';
+      if(isDigits(nextTrad)) return py;
+      if(nt === 4) return 'yí';
+      if(nt >= 1) return 'yì';
+      return 'yì';
+    });
+  }
+  function makeTokens(raw){
+    const trad = raw.trim().split(/\s+/).filter(Boolean);
+    const simp = trad.map(t => toSimplified(t));
+    const pinyin = fixYiBu(trad, trad.map((t,i) => toPinyinTW(t, simp[i])));
+    return { trad, simp, pinyin };
+  }
+
+  const countHan = tradArr => Array.from((tradArr||[]).join('')).filter(c => HAS_HAN.test(c)).length;
+
+  // ================= Firebase =================
+  let auth = null, db = null, user = null;
+  let PLAN = { plan:'free', active:false, expiresAt:null };
+  let SLOTS = {};            // { '0': sid, ... }
+  let BANKS = {};            // { '0': { sid, data }, ... }
+  let ED = null;             // 目前編輯中的句庫
+  try{
+    firebase.initializeApp(centralConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+  }catch(e){ console.warn('Firebase init failed', e); }
+
+  const isRealUser = u => !!(u && !u.isAnonymous && u.email);
+  const planActiveOf = p => !!p && ['month','year','trial','pro'].indexOf(p.plan) >= 0 && !!p.expiresAt && p.expiresAt > Date.now();
+  const maxSent = () => PLAN.active ? PRO_SENT : FREE_SENT;
+  const maxSlots = () => PLAN.active ? PRO_SLOTS : FREE_SLOTS;
+  const tsMs = v => (v && typeof v.toMillis === 'function') ? v.toMillis() : (typeof v === 'number' ? v : null);
+
+  async function loadAccount(){
+    setStatus($('listStatus'), tr('loading'));
+    try{
+      // 會員資料（首次登入自動建立，管理員才看得到你的 email 並能開通方案）
+      const mref = db.collection('site_members').doc(user.uid);
+      const m = await mref.get();
+      if(!m.exists){
+        await mref.set({ email: user.email || '', name: user.displayName || '', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      }
+      const p = await db.collection('site_plans').doc(user.uid).get();
+      const d = p.exists ? p.data() : {};
+      PLAN = { plan: d.plan || 'free', expiresAt: tsMs(d.expiresAt) };
+      PLAN.active = planActiveOf(PLAN);
+      const ix = await db.collection('teacher_banks').doc(user.uid).get();
+      SLOTS = ix.exists ? (ix.data().slots || {}) : {};
+      BANKS = {};
+      await Promise.all(Object.keys(SLOTS).map(async k=>{
+        try{
+          const s = await db.collection('shared_banks').doc(SLOTS[k]).get();
+          if(s.exists) BANKS[k] = { sid: s.id, data: s.data() };
+        }catch(e){ console.warn('bank read failed', k, e); }
+      }));
+      setStatus($('listStatus'), '');
+    }catch(e){
+      console.error(e);
+      setStatus($('listStatus'), tr('loadFail', { m: explainError(e) }), 'err');
+    }
+  }
+
+  // ================= 登入 =================
+  function renderAuth(){
+    const real = isRealUser(user);
+    $('who').textContent = real ? tr('signedIn', { email: user.email }) : '';
+    $('who').className = 'who' + (real ? ' ok' : '');
+    $('loginBtn').hidden = real;
+    $('logoutBtn').hidden = !real;
+    $('viewOut').hidden = real;
+    if(!real){ $('viewList').hidden = true; $('viewEdit').hidden = true; ED = null; }
+  }
+  async function login(){
+    if(!auth){ setStatus($('authMsg'), 'Firebase not loaded.', 'err'); return; }
+    setStatus($('authMsg'), '…');
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try{
+      await auth.signInWithPopup(provider);
+      setStatus($('authMsg'), '');
+    }catch(e){
+      const c = e && e.code;
+      if(c === 'auth/popup-blocked' || c === 'auth/operation-not-supported-in-this-environment'){ auth.signInWithRedirect(provider); return; }
+      if(c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request'){ setStatus($('authMsg'), ''); return; }
+      setStatus($('authMsg'), (e && e.message) || c || 'login failed', 'err');
+    }
+  }
+  $('loginBtn').addEventListener('click', login);
+  $('logoutBtn').addEventListener('click', ()=>{ if(auth) auth.signOut(); });
+  if(auth){
+    auth.getRedirectResult().catch(()=>{});
+    auth.onAuthStateChanged(async u=>{
+      user = u;
+      renderAuth();
+      if(isRealUser(u)){
+        $('viewList').hidden = false;
+        await loadAccount();
+        if(user === u) renderList();
+      }
+    });
+  }
+
+  // ================= 我的句庫 =================
+  function renderPlan(){
+    const box = $('planBox'); box.textContent = '';
+    const line = mk('div');
+    const b = mk('span', 'badge' + (PLAN.active ? ' pro' : ''), PLAN.active ? tr('planPro') : tr('planFree'));
+    line.appendChild(b);
+    if(PLAN.expiresAt){ line.appendChild(mk('span', 'hint', '  ' + tr('until') + ' ' + fdate(PLAN.expiresAt))); }
+    box.appendChild(line);
+    box.appendChild(mk('p', 'hint', PLAN.active ? tr('limitsPro') : tr('limitsFree')));
+    const a = mk('a', 'btn ghost small', tr('subscribe')); a.href = PORTAL_URL; a.target = '_blank'; a.rel = 'noopener'; a.style.textDecoration = 'none';
+    if(!PLAN.active) box.appendChild(a);
+
+    const nb = $('planNotice'); nb.textContent = '';
+    const everPaid = PLAN.plan && PLAN.plan !== 'free' && PLAN.expiresAt;
+    const hasProBank = Object.keys(BANKS).some(k => BANKS[k].data.pro);
+    if(!PLAN.active && everPaid && (hasProBank || Object.keys(BANKS).some(k=>k!=='0'))){
+      nb.appendChild(mk('div', 'notice err', tr('expiredNotice')));
+    }else if(PLAN.active && PLAN.expiresAt){
+      const days = Math.ceil((PLAN.expiresAt - Date.now()) / 86400000);
+      if(days <= 7) nb.appendChild(mk('div', 'notice', tr('soonNotice', { d: fdate(PLAN.expiresAt), n: days })));
+    }
+  }
+  function renderList(){
+    if(ED) return;
+    renderPlan();
+    const list = $('bankList'); list.textContent = '';
+    for(let i = 0; i < PRO_SLOTS; i++){
+      const key = String(i), b = BANKS[key];
+      const locked = i >= FREE_SLOTS && !PLAN.active && !b;
+      const card = mk('div', 'bank' + (b ? '' : ' empty') + (locked ? ' locked' : ''));
+      if(b){
+        const d = b.data, n = (d.sentences || []).length;
+        card.appendChild(mk('div', 't', d.name || tr('slotN', { n: i + 1 })));
+        card.appendChild(mk('div', 'meta', tr('slotN', { n: i + 1 }) + ' · ' + tr('count', { n: n, max: i === 0 ? (PLAN.active ? PRO_SENT : FREE_SENT) : PRO_SENT }) +
+          ' · ' + tr(d.speed) + ' · ' + tr(d.script) + (d.pro ? ' · ' + tr('planPro') : '')));
+        if(d.pro && !PLAN.active) card.appendChild(mk('div', 'paused', tr('paused')));
+        const row = mk('div', 'row');
+        const eb = mk('button', 'btn small', tr('edit')); eb.addEventListener('click', ()=>openEditor(i));
+        const tb = mk('button', 'btn ghost small', tr('test')); tb.addEventListener('click', ()=>{ window.open(bankLink(b.sid) + '&preview=1', '_blank'); });
+        const cb = mk('button', 'btn ghost small', tr('copyLink'));
+        cb.addEventListener('click', ()=>copyText(bankLink(b.sid), cb));
+        const db_ = mk('button', 'btn danger small', tr('del')); db_.addEventListener('click', ()=>deleteBank(i));
+        row.appendChild(eb); row.appendChild(tb); row.appendChild(cb); row.appendChild(db_);
+        card.appendChild(row);
+      }else{
+        card.appendChild(mk('div', 't', tr('slotN', { n: i + 1 })));
+        if(locked){
+          card.appendChild(mk('div', 'meta', tr('locked')));
+        }else{
+          const row = mk('div', 'row');
+          const cbtn = mk('button', 'btn small', tr('create')); cbtn.addEventListener('click', ()=>openEditor(i));
+          row.appendChild(cbtn); card.appendChild(row);
+        }
+      }
+      list.appendChild(card);
+    }
+  }
+  async function copyText(text, btn){
+    try{ await navigator.clipboard.writeText(text); }
+    catch(e){
+      const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); }catch(_){} ta.remove();
+    }
+    const old = btn.textContent; btn.textContent = tr('copied'); setTimeout(()=>{ btn.textContent = old; }, 1600);
+  }
+  async function deleteBank(i){
+    const b = BANKS[String(i)]; if(!b) return;
+    if(!confirm(tr('delConfirm', { name: b.data.name || tr('slotN', { n: i + 1 }) }))) return;
+    setStatus($('listStatus'), tr('saving'));
+    try{
+      const slots = Object.assign({}, SLOTS); delete slots[String(i)];
+      const batch = db.batch();
+      batch.delete(db.collection('shared_banks').doc(b.sid));
+      batch.set(db.collection('teacher_banks').doc(user.uid), { slots, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      await batch.commit();
+      SLOTS = slots; delete BANKS[String(i)];
+      setStatus($('listStatus'), '');
+      renderList();
+    }catch(e){ console.error(e); setStatus($('listStatus'), tr('delFail', { m: explainError(e) }), 'err'); }
+  }
+
+  // ================= 編輯句庫 =================
+  const sentInput = $('sentInput'), esTop = $('esTop'), enTop = $('enTop');
+  const tokenTable = $('tokenTable'), esInput = $('esInput'), enInput = $('enInput');
+  let editingIdx = -1;       // 正在修改句庫裡的第幾句（-1 = 新增）
+  let bulkReady = [];
+
+  function openEditor(slot){
+    const b = BANKS[String(slot)];
+    ED = b
+      ? { slot, sid: b.sid, name: b.data.name || '', speed: b.data.speed || 'normal', script: b.data.script || 'trad', boss: b.data.boss !== false,
+          sentences: (b.data.sentences || []).map(s => Object.assign({}, s)), dirty: false }
+      : { slot, sid: null, name: '', speed: 'normal', script: 'trad', boss: true, sentences: [], dirty: false };
+    $('viewList').hidden = true; $('viewEdit').hidden = false;
+    $('bankName').value = ED.name;
+    setGroup('speedGroup', ED.speed); setGroup('scriptGroup', ED.script); setGroup('bossGroup', ED.boss ? '1' : '0');
+    resetSentenceForm();
+    $('bulkInput').value = ''; $('bulkPreview').textContent = ''; $('bulkGoBtn').hidden = true; setStatus($('bulkStatus'), '');
+    setStatus($('saveStatus'), '');
+    renderEditorMeta(); renderSentList();
+    window.scrollTo(0, 0);
+  }
+  function setGroup(id, value){
+    $(id).querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.value === value));
+  }
+  ['speedGroup','scriptGroup','bossGroup'].forEach(id=>{
+    $(id).querySelectorAll('.toggle-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(!ED) return;
+        setGroup(id, btn.dataset.value);
+        if(id === 'speedGroup') ED.speed = btn.dataset.value;
+        if(id === 'scriptGroup') ED.script = btn.dataset.value;
+        if(id === 'bossGroup') ED.boss = btn.dataset.value === '1';
+        markDirty();
+      });
+    });
+  });
+  $('bankName').addEventListener('input', ()=>{ if(ED){ ED.name = $('bankName').value; markDirty(); } });
+  function markDirty(){ if(ED){ ED.dirty = true; $('dirtyMark').hidden = false; } }
+  function clearDirty(){ if(ED){ ED.dirty = false; } $('dirtyMark').hidden = true; }
+  window.addEventListener('beforeunload', e=>{ if(ED && ED.dirty){ e.preventDefault(); e.returnValue = ''; } });
+
+  function cap(){ return ED && ED.slot === 0 ? maxSent() : PRO_SENT; }
+  function renderEditorMeta(){
+    $('inputHint').textContent = tr('inputHint', { n: MAX_CHARS });
+    const n = ED ? ED.sentences.length : 0, max = cap();
+    const c = $('counter'); c.textContent = '(' + n + ' / ' + max + ')';
+    c.className = 'counter' + (n >= max ? ' bad' : (n > FREE_SENT ? ' warn' : ''));
+    const note = $('editNotice'); note.textContent = '';
+    if(ED && n > FREE_SENT) note.appendChild(mk('div', 'notice', tr('over50')));
+    if(ED && ED.slot > 0 && !PLAN.active) note.appendChild(mk('div', 'notice err', tr('expiredNotice')));
+    $('addSentBtn').textContent = editingIdx >= 0 ? tr('updSent') : tr('addSent');
+  }
+  function renderSentList(){
+    const box = $('sentList'); box.textContent = '';
+    ED.sentences.forEach((s, i)=>{
+      const card = mk('div', 'sent-card');
+      const info = mk('div');
+      info.appendChild(mk('div', 'hz', (s.trad || []).join(' · ')));
+      info.appendChild(mk('div', 'py', (s.pinyin || []).join('  ')));
+      info.appendChild(mk('div', 'es', s.es || ''));
+      info.appendChild(mk('div', 'en', s.en || tr('noEn')));
+      info.appendChild(mk('div', 'n', tr('sentCount', { n: countHan(s.trad) })));
+      const acts = mk('div', 'acts');
+      const e = mk('button', '', '✏️'); e.addEventListener('click', ()=>startEditSentence(i));
+      const d = mk('button', '', '🗑'); d.addEventListener('click', ()=>{
+        ED.sentences.splice(i, 1);
+        if(editingIdx === i) resetSentenceForm(); else if(editingIdx > i) editingIdx--;
+        markDirty(); renderEditorMeta(); renderSentList();
+      });
+      acts.appendChild(e); acts.appendChild(d);
+      card.appendChild(info); card.appendChild(acts);
+      box.appendChild(card);
+    });
+    renderEditorMeta();
+  }
+  function resetSentenceForm(){
+    editingIdx = -1;
+    sentInput.value = ''; esTop.value = ''; enTop.value = ''; esInput.value = ''; enInput.value = '';
+    tokenTable.textContent = '';
+    $('previewSection').hidden = true; $('cancelEditBtn').hidden = true;
+    setStatus($('genStatus'), ''); setStatus($('addStatus'), '');
+    $('addSentBtn').textContent = tr('addSent');
+  }
+  function startEditSentence(i){
+    const s = ED.sentences[i]; editingIdx = i;
+    sentInput.value = (s.trad || []).join(' '); esTop.value = s.es || ''; enTop.value = s.en || '';
+    renderTokenRows({ trad: s.trad || [], simp: s.simp || [], pinyin: s.pinyin || [] });
+    esInput.value = s.es || ''; enInput.value = s.en || '';
+    $('previewSection').hidden = false; $('cancelEditBtn').hidden = false;
+    $('addSentBtn').textContent = tr('updSent');
+    $('previewSection').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+  $('cancelEditBtn').addEventListener('click', resetSentenceForm);
+
+  function renderTokenRows(data){
+    tokenTable.textContent = '';
+    const n = Math.max(data.trad.length, data.simp.length, data.pinyin.length);
+    for(let i = 0; i < n; i++) addTokenRow(data.trad[i] || '', data.simp[i] || '', data.pinyin[i] || '');
+  }
+  function addTokenRow(trad, simp, pinyin){
+    const row = mk('div', 'token-row');
+    row.appendChild(mk('span', 'idx'));
+    [['trad', trad], ['simp', simp], ['pinyin', pinyin]].forEach(([cls, val])=>{
+      const inp = document.createElement('input'); inp.type = 'text'; inp.className = cls; inp.value = val; row.appendChild(inp);
+    });
+    const rm = mk('button', 'rm', '×'); rm.addEventListener('click', ()=>{ row.remove(); reindexRows(); });
+    row.appendChild(rm); tokenTable.appendChild(row); reindexRows();
+  }
+  function reindexRows(){ tokenTable.querySelectorAll('.token-row').forEach((r, i)=>{ r.querySelector('.idx').textContent = i + 1; }); }
+  function collectTokens(){
+    const rows = [...tokenTable.querySelectorAll('.token-row')];
+    const g = c => rows.map(r => r.querySelector('.' + c).value.trim()).filter(Boolean);
+    return { trad: g('trad'), simp: g('simp'), pinyin: g('pinyin') };
+  }
+  $('addTokenBtn').addEventListener('click', ()=>addTokenRow('', '', ''));
+
+  async function runGenerate(){
+    const raw = sentInput.value.trim();
+    const st = $('genStatus');
+    if(!raw){ setStatus(st, tr('needInput'), 'err'); return; }
+    const trad = raw.split(/\s+/).filter(Boolean);
+    const han = countHan(trad);
+    if(han > MAX_CHARS){ setStatus(st, tr('tooLong', { n: han, max: MAX_CHARS }), 'err'); return; }
+    $('genBtn').disabled = true; setStatus(st, tr('genWorking'));
+    try{
+      const simp = trad.map(t => toSimplified(t));
+      const py = fixYiBu(trad, trad.map((t, i) => toPinyinTW(t, simp[i])));
+      let es = esTop.value.trim(), en = enTop.value.trim(), auto = false, enFailed = false;
+      if(!es){ setStatus(st, tr('genTranslating')); es = await translateZh(simp.join(''), 'es'); esTop.value = es; auto = true; }
+      if(!en){ try{ en = await translateZh(simp.join(''), 'en'); enTop.value = en; auto = true; }catch(e){ enFailed = true; } }
+      renderTokenRows({ trad, simp, pinyin: py });
+      esInput.value = es; enInput.value = en;
+      $('previewSection').hidden = false;
+      setStatus(st, (auto ? tr('genDone') : tr('genDoneNoAuto')) + (enFailed ? ' ' + tr('enFailed') : ''), 'ok');
+    }catch(e){
+      console.error(e); setStatus(st, e.message || 'error', 'err');
+    }finally{ $('genBtn').disabled = false; }
+  }
+  $('genBtn').addEventListener('click', runGenerate);
+
+  const keyOf = trad => (trad || []).join('');
+  function addSentence(){
+    const st = $('addStatus');
+    const tk = collectTokens(), es = esInput.value.trim(), en = enInput.value.trim();
+    if(!tk.trad.length || !tk.simp.length || !tk.pinyin.length){ setStatus(st, tr('emptyCells'), 'err'); return; }
+    if(tk.trad.length !== tk.simp.length || tk.trad.length !== tk.pinyin.length){ setStatus(st, tr('mismatch'), 'err'); return; }
+    const han = countHan(tk.trad);
+    if(han > MAX_CHARS){ setStatus(st, tr('tooLong', { n: han, max: MAX_CHARS }), 'err'); return; }
+    if(han < 1){ setStatus(st, tr('needInput'), 'err'); return; }
+    if(!es){ setStatus(st, tr('needEs'), 'err'); return; }
+    const k = keyOf(tk.trad);
+    if(ED.sentences.some((s, i) => i !== editingIdx && keyOf(s.trad) === k)){ setStatus(st, tr('dup'), 'err'); return; }
+    const obj = { trad: tk.trad, simp: tk.simp, pinyin: tk.pinyin, es, en };
+    if(editingIdx >= 0){ ED.sentences[editingIdx] = obj; resetSentenceForm(); setStatus($('addStatus'), tr('updated'), 'ok'); }
+    else{
+      if(ED.sentences.length >= cap()){ setStatus(st, tr('full', { max: cap() }), 'err'); return; }
+      ED.sentences.push(obj); resetSentenceForm(); setStatus($('addStatus'), tr('added'), 'ok');
+    }
+    markDirty(); renderSentList();
+  }
+  $('addSentBtn').addEventListener('click', addSentence);
+
+  // ---- 批次匯入 ----
+  async function bulkCheck(){
+    bulkReady = []; $('bulkGoBtn').hidden = true; $('bulkPreview').textContent = '';
+    const lines = $('bulkInput').value.split('\n').map(l => l.trim()).filter(Boolean);
+    const st = $('bulkStatus');
+    if(!lines.length){ setStatus(st, tr('needInput'), 'err'); return; }
+    $('bulkCheckBtn').disabled = true; setStatus(st, tr('genWorking'));
+    const have = new Set(ED.sentences.map(s => keyOf(s.trad)));
+    let room = cap() - ED.sentences.length, ok = 0, skip = 0;
+    try{
+      for(let i = 0; i < lines.length; i++){
+        const parts = lines[i].split('|');
+        const tk = makeTokens(parts[0]);
+        if(!tk.trad.length) continue;
+        let es = (parts[1] || '').trim(), en = (parts[2] || '').trim(), note = '', bad = false;
+        const han = countHan(tk.trad), key = keyOf(tk.trad);
+        if(han < 1 || han > MAX_CHARS){ note = tr('skipLong', { max: MAX_CHARS }); bad = true; }
+        else if(have.has(key)){ note = tr('skipDup'); bad = true; }
+        else if(room <= 0){ note = tr('skipFull'); bad = true; }
+        else{
+          if(!es){
+            setStatus(st, tr('genTranslating') + ' (' + (i + 1) + '/' + lines.length + ')');
+            try{ es = await translateZh(tk.simp.join(''), 'es'); note = tr('autoTr'); }catch(e){ note = tr('skipTr'); bad = true; }
+          }
+          if(!bad && !en){ try{ en = await translateZh(tk.simp.join(''), 'en'); note = tr('autoTr'); }catch(e){ en = ''; } }
+        }
+        if(!bad){ have.add(key); room--; ok++; bulkReady.push({ trad: tk.trad, simp: tk.simp, pinyin: tk.pinyin, es, en }); } else skip++;
+        const card = mk('div', 'sent-card'); const info = mk('div');
+        info.appendChild(mk('div', 'hz', tk.trad.join(' · ')));
+        info.appendChild(mk('div', 'py', tk.pinyin.join('  ')));
+        info.appendChild(mk('div', 'es', es || '')); info.appendChild(mk('div', 'en', en || ''));
+        if(note) info.appendChild(mk('div', 'n', note));
+        card.appendChild(info); if(bad) card.style.opacity = '.5';
+        $('bulkPreview').appendChild(card);
+      }
+      setStatus(st, tr('bulkRes', { ok, skip }), 'ok');
+      $('bulkGoBtn').hidden = bulkReady.length === 0;
+    }catch(e){ console.error(e); setStatus(st, e.message || 'error', 'err'); }
+    finally{ $('bulkCheckBtn').disabled = false; }
+  }
+  function bulkGo(){
+    const n = bulkReady.length; if(!n) return;
+    bulkReady.forEach(s => ED.sentences.push(s));
+    bulkReady = []; $('bulkGoBtn').hidden = true; $('bulkPreview').textContent = ''; $('bulkInput').value = '';
+    setStatus($('bulkStatus'), tr('bulkAdded', { n }), 'ok');
+    markDirty(); renderSentList();
+  }
+  $('bulkCheckBtn').addEventListener('click', bulkCheck);
+  $('bulkGoBtn').addEventListener('click', bulkGo);
+
+  // ---- 儲存（上傳）----
+  async function saveBank(){
+    const st = $('saveStatus');
+    if(!ED || !isRealUser(user)){ setStatus(st, tr('needLogin'), 'err'); return; }
+    const name = ($('bankName').value || '').trim().slice(0, 40) || tr('autoNameDefault');
+    if(!ED.sentences.length){ setStatus(st, tr('needOne'), 'err'); return; }
+    const n = ED.sentences.length;
+    if(n > cap()){ setStatus(st, tr('full', { max: cap() }), 'err'); return; }
+    const pro = ED.slot > 0 || n > FREE_SENT;
+    if(pro && !PLAN.active){ setStatus(st, tr('needSub'), 'err'); return; }
+    if(!ED.sentences.every(s => countHan(s.trad) >= 1 && countHan(s.trad) <= MAX_CHARS)){ setStatus(st, tr('tooLong', { n: '>' + MAX_CHARS, max: MAX_CHARS }), 'err'); return; }
+    $('saveBankBtn').disabled = true; setStatus(st, tr('saving'));
+    try{
+      const ts = firebase.firestore.FieldValue.serverTimestamp();
+      const clean = ED.sentences.map(s => ({ trad: s.trad, simp: s.simp, pinyin: s.pinyin, es: s.es, en: s.en || '' }));
+      const data = { owner: user.uid, slot: ED.slot, name, speed: ED.speed, script: ED.script, boss: !!ED.boss, sentences: clean, pro, updatedAt: ts };
+      const batch = db.batch();
+      let sid = ED.sid, slots = SLOTS;
+      if(!sid){
+        sid = newSid(); slots = Object.assign({}, SLOTS, { [String(ED.slot)]: sid });
+        batch.set(db.collection('teacher_banks').doc(user.uid), { slots, updatedAt: ts });
+      }
+      batch.set(db.collection('shared_banks').doc(sid), data);
+      await batch.commit();
+      SLOTS = slots; ED.sid = sid; ED.name = name; $('bankName').value = name;
+      BANKS[String(ED.slot)] = { sid, data: Object.assign({}, data, { sentences: clean }) };
+      clearDirty();
+      setStatus(st, tr('saved'), 'ok');
+    }catch(e){
+      console.error(e); setStatus(st, tr('saveFail', { m: explainError(e) }), 'err');
+    }finally{ $('saveBankBtn').disabled = false; }
+  }
+  $('saveBankBtn').addEventListener('click', saveBank);
+  $('backBtn').addEventListener('click', ()=>{
+    if(ED && ED.dirty && !confirm(tr('confirmLeave'))) return;
+    ED = null; $('viewEdit').hidden = true; $('viewList').hidden = false; renderList();
+  });
+
+  // ================= 語言切換 =================
+  function applyLang(){
+    document.documentElement.lang = HTML_LANG[LANG];
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = tr(el.dataset.i18n); });
+    $('langs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.l === LANG));
+    renderAuth();
+    if(ED){ renderEditorMeta(); $('addSentBtn').textContent = editingIdx >= 0 ? tr('updSent') : tr('addSent'); }
+    else if(isRealUser(user)) renderList();
+  }
+  $('langs').querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click', ()=>{ LANG = b.dataset.l; try{ localStorage.setItem('correTeacherLang', LANG); }catch(e){} applyLang(); });
+  });
+  applyLang();
+
+  // 給測試用
+  window.__teacher = { get ED(){ return ED; }, makeTokens, countHan };
+})();
+</script>
+</body>
+</html>
