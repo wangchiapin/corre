@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-<title>每天一分鐘 · Corre por los caracteres</title>
+<title>跑吧！漢字 · Cada día unos minutos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Noto+Sans+TC:wght@500;700;900&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -63,6 +63,7 @@
     position:relative;z-index:2;
     padding:10px 14px 6px;
     display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:nowrap;gap:6px;   /* 標題列永遠單行，不換行 */
     border-bottom:1.5px solid var(--line);
     background:linear-gradient(180deg, rgba(0,255,242,0.05), transparent);
   }
@@ -72,13 +73,15 @@
     font-size:20px;
     color:var(--cyan);
     letter-spacing:1px;
+    white-space:nowrap;flex:0 0 auto;
     text-shadow:0 0 6px var(--cyan), 0 0 16px rgba(0,255,242,0.5), 2px 0 var(--magenta);
   }
   .hud{
     display:flex;align-items:center;gap:8px;
+    flex:0 0 auto;white-space:nowrap;
     font-family:'Orbitron',sans-serif;
   }
-  .hearts{font-size:15px;letter-spacing:2px;color:var(--magenta);text-shadow:0 0 6px var(--magenta);}
+  .hearts{font-size:15px;letter-spacing:2px;white-space:nowrap;color:var(--magenta);text-shadow:0 0 6px var(--magenta);}
   .hearts .lost{color:rgba(255,47,208,0.15);text-shadow:none;}
   .score-wrap{
     display:flex;flex-direction:column;align-items:center;
@@ -101,8 +104,30 @@
     gap:3px;
     padding:0 8px;
     cursor:pointer;
+    white-space:nowrap;flex-shrink:0;
   }
   .icon-btn.on{ background:rgba(255,47,208,0.15); color:var(--magenta); border-color:var(--magenta); box-shadow:0 0 8px rgba(255,47,208,0.4); }
+
+  /* 手機：縮小標題列的字級與間距，最多 5 顆愛心也放得下一行 */
+  @media (max-width:430px){
+    header{ padding:8px 10px 6px; gap:4px; }
+    .brand{ font-size:16px; letter-spacing:0; }
+    .hud{ gap:5px; }
+    .hearts{ font-size:12px; letter-spacing:0; }
+    .score-wrap{ padding:1px 6px; }
+    .score-wrap .lbl{ font-size:7px; letter-spacing:1px; }
+    .score-wrap .val{ font-size:13px; }
+    .icon-btn{ min-width:30px; height:26px; padding:0 6px; font-size:10.5px; border-radius:13px; }
+  }
+  @media (max-width:370px){
+    header{ padding:8px 8px 6px; }
+    .brand{ font-size:15px; }
+    .hud{ gap:4px; }
+    .hearts{ font-size:11px; }
+    .score-wrap{ padding:1px 5px; }
+    .score-wrap .val{ font-size:12px; }
+    .icon-btn{ min-width:28px; padding:0 5px; font-size:10px; }
+  }
 
   /* ---------- SENTENCE SCROLL ---------- */
   #banner-wrap{
@@ -147,6 +172,30 @@
   .boss-banner .spk{ display:inline-block; }
   .boss-banner.speaking .spk{ animation:spkPulse .5s ease infinite; }
   @keyframes spkPulse{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.35);} }
+  /* 🔊 重聽鍵 */
+  .replay-btn{
+    flex:0 0 auto;
+    min-width:40px;height:30px;padding:0 8px;
+    border-radius:15px;
+    border:1.5px solid var(--danger);
+    background:rgba(255,47,109,0.12);
+    color:var(--danger);
+    font-size:14px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    box-shadow:0 0 8px rgba(255,47,109,0.35);
+  }
+  .replay-btn:active{ transform:translateY(1px); background:rgba(255,47,109,0.25); }
+  /* 沒有語音可用時：隱藏重聽鍵，改顯示「看拼音」的提示 */
+  .boss-banner .when-novoice{ display:none; }
+  .boss-banner.no-voice .when-novoice{ display:inline; }
+  .boss-banner.no-voice .when-voice{ display:none; }
+  .boss-banner.no-voice .replay-btn{ display:none; }
+  /* 沒語音時，還沒吃到的格子只顯示拼音（漢字仍是「？」），把拼音調亮一點 */
+  #banner-wrap.pinyin-hint .slot:not(.stamped) .py{ color:#ffb8cc; font-size:10.5px; }
+  @media (max-width:430px){
+    .boss-banner{ font-size:12px; letter-spacing:0; gap:5px; }
+  }
   #sentence-track{
     display:flex;
     flex-wrap:wrap;
@@ -421,7 +470,7 @@
 <div id="stage">
 
   <header>
-    <div class="brand">每天一分鐘</div>
+    <div class="brand">跑吧！漢字</div>
     <div class="hud">
       <div class="hearts" id="hearts">♥ ♥ ♥</div>
       <div class="score-wrap"><span class="lbl">PTS</span><span class="val" id="score">0</span></div>
@@ -433,7 +482,10 @@
 
   <div id="banner-wrap">
     <div class="banner-label"><span data-i18n="order">Cómelos en orden</span><span id="progressLabel">0/0</span></div>
-    <div class="boss-banner" id="bossBanner"><span class="spk">🔊</span><span>大魔王關卡 · <span data-i18n="boss">¡Escucha con atención!</span></span></div>
+    <div class="boss-banner" id="bossBanner">
+      <button type="button" class="replay-btn" id="replayBtn" data-i18n-title="replay" title="Escuchar otra vez"><span class="spk">🔊</span></button>
+      <span>大魔王關卡 · <span class="when-voice" data-i18n="boss">¡Escucha con atención!</span><span class="when-novoice" data-i18n="bossNoVoice">Sin audio: mira el pinyin</span></span>
+    </div>
     <div id="sentence-track"></div>
     <div class="es-line" id="esLine"></div>
   </div>
@@ -591,7 +643,8 @@
       viewLb:'Ver clasificación', over:'Fin del juego', points:'Puntos', sentences:'Frases', best:'Mejores puntuaciones', again:'Jugar de nuevo',
       pause:'Pausa', pauseTitle:'Pausa (P)', resume:'Continuar', quit:'Terminar partida', lbTitle:'Clasificación', close:'Cerrar',
       loading:'Cargando…', noScores:'Todavía no hay puntuaciones. ¡Sé el primero!',
-      noFirebase:'Configura Firebase en el código para activar la clasificación en línea.', bossDefeated:'+1 ♥ ¡Jefe derrotado!', defaultName:'Jugador'
+      noFirebase:'Configura Firebase en el código para activar la clasificación en línea.', bossDefeated:'+1 ♥ ¡Jefe derrotado!', defaultName:'Jugador',
+      replay:'Escuchar otra vez', bossNoVoice:'Sin audio: mira el pinyin'
     },
     en:{
       order:'Eat them in order', boss:'Listen carefully!', toast:'Follow the order of the sentence!', excellent:'Excellent!',
@@ -602,7 +655,8 @@
       viewLb:'View leaderboard', over:'Game over', points:'Points', sentences:'Sentences', best:'Top scores', again:'Play again',
       pause:'Pause', pauseTitle:'Pause (P)', resume:'Resume', quit:'End game', lbTitle:'Leaderboard', close:'Close',
       loading:'Loading…', noScores:'No scores yet. Be the first!',
-      noFirebase:'Set up Firebase in the code to enable the online leaderboard.', bossDefeated:'+1 ♥ Boss defeated!', defaultName:'Player'
+      noFirebase:'Set up Firebase in the code to enable the online leaderboard.', bossDefeated:'+1 ♥ Boss defeated!', defaultName:'Player',
+      replay:'Listen again', bossNoVoice:'No audio: follow the pinyin'
     }
   };
   let lang = 'es';
@@ -614,8 +668,11 @@
     document.documentElement.lang = lang;
     document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPh); });
-    document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title = t(el.dataset.i18nTitle); });
-    document.title = '每天一分鐘 · ' + (lang === 'en' ? 'Run for the Characters' : 'Corre por los caracteres');
+    document.querySelectorAll('[data-i18n-title]').forEach(el=>{
+      el.title = t(el.dataset.i18nTitle);
+      if(el.tagName === 'BUTTON') el.setAttribute('aria-label', el.title);
+    });
+    document.title = '跑吧！漢字 · ' + (lang === 'en' ? 'A Few Minutes a Day' : 'Cada día unos minutos');
   }
 
   const diffLabel = k => ({ facil:t('facil'), normal:t('normal'), dificil:t('dificil') }[k] || '');
@@ -659,32 +716,100 @@
     loadVoices();
     speechSynthesis.onvoiceschanged = loadVoices;
   }
+  // 語言代碼統一成小寫、連字號（有些 Android 會回傳 zh_TW）
+  const normLang = v => String((v && v.lang) || '').toLowerCase().replace(/_/g,'-');
+  // 只接受國語的語音（zh-TW、zh-CN、cmn-…）。廣東話（zh-HK、yue）要排除，
+  // 否則裝置只有廣東話語音時，會用廣東話去念國語句子。
+  function isMandarinVoice(v){
+    const l = normLang(v);
+    if(l.startsWith('yue') || l.startsWith('zh-hk')) return false;
+    return l === 'zh' || l.startsWith('zh-') || l.startsWith('cmn');
+  }
   function pickVoice(){
-    return voicesList.find(v=>v.lang==='zh-TW') ||
-           voicesList.find(v=>v.lang && v.lang.toLowerCase().startsWith('zh')) ||
+    return voicesList.find(v=>['zh-tw','cmn-tw','zh-hant-tw'].includes(normLang(v))) ||
+           voicesList.find(isMandarinVoice) ||
            null;
   }
+
+  // 語音能不能用：
+  //  - 語音清單有內容、卻完全沒有國語語音 → 不能用
+  //  - 清單是空的（有些手機一開始就是空的，但其實能念）→ 先當作能用，真的念不出來時再降級
+  //  - 實際播放失敗（沒開始、或回報「語音不可用」）→ 不能用；之後只要又成功念出一次就恢復
+  let speechState = 'unknown';   // 'unknown' | 'ok' | 'none'
+  function speechUsable(){
+    if(!('speechSynthesis' in window)) return false;
+    loadVoices();
+    if(voicesList.length > 0 && !voicesList.some(isMandarinVoice)) return false;
+    return speechState !== 'none';
+  }
+  function onSpeechFailed(){
+    if(speechState === 'none') return;
+    speechState = 'none';
+    if(isBoss) applyBossVoiceMode();   // Boss 進行到一半才發現沒語音：當場改成只看拼音
+  }
+  // iPhone 通常要「使用者點擊」之後才允許發聲：在按下開始時先無聲地念一次，打開權限。
+  let speechUnlocked = false;
+  function unlockSpeech(){
+    if(speechUnlocked || !('speechSynthesis' in window)) return;
+    speechUnlocked = true;
+    try{
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
   // 每次念字都有一個編號；只有「最新那一次」念完時，才把背景音樂調回來。
   // 這樣前一次被打斷或比較早結束的語音，不會在新的語音還在念的時候就把音樂調大聲。
   let speakSeq = 0;
   let duckRestoreTimer = null;
-  function speak(text, interrupt){
+  let speakStartTimer = null;
+  // showIndicator：是 Boss 的整句朗讀時，讓 🔊 跟著「真的在播放」跳動
+  function speak(text, interrupt, showIndicator){
     if(!('speechSynthesis' in window) || !text) return;
     try{
-      if(interrupt !== false) speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'zh-TW';
-      u.rate = 0.92;
-      const v = pickVoice();
-      if(v) u.voice = v;
       const mySeq = ++speakSeq;
+      bossBannerEl.classList.remove('speaking');
+      const doSpeak = ()=>{
+        if(mySeq !== speakSeq) return;   // 等待的這一小段時間裡又有更新的語音，這一個就不念了
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'zh-TW';
+        u.rate = 0.92;
+        const v = pickVoice();
+        if(v) u.voice = v;
+        let started = false;
+        const restore = ()=>{ if(mySeq === speakSeq) duckMusic(false); };
+        u.onstart = ()=>{
+          started = true;
+          speechState = 'ok';
+          if(showIndicator && mySeq === speakSeq) bossBannerEl.classList.add('speaking');
+        };
+        u.onend = ()=>{ if(showIndicator) bossBannerEl.classList.remove('speaking'); restore(); };
+        u.onerror = (e)=>{
+          if(showIndicator) bossBannerEl.classList.remove('speaking');
+          restore();
+          // 被取消／被新語音打斷、或「還沒被允許發聲」都不算失敗；只有明確回報不可用才降級
+          if(e && ['synthesis-unavailable','language-unavailable','voice-unavailable'].includes(e.error)) onSpeechFailed();
+        };
+        clearTimeout(duckRestoreTimer);
+        duckRestoreTimer = setTimeout(restore, Math.max(1100, text.length*280)); // fallback in case onend never fires
+        speechSynthesis.speak(u);
+        // 還沒確認過語音能用時：2.5 秒內都沒開始播，就當作沒語音
+        if(speechState !== 'ok'){
+          clearTimeout(speakStartTimer);
+          speakStartTimer = setTimeout(()=>{
+            if(!started && mySeq === speakSeq && !document.hidden && speechState !== 'ok') onSpeechFailed();
+          }, 2500);
+        }
+      };
       duckMusic(true);
-      const restore = ()=>{ if(mySeq === speakSeq) duckMusic(false); };
-      u.onend = restore;
-      u.onerror = restore;
-      clearTimeout(duckRestoreTimer);
-      duckRestoreTimer = setTimeout(restore, Math.max(1100, text.length*280)); // fallback in case onend never fires
-      speechSynthesis.speak(u);
+      // 正在念的時候又要念新的：先取消，等一下下再念（有些手機瀏覽器 cancel 後馬上 speak 會被吞掉）
+      if(interrupt !== false && (speechSynthesis.speaking || speechSynthesis.pending)){
+        speechSynthesis.cancel();
+        setTimeout(doSpeak, 60);
+      } else {
+        doSpeak();
+      }
     }catch(e){}
   }
 
@@ -927,7 +1052,10 @@
   let targetIndex = 0;
   let bag = [];
   let isBoss = false;
+  let bossNoVoice = false;   // 這一關是 Boss、但這台裝置沒有可用的國語語音 → 改成只顯示拼音
   let bossTimer = 0;
+  let lastReplayAt = 0;
+  let targetMissWaves = 0;   // 目前要吃的詞，連續幾波沒有出現在畫面上
   let running = false;
   let rafId = 0;
   let paused = false;   // 暫停中（running 也會是 false，迴圈停止）
@@ -1059,7 +1187,8 @@
 
   function renderHearts(){
     let s='';
-    for(let i=0;i<maxLives;i++){ s += i < lives ? '♥ ' : '<span class="lost">♥</span> '; }
+    // ︎：指定用「文字樣式」的愛心，iPhone 才不會變成紅色 emoji（顏色與寬度都跟著設計走）
+    for(let i=0;i<maxLives;i++){ s += i < lives ? '♥︎ ' : '<span class="lost">♥︎</span> '; }
     heartsEl.innerHTML = s;
   }
 
@@ -1080,14 +1209,24 @@
       fetchMoreSentences();
     }
     targetIndex = 0;
+    targetMissWaves = 0;
     bag = [];
     isBoss = sentencesDone > 0 && sentencesDone % BOSS_EVERY === 0;
     bossTimer = 0;
     bannerWrapEl.classList.toggle('boss-mode', isBoss);
     bossBannerEl.style.display = isBoss ? 'flex' : 'none';
-    renderBanner();
+    bossBannerEl.classList.remove('speaking');
+    applyBossVoiceMode();   // 判斷這台裝置能不能聽語音，並畫出句子列
     esLineEl.textContent = '';
-    if(isBoss){ setTimeout(speakBossSentence, 500); }
+    if(isBoss && !bossNoVoice){ setTimeout(speakBossSentence, 500); }
+  }
+
+  // Boss 關開始（或進行中發現語音壞掉）時呼叫：決定「聽語音」還是「看拼音」
+  function applyBossVoiceMode(){
+    bossNoVoice = isBoss && !speechUsable();
+    bossBannerEl.classList.toggle('no-voice', bossNoVoice);
+    bannerWrapEl.classList.toggle('pinyin-hint', bossNoVoice);
+    if(sentence) renderBanner();
   }
 
   function renderBanner(){
@@ -1104,7 +1243,9 @@
       hz.textContent = showChar ? tok : '？';
       const py = document.createElement('div');
       py.className = 'py';
-      py.textContent = (showChar && showPinyin) ? (sentence.pinyin[i] || '') : '';
+      // 沒有語音的 Boss：還沒吃到的格子強制顯示拼音（就算玩家把拼音開關關掉），漢字仍然是「？」
+      const hintPinyin = isBoss && bossNoVoice && !stamped;
+      py.textContent = ((showChar && showPinyin) || hintPinyin) ? (sentence.pinyin[i] || '') : '';
       slot.appendChild(hz);
       slot.appendChild(py);
       if(stamped){
@@ -1118,10 +1259,18 @@
   }
 
   function speakBossSentence(){
-    if(!sentence || !isBoss) return;
-    speak(getTokens(sentence).join(''));
-    bossBannerEl.classList.add('speaking');
-    setTimeout(()=>bossBannerEl.classList.remove('speaking'), 900);
+    if(!sentence || !isBoss || bossNoVoice) return;
+    speak(getTokens(sentence).join(''), true, true);
+  }
+
+  // 🔊 重聽：播放中按下去 = 取消目前的、從頭再念一次（不會重疊）
+  function replayBossSentence(){
+    if(!running || !isBoss || bossNoVoice || !sentence) return;
+    const now = performance.now();
+    if(now - lastReplayAt < 500) return;   // 連按防抖
+    lastReplayAt = now;
+    bossTimer = 0;                          // 每 10 秒自動重念的計時也重新開始，避免剛按完又被自動重念打斷
+    speakBossSentence();
   }
 
   function refillBagIfNeeded(){
@@ -1134,9 +1283,31 @@
   function spawnWave(){
     measure();
     const tokens = getTokens(sentence);
+    if(targetIndex >= tokens.length) return;
     refillBagIfNeeded();
     const lanesUsed = new Set();
-    if(bag.length > 0){
+
+    // 保證「目前要吃的詞」不會缺席太久：
+    // 畫面上還吃得到就不用補；連續 2 波都沒有，第 3 波強制補出。
+    const target = tokens[targetIndex];
+    const targetOnScreen = coins.some(c => !c.resolved && c.text === target && c.x + (c.width||60)/2 > 60);
+    let forceTarget = false;
+    if(targetOnScreen){
+      targetMissWaves = 0;
+    } else if(targetMissWaves >= 2){
+      forceTarget = true;
+      targetMissWaves = 0;
+    } else {
+      targetMissWaves++;
+    }
+
+    if(forceTarget){
+      const l = Math.floor(Math.random()*laneCount);
+      lanesUsed.add(l);
+      makeCoin(target, l);
+      const bi = bag.indexOf(target);   // 詞袋裡的這一份拿掉，避免同一個詞連出兩次
+      if(bi >= 0) bag.splice(bi, 1);
+    } else if(bag.length > 0){
       const tok = bag.pop();
       const l = Math.floor(Math.random()*laneCount);
       lanesUsed.add(l);
@@ -1206,6 +1377,7 @@
       sfxGood();
       setTimeout(()=>coin.el.remove(), 300);
       targetIndex++;
+      targetMissWaves = 0;   // 換成下一個目標詞，重新計算
       renderBanner();
       const d = DIFF[diffKey];
       speed = Math.min(d.cap, speed + d.inc);
@@ -1294,7 +1466,7 @@
 
     if(isBoss){
       bossTimer += dt*1000;
-      if(bossTimer >= 10000){ bossTimer = 0; speakBossSentence(); }
+      if(bossTimer >= 10000){ bossTimer = 0; if(!bossNoVoice) speakBossSentence(); }
     }
 
     const yTol = (100/laneCount) * 0.55;
@@ -1376,6 +1548,7 @@
     held.up = held.down = held.left = held.right = false;
     dragPointerId = null;
     if('speechSynthesis' in window) speechSynthesis.cancel();
+    bossBannerEl.classList.remove('speaking');
     try{ if(actx && actx.state === 'running') actx.suspend(); }catch(e){}
     pauseOverlay.classList.remove('hidden');
   }
@@ -1389,6 +1562,10 @@
     rafId = requestAnimationFrame(loop);
   }
   pauseBtn.addEventListener('click', ()=> paused ? resumeGame() : pauseGame());
+  document.getElementById('replayBtn').addEventListener('click', e=>{
+    e.currentTarget.blur();
+    replayBossSentence();
+  });
   document.getElementById('resumeBtn').addEventListener('click', resumeGame);
   document.getElementById('quitBtn').addEventListener('click', ()=>{ paused = false; endGame(); });
   window.addEventListener('keydown', e=>{
@@ -1453,8 +1630,10 @@
     lbOverlay.classList.add('hidden');
 
     if(musicOn){ startMusic(); setMusicVolume(); }
+    unlockSpeech();
 
     clearTimeout(nextSentenceTimer);
+    targetMissWaves = 0;
     paused = false;
     pauseOverlay.classList.add('hidden');
     usedIds = new Set();
