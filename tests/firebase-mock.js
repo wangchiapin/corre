@@ -53,10 +53,12 @@
   function makeFirestore(pid){
     const fs = {
       collection: c => Object.assign(Query(pid, c, [], null, null, null), {
+        add: async d => { const id = 'auto' + Math.random().toString(36).slice(2, 10); col(pid, c)[id] = clone(d); return { id }; },
         doc: id => ({
           id,
           get: async () => { window.__reads[pid] = (window.__reads[pid] || 0) + 1; return docSnap(pid, c, id); },
           set: async d => { col(pid, c)[id] = clone(d); },
+          update: async d => { if(!col(pid, c)[id]) throw { code: 'not-found' }; Object.assign(col(pid, c)[id], clone(d)); },
           delete: async () => { delete col(pid, c)[id]; }
         })
       }),
@@ -75,6 +77,8 @@
     let cb = null;
     return {
       currentUser: user,
+      authStateReady: () => Promise.resolve(),
+      signInAnonymously: async () => ({ user }),
       onAuthStateChanged: fn => { cb = fn; setTimeout(() => fn(user), 0); },
       getRedirectResult: () => Promise.resolve(),
       signInWithPopup: async () => { if(cb) cb(user); },

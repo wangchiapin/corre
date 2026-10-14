@@ -397,34 +397,76 @@
   }
   .field input[type="text"]:focus{ outline:none; border-color:var(--cyan); box-shadow:0 0 8px rgba(0,255,242,0.4); }
   .toggle-group{ display:flex; gap:6px; }
+  /* 統一按鈕（三款遊戲同一規格）：一律膠囊形；選項按鈕同高 46px、主要按鈕滿寬同高 54px */
   .toggle-btn{
-    flex:1; padding:9px 4px; border-radius:6px;
+    flex:1; min-height:46px; padding:5px 6px; border-radius:999px;
     border:1.5px solid var(--line); background:rgba(0,255,242,0.04);
-    font-size:12px; font-family:'Work Sans'; cursor:pointer; color:var(--text);
+    font-size:13px; font-family:'Noto Sans TC','Work Sans',sans-serif; font-weight:700; cursor:pointer; color:var(--text);
+    display:flex; align-items:center; justify-content:center; line-height:1.15;
   }
   .toggle-btn.active{ background:rgba(255,47,208,0.18); color:var(--magenta); border-color:var(--magenta); box-shadow:0 0 10px rgba(255,47,208,0.35); }
+  .toggle-btn:disabled{ opacity:.45; cursor:not-allowed; }
 
   .primary-btn{
-    margin-top:6px;
-    padding:12px 30px;
-    border-radius:24px;
+    width:100%; max-width:300px; min-height:54px;
+    margin-top:4px; padding:6px 18px;
+    border-radius:999px;
     border:1.5px solid var(--cyan);
     background:linear-gradient(90deg, rgba(0,255,242,0.18), rgba(255,47,208,0.18));
     color:var(--text);
-    font-family:'Orbitron',sans-serif;
-    font-weight:700;
-    font-size:14px;
+    font-family:'Noto Sans TC','Orbitron',sans-serif;
+    font-weight:900;
+    font-size:16px;
     letter-spacing:.6px;
     cursor:pointer;
     box-shadow:0 0 14px rgba(0,255,242,0.35);
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    text-decoration:none; flex-shrink:0;
   }
   .primary-btn:active{ transform:translateY(2px); box-shadow:0 0 6px rgba(0,255,242,0.3); }
   .primary-btn:disabled{ opacity:0.5; cursor:not-allowed; }
-  .link-btn{
-    background:none; border:none; color:var(--cyan);
-    text-decoration:underline; font-size:13px; cursor:pointer;
-    margin-top:2px; font-family:'Work Sans'; padding:4px;
+  /* 次要按鈕：同樣大小，透明底 */
+  .primary-btn.ghost{ background:transparent; border-color:var(--line); box-shadow:none; color:var(--cyan); }
+  .primary-btn .ic{ font-size:18px; line-height:1; }
+
+  /* 雙行文字：上面中文（跟著繁簡），下面小字西文或英文；選「只有中文」時沒有下面那行 */
+  .dl{ display:inline-flex; flex-direction:column; align-items:center; line-height:1.2; }
+  .dl .z{ font-family:'Noto Sans TC','Work Sans',sans-serif; }
+  .dl .s{ font-family:'Work Sans',sans-serif; font-size:.72em; font-weight:500; opacity:.78; letter-spacing:0; }
+  .field label .dl{ align-items:flex-start; }
+  .lb-heading .dl{ vertical-align:middle; }
+  .subtitle .dl, .drag-hint .dl, .overlay p .dl{ display:flex; gap:3px; }
+  .subtitle .dl .s, .drag-hint .dl .s, .overlay p .dl .s{ font-size:.9em; }
+
+  /* ⚙️ 設定（右上角） */
+  .gear-float{
+    position:absolute; top:10px; right:10px; z-index:15;
+    width:42px; height:42px; border-radius:999px; font-size:20px;
+    border:1.5px solid var(--line); background:rgba(0,255,242,0.06); color:var(--text);
+    display:none; align-items:center; justify-content:center; cursor:pointer; padding:0;
   }
+  #stage.menu .gear-float{ display:flex; }
+  .icon-btn.gear{ font-size:15px; }
+  .set-modal{
+    position:absolute; inset:0; z-index:30; background:rgba(0,0,0,0.72);
+    display:flex; align-items:center; justify-content:center; padding:16px;
+  }
+  .set-modal.hidden{ display:none; }
+  .set-card{
+    width:100%; max-width:360px; max-height:100%; overflow-y:auto;
+    background:var(--panel-solid); border:1.5px solid var(--cyan); border-radius:20px;
+    box-shadow:0 0 30px rgba(0,255,242,0.25); padding:16px 16px 18px;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .set-card h2{ margin:0; text-align:center; color:var(--cyan); font-family:'Noto Sans TC',sans-serif; font-weight:900; font-size:20px; }
+  .set-card .field{ max-width:none; margin:0; }
+  .set-card .toggle-group{ flex-wrap:wrap; }
+  .set-card .toggle-btn{ flex:1 1 0; min-width:0; font-size:12.5px; padding:5px 4px; }
+  .set-card #setPhon .toggle-btn{ flex:1 1 40%; }
+  .set-card .primary-btn{ max-width:none; margin-top:4px; }
+  .lock-note{ display:block; font-family:'Noto Sans TC','Work Sans',sans-serif; font-size:11px; color:var(--magenta); margin-top:2px; font-weight:700; letter-spacing:0; }
+  .comment{ font-family:'Noto Sans TC','Work Sans',sans-serif; font-weight:900; font-size:20px; color:var(--green); text-shadow:0 0 8px rgba(57,255,136,0.5); }
+  .ver{ font-size:10px; color:rgba(127,163,172,0.5); margin-top:auto; padding-top:6px; font-family:'Work Sans',sans-serif; }
   [hidden]{ display:none !important; }
   .bank-tag{
     font-family:'Noto Sans TC','Work Sans',sans-serif; font-weight:700; font-size:15px; color:var(--magenta);
@@ -480,13 +522,13 @@
 <div id="stage">
 
   <header>
-    <div class="brand">跑吧！漢字</div>
+    <div class="brand" data-zh="brand">跑吧！漢字</div>
     <div class="hud">
       <div class="hearts" id="hearts">♥ ♥ ♥</div>
       <div class="score-wrap"><span class="lbl">PTS</span><span class="val" id="score">0</span></div>
-      <div class="icon-btn" id="pinyinToggle">拼音</div>
       <div class="icon-btn" id="musicToggle">🎵</div>
       <div class="icon-btn" id="pauseBtn" data-i18n-title="pauseTitle" title="Pausa (P)">⏸</div>
+      <div class="icon-btn gear" id="gearBtn" data-i18n-title="settings" title="Ajustes" role="button">⚙️</div>
     </div>
   </header>
 
@@ -494,7 +536,7 @@
     <div class="banner-label"><span data-i18n="order">Cómelos en orden</span><span id="progressLabel">0/0</span></div>
     <div class="boss-banner" id="bossBanner">
       <button type="button" class="replay-btn" id="replayBtn" data-i18n-title="replay" title="Escuchar otra vez"><span class="spk">🔊</span></button>
-      <span>大魔王關卡 · <span class="when-voice" data-i18n="boss">¡Escucha con atención!</span><span class="when-novoice" data-i18n="bossNoVoice">Sin audio: mira el pinyin</span></span>
+      <span><span data-zh="bossTitle">大魔王關卡</span> · <span class="when-voice" data-i18n="boss">¡Escucha con atención!</span><span class="when-novoice" data-i18n="bossNoVoice">Sin audio: mira el pinyin</span></span>
     </div>
     <div id="sentence-track"></div>
     <div class="es-line" id="esLine"></div>
@@ -512,7 +554,7 @@
       </svg>
     </div>
     <div class="order-toast" id="orderToast">
-      <div class="main">按照順序來唷！</div>
+      <div class="main" data-zh="toastMain">按照順序來唷！</div>
       <div class="sub" data-i18n="toast">¡Sigue el orden de la frase!</div>
     </div>
   </div>
@@ -521,32 +563,16 @@
 
   <!-- START / SETUP -->
   <div class="overlay" id="startOverlay">
-    <h1>跑吧！漢字</h1>
+    <h1 data-zh="brand">跑吧！漢字</h1>
     <div class="bank-tag" id="bankTag" hidden></div>
     <div class="bank-tag" id="classTag" hidden></div>
     <p class="subtitle" data-i18n="subtitle">¡Corre y come las palabras en el orden correcto de la frase! Cada cierto tiempo aparece un nivel jefe: escucha la frase en vez de leerla.</p>
     <p class="drag-hint" data-i18n="dragHint">👆 Arrastra el dedo por la pantalla para moverte. En computadora: flechas o WASD, o arrastra con el ratón.</p>
 
     <div class="field">
-      <label data-i18n="langLabel">Idioma de las traducciones</label>
-      <div class="toggle-group" id="langGroup">
-        <button class="toggle-btn active" data-value="es">Español</button>
-        <button class="toggle-btn" data-value="en">English</button>
-      </div>
-    </div>
-
-    <div class="field">
       <label data-i18n="name">Tu nombre</label>
       <input type="text" id="nameInput" maxlength="16" placeholder="Jugador" data-i18n-ph="namePh">
       <p class="bank-err" id="classHint" hidden style="color:var(--text-dim);margin:6px 0 0"></p>
-    </div>
-
-    <div class="field">
-      <label data-i18n="script">Tipo de caracteres</label>
-      <div class="toggle-group" id="scriptGroup">
-        <button class="toggle-btn active" data-value="trad">繁體 <span data-i18n="trad">Tradicional</span></button>
-        <button class="toggle-btn" data-value="simp">簡體 <span data-i18n="simp">Simplificado</span></button>
-      </div>
     </div>
 
     <div class="field">
@@ -560,9 +586,10 @@
 
     <p class="bank-err" id="bankErr" hidden></p>
     <button class="primary-btn" id="startBtn" data-i18n="start">Empezar</button>
-    <button class="link-btn" id="showLbBtn">🏆 <span data-i18n="viewLb">Ver clasificación</span></button>
-    <a class="link-btn" id="teacherLink" href="teacher/">👩‍🏫 <span data-i18n="teacher">Versión para profesores</span></a>
-    <a class="link-btn" id="homeLink" href="./" hidden><span data-i18n="goHome">Ir al juego normal</span></a>
+    <button class="primary-btn ghost" id="showLbBtn"><span class="ic">🏆</span><span data-i18n="viewLb">Ver clasificación</span></button>
+    <a class="primary-btn ghost" id="teacherLink" href="https://wangchiapin.github.io/profesor/#/settings"><span class="ic">👩‍🏫</span><span data-i18n="teacher">Centro para profesores</span></a>
+    <a class="primary-btn ghost" id="homeLink" href="./" hidden><span data-i18n="goHome">Ir al juego normal</span></a>
+    <div class="ver">v5-2</div>
   </div>
 
   <!-- GAME OVER -->
@@ -572,20 +599,22 @@
       <div><b id="finalScore">0</b><span data-i18n="points">Puntos</span></div>
       <div><b id="finalSentences">0</b><span data-i18n="sentences">Frases</span></div>
     </div>
+    <div class="comment" id="commentLine"></div>
+    <p id="classMsg" class="lb-msg" hidden></p>
+    <button class="primary-btn ghost" id="classRetryBtn" hidden></button>
     <div class="lb-heading" id="lbHeadingOver">🏆 <span data-i18n="best">Mejores puntuaciones</span></div>
     <div class="lb-list" id="lbListOver"><p class="lb-msg">Cargando…</p></div>
-    <p id="classMsg" class="lb-msg" hidden></p>
-    <button class="link-btn" id="classRetryBtn" hidden></button>
     <p id="noRecordMsg" hidden data-i18n="noRecord">Este resultado no se guarda en la clasificación. Descarga la imagen para compartirlo.</p>
-    <button class="primary-btn" id="dlBtn" hidden>⬇ <span data-i18n="download">Descargar imagen</span></button>
+    <button class="primary-btn ghost" id="dlBtn" hidden><span class="ic">⬇</span><span data-i18n="download">Descargar imagen</span></button>
     <button class="primary-btn" id="restartBtn" data-i18n="again">Jugar de nuevo</button>
+    <button class="primary-btn ghost" id="menuBtn" data-i18n="menu">Menú principal</button>
   </div>
 
   <!-- PAUSA -->
   <div class="overlay hidden" id="pauseOverlay">
     <h1 data-i18n="pause">Pausa</h1>
     <button class="primary-btn" id="resumeBtn" data-i18n="resume">Continuar</button>
-    <button class="primary-btn" id="quitBtn" style="background:transparent;color:var(--text-dim);border:1.5px solid var(--line);box-shadow:none;" data-i18n="quit">Terminar partida</button>
+    <button class="primary-btn ghost" id="quitBtn" data-i18n="quit">Terminar partida</button>
   </div>
 
   <!-- LEADERBOARD -->
@@ -593,6 +622,49 @@
     <h1 data-i18n="lbTitle">Clasificación</h1>
     <div class="lb-list" id="lbListMain"><p class="lb-msg">Cargando…</p></div>
     <button class="primary-btn" id="lbCloseBtn" data-i18n="close">Cerrar</button>
+  </div>
+
+  <!-- ⚙️ 右上角設定（開始／結果畫面用這顆；遊戲中用標題列那顆） -->
+  <button type="button" class="gear-float" id="gearFloat" data-i18n-title="settings" title="Ajustes">⚙️</button>
+
+  <!-- ⚙️ 設定視窗：只放基本設定（三款遊戲共用） -->
+  <div class="set-modal hidden" id="setModal" role="dialog" aria-modal="true">
+    <div class="set-card">
+      <h2 data-i18n="settings">Ajustes</h2>
+      <div class="field">
+        <label><span data-i18n="script">Caracteres</span><span class="lock-note" id="scriptLock" hidden></span></label>
+        <div class="toggle-group" id="setScript">
+          <button class="toggle-btn" data-value="trad">繁體</button>
+          <button class="toggle-btn" data-value="simp">简体</button>
+        </div>
+      </div>
+      <div class="field">
+        <label data-i18n="langLbl">Idioma</label>
+        <div class="toggle-group" id="setLang">
+          <button class="toggle-btn" data-value="es"><span class="dl"><span class="z" data-zh="zhPlus">中文＋</span><span class="s">Español</span></span></button>
+          <button class="toggle-btn" data-value="en"><span class="dl"><span class="z" data-zh="zhPlus">中文＋</span><span class="s">English</span></span></button>
+          <button class="toggle-btn" data-value="zh"><span data-zh="zhOnly">只有中文</span></button>
+        </div>
+      </div>
+      <div class="field">
+        <label data-i18n="phon">Pinyin / Zhuyin</label>
+        <div class="toggle-group" id="setPhon">
+          <button class="toggle-btn" data-value="pinyin" data-i18n="pinyin">Pinyin</button>
+          <button class="toggle-btn" data-value="zhuyin" data-i18n="zhuyin">Zhuyin</button>
+          <button class="toggle-btn" data-value="both" data-i18n="both">Ambos</button>
+          <button class="toggle-btn" data-value="off" data-i18n="phOff">Ocultar</button>
+        </div>
+      </div>
+      <div class="field">
+        <label data-i18n="rate">Velocidad de voz</label>
+        <div class="toggle-group" id="setRate">
+          <button class="toggle-btn" data-value="slow" data-i18n="slow">Lenta</button>
+          <button class="toggle-btn" data-value="normal" data-i18n="rateNormal">Normal</button>
+          <button class="toggle-btn" data-value="fast" data-i18n="fast">Rápida</button>
+        </div>
+      </div>
+      <button class="primary-btn" id="setDone" data-i18n="done">Listo</button>
+    </div>
   </div>
 
 </div>
@@ -678,69 +750,161 @@
     return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  // ================= 語言（預設西班牙文，可切換英文） =================
-  const I18N = {
-    es:{
-      order:'Cómelos en orden', boss:'¡Escucha con atención!', toast:'¡Sigue el orden de la frase!', excellent:'¡Excelente!',
-      subtitle:'¡Corre y come las palabras en el orden correcto de la frase! Cada cierto tiempo aparece un nivel jefe: escucha la frase en vez de leerla.',
-      dragHint:'👆 Arrastra el dedo por la pantalla para moverte. En computadora: flechas o WASD, o arrastra con el ratón.',
-      langLabel:'Idioma de las traducciones', name:'Tu nombre', namePh:'Jugador', script:'Tipo de caracteres', trad:'Tradicional', simp:'Simplificado',
-      diff:'Dificultad (velocidad)', facil:'Fácil', normal:'Normal', dificil:'Difícil', start:'Empezar', loadingSent:'Cargando frases…',
-      viewLb:'Ver clasificación', over:'Fin del juego', points:'Puntos', sentences:'Frases', best:'Mejores puntuaciones', again:'Jugar de nuevo',
-      pause:'Pausa', pauseTitle:'Pausa (P)', resume:'Continuar', quit:'Terminar partida', lbTitle:'Clasificación', close:'Cerrar',
-      loading:'Cargando…', noScores:'Todavía no hay puntuaciones. ¡Sé el primero!',
-      noFirebase:'Configura Firebase en el código para activar la clasificación en línea.', bossDefeated:'+1 ♥ ¡Jefe derrotado!', defaultName:'Jugador',
-      replay:'Escuchar otra vez', bossNoVoice:'Sin audio: mira el pinyin',
-      teacher:'Versión para profesores', goHome:'Ir al juego normal', preview:'Vista previa',
-      noRecord:'Este resultado no se guarda en la clasificación. Descarga la imagen para compartirlo.', download:'Descargar imagen',
-      linkUnavailable:'Este enlace no está disponible (puede haber sido eliminado o la suscripción del profesor venció).',
-      linkError:'No se pudo cargar el banco de frases. Revisa tu conexión e inténtalo de nuevo.', speedLbl:'Velocidad', charsLbl:'Caracteres',
-      classNeedName:'Escribe tu apodo para empezar.', classHint:'Escribe el apodo que tu profesor te pidió. Tu resultado se enviará automáticamente.', classSent:'✅ Resultado enviado a tu profesor', classSending:'Enviando resultado…', classFail:'No se pudo enviar el resultado.', classRetry:'Reintentar', classBoard:'Clasificación de la clase'
-    },
-    en:{
-      order:'Eat them in order', boss:'Listen carefully!', toast:'Follow the order of the sentence!', excellent:'Excellent!',
-      subtitle:'Run and eat the words in the correct order of the sentence! Every so often a boss level appears: listen to the sentence instead of reading it.',
-      dragHint:'👆 Drag your finger across the screen to move. On a computer: arrow keys or WASD, or drag with the mouse.',
-      langLabel:'Language of the translations', name:'Your name', namePh:'Player', script:'Character type', trad:'Traditional', simp:'Simplified',
-      diff:'Difficulty (speed)', facil:'Easy', normal:'Normal', dificil:'Hard', start:'Start', loadingSent:'Loading sentences…',
-      viewLb:'View leaderboard', over:'Game over', points:'Points', sentences:'Sentences', best:'Top scores', again:'Play again',
-      pause:'Pause', pauseTitle:'Pause (P)', resume:'Resume', quit:'End game', lbTitle:'Leaderboard', close:'Close',
-      loading:'Loading…', noScores:'No scores yet. Be the first!',
-      noFirebase:'Set up Firebase in the code to enable the online leaderboard.', bossDefeated:'+1 ♥ Boss defeated!', defaultName:'Player',
-      replay:'Listen again', bossNoVoice:'No audio: follow the pinyin',
-      teacher:'For teachers', goHome:'Go to the regular game', preview:'Preview',
-      noRecord:'This result is not saved on the leaderboard. Download the image to share it.', download:'Download image',
-      linkUnavailable:'This link is not available (it may have been removed, or the teacher\'s subscription has expired).',
-      linkError:'Could not load the sentence bank. Check your connection and try again.', speedLbl:'Speed', charsLbl:'Characters',
-      classNeedName:'Type your nickname to start.', classHint:'Type the nickname your teacher asked for. Your result is sent automatically.', classSent:'✅ Result sent to your teacher', classSending:'Sending result…', classFail:'Could not send the result.', classRetry:'Retry', classBoard:'Class leaderboard'
+  // ================= 三款遊戲共用的基本設定（⚙️） =================
+  // 存在同一個網域（wangchiapin.github.io）的 localStorage，鑰匙 'hanziGames.settings'，內容是 JSON：
+  //   { v:1, script:'trad'|'simp', lang:'es'|'en'|'zh', phon:'pinyin'|'zhuyin'|'both'|'off', rate:'slow'|'normal'|'fast' }
+  // 跑吧、色數、比比看都讀寫這一把鑰匙；格式說明在 README。
+  const SETTINGS_KEY = 'hanziGames.settings';
+  const SET_OPTS = { script:['trad','simp'], lang:['es','en','zh'], phon:['pinyin','zhuyin','both','off'], rate:['slow','normal','fast'] };
+  const RATE_VALUE = { slow:0.75, normal:0.92, fast:1.1 };
+  function readSettings(){
+    const out = { v:1, script:'trad', lang:'es', phon:'pinyin', rate:'normal' };
+    let saved = null;
+    try{ saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null'); }catch(e){}
+    if(saved && typeof saved === 'object'){
+      Object.keys(SET_OPTS).forEach(k=>{ if(SET_OPTS[k].includes(saved[k])) out[k] = saved[k]; });
+    }else{
+      // 第一次：從跑吧舊的設定搬過來（舊版只有「西文／英文」）
+      try{ if(localStorage.getItem('correLang') === 'en') out.lang = 'en'; }catch(e){}
+      writeSettings(out);
     }
+    return out;
+  }
+  function writeSettings(o){
+    try{
+      // 保留其他遊戲可能多存的欄位，只更新這四項
+      let cur = {};
+      try{ cur = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; }catch(e){}
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(Object.assign(cur, { v:1, script:o.script, lang:o.lang, phon:o.phon, rate:o.rate })));
+    }catch(e){}
+  }
+  const SETTINGS = readSettings();
+
+  // ================= 介面文字：中文（繁／簡）＋ 西文或英文；「只有中文」就只有中文 =================
+  // key: [繁體, 简体, Español, English]
+  const I18N = {
+    brand:['跑吧！漢字','跑吧！汉字','',''],
+    order:['依照順序吃','依照顺序吃','Cómelos en orden','Eat them in order'],
+    boss:['仔細聽！','仔细听！','¡Escucha con atención!','Listen carefully!'],
+    bossTitle:['大魔王關卡','大魔王关卡','',''],
+    toastMain:['按照順序來唷！','按照顺序来哟！','',''],
+    toast:['','','¡Sigue el orden de la frase!','Follow the order of the sentence!'],
+    excellent:['太棒了！','太棒了！','¡Excelente!','Excellent!'],
+    subtitle:['照句子的順序，跑過去吃掉詞語！每隔幾句會出現大魔王關卡：不給你看字，要用聽的。','照句子的顺序，跑过去吃掉词语！每隔几句会出现大魔王关卡：不给你看字，要用听的。',
+      '¡Corre y come las palabras en el orden correcto de la frase! Cada cierto tiempo aparece un nivel jefe: escucha la frase en vez de leerla.',
+      'Run and eat the words in the correct order of the sentence! Every so often a boss level appears: listen to the sentence instead of reading it.'],
+    dragHint:['👆 手指在畫面上拖動就能移動。電腦：方向鍵、WASD 或用滑鼠拖動。','👆 手指在画面上拖动就能移动。电脑：方向键、WASD 或用鼠标拖动。',
+      'Arrastra el dedo por la pantalla para moverte. En computadora: flechas o WASD, o arrastra con el ratón.',
+      'Drag your finger across the screen to move. On a computer: arrow keys or WASD, or drag with the mouse.'],
+    name:['你的名字','你的名字','Tu nombre','Your name'],
+    namePh:['玩家','玩家','Jugador','Player'],
+    defaultName:['玩家','玩家','Jugador','Player'],
+    diff:['難度（速度）','难度（速度）','Dificultad (velocidad)','Difficulty (speed)'],
+    facil:['簡單','简单','Fácil','Easy'], normal:['普通','普通','Normal','Normal'], dificil:['困難','困难','Difícil','Hard'],
+    start:['開始','开始','Empezar','Start'],
+    loadingSent:['載入句子中…','载入句子中…','Cargando frases…','Loading sentences…'],
+    viewLb:['排行榜','排行榜','Clasificación','Leaderboard'],
+    over:['遊戲結束','游戏结束','Fin del juego','Game over'],
+    points:['分數','分数','Puntos','Points'],
+    sentences:['句子','句子','Frases','Sentences'],
+    best:['最高分','最高分','Mejores puntuaciones','Top scores'],
+    again:['再玩一次','再玩一次','Jugar de nuevo','Play again'],
+    menu:['主選單','主菜单','Menú principal','Main menu'],
+    pause:['暫停','暂停','Pausa','Pause'], pauseTitle:['暫停 (P)','暂停 (P)','Pausa (P)','Pause (P)'],
+    resume:['繼續','继续','Continuar','Resume'], quit:['結束遊戲','结束游戏','Terminar partida','End game'],
+    lbTitle:['排行榜','排行榜','Clasificación','Leaderboard'], close:['關閉','关闭','Cerrar','Close'],
+    loading:['載入中…','载入中…','Cargando…','Loading…'],
+    noScores:['還沒有成績，搶第一！','还没有成绩，抢第一！','Todavía no hay puntuaciones. ¡Sé el primero!','No scores yet. Be the first!'],
+    noFirebase:['排行榜暫時無法使用。','排行榜暂时无法使用。','La clasificación no está disponible ahora.','The leaderboard is not available right now.'],
+    bossDefeated:['+1 ♥ 打敗大魔王！','+1 ♥ 打败大魔王！','¡Jefe derrotado!','Boss defeated!'],
+    replay:['再聽一次','再听一次','Escuchar otra vez','Listen again'],
+    bossNoVoice:['沒有語音：看拼音','没有语音：看拼音','Sin audio: mira el pinyin','No audio: follow the pinyin'],
+    teacher:['老師管理中心','老师管理中心','Centro para profesores','Teacher center'],
+    goHome:['回到一般遊戲','回到一般游戏','Ir al juego normal','Go to the regular game'],
+    preview:['預覽','预览','Vista previa','Preview'],
+    noRecord:['這次成績不會上排行榜，可以下載圖片分享。','这次成绩不会上排行榜，可以下载图片分享。','Este resultado no se guarda en la clasificación. Descarga la imagen para compartirlo.','This result is not saved on the leaderboard. Download the image to share it.'],
+    download:['下載圖片','下载图片','Descargar imagen','Download image'],
+    linkUnavailable:['這個連結無法使用（可能已刪除，或老師的訂閱已到期）。','这个链接无法使用（可能已删除，或老师的订阅已到期）。',
+      'Este enlace no está disponible (puede haber sido eliminado o la suscripción del profesor venció).',
+      'This link is not available (it may have been removed, or the teacher\'s subscription has expired).'],
+    linkError:['句庫載入失敗，請檢查網路再試一次。','句库载入失败，请检查网络再试一次。','No se pudo cargar el banco de frases. Revisa tu conexión e inténtalo de nuevo.','Could not load the sentence bank. Check your connection and try again.'],
+    speedLbl:['速度','速度','Velocidad','Speed'],
+    classNeedName:['請輸入暱稱才能開始。','请输入昵称才能开始。','Escribe tu apodo para empezar.','Type your nickname to start.'],
+    classHint:['請輸入老師要你用的暱稱，成績會自動回傳。','请输入老师要你用的昵称，成绩会自动回传。','Escribe el apodo que tu profesor te pidió. Tu resultado se enviará automáticamente.','Type the nickname your teacher asked for. Your result is sent automatically.'],
+    classSent:['✅ 成績已回傳給老師','✅ 成绩已回传给老师','Resultado enviado a tu profesor','Result sent to your teacher'],
+    classSending:['正在回傳成績…','正在回传成绩…','Enviando resultado…','Sending result…'],
+    classFail:['成績回傳失敗。','成绩回传失败。','No se pudo enviar el resultado.','Could not send the result.'],
+    classRetry:['再試一次','再试一次','Reintentar','Retry'],
+    classBoard:['班級排行榜','班级排行榜','Clasificación de la clase','Class leaderboard'],
+    settings:['設定','设置','Ajustes','Settings'],
+    script:['字形','字形','Caracteres','Characters'],
+    langLbl:['語言','语言','Idioma','Language'],
+    zhPlus:['中文＋','中文＋','',''], zhOnly:['只有中文','只有中文','',''],
+    phon:['拼音／注音','拼音／注音','Pinyin / Zhuyin','Pinyin / Zhuyin'],
+    pinyin:['拼音','拼音','Pinyin','Pinyin'], zhuyin:['注音','注音','Zhuyin','Zhuyin'],
+    both:['兩個都顯示','两个都显示','Ambos','Both'], phOff:['關','关','Ocultar','Off'],
+    rate:['語速','语速','Velocidad de voz','Speech speed'],
+    slow:['慢','慢','Lenta','Slow'], rateNormal:['正常','正常','Normal','Normal'], fast:['快','快','Rápida','Fast'],
+    lockedByTeacher:['老師已設定','老师已设定','Lo fijó tu profesor','Set by your teacher'],
+    done:['完成','完成','Listo','Done'],
+    // 結果畫面的評語（依完成句數）
+    c0:['沒關係，再試一次！','没关系，再试一次！','¡No pasa nada, inténtalo otra vez!','No worries, try again!'],
+    c1:['不錯的開始！','不错的开始！','¡Buen comienzo!','Good start!'],
+    c2:['很好，越來越厲害了！','很好，越来越厉害了！','¡Muy bien, cada vez mejor!','Very good, getting better and better!'],
+    c3:['太厲害了！','太厉害了！','¡Increíble!','Amazing!'],
+    c4:['你是漢字高手！','你是汉字高手！','¡Eres un maestro de los caracteres!','You\'re a Chinese character master!']
   };
-  let lang = 'es';
-  try{ if(localStorage.getItem('correLang') === 'en') lang = 'en'; }catch(e){}
-  const t = key => I18N[lang][key];
-  // 句子的翻譯：選英文時用 en；這句還沒有英文翻譯就先顯示西班牙文，不會是空白
-  const translationOf = s => (lang === 'en' && s.en) ? s.en : s.es;
+  let lang = SETTINGS.lang;           // 'es' | 'en' | 'zh'
+  let scriptLocked = false;           // 老師句庫連結：字形由老師決定
+  // 介面中文用哪一種：一般跟著 ⚙️ 字形；老師句庫鎖定時跟著句庫
+  const zhIdx = () => (useSimplified ? 1 : 0);
+  const zhOf = key => (I18N[key] ? I18N[key][zhIdx()] : '');
+  const subOf = key => (!I18N[key] || lang === 'zh') ? '' : I18N[key][lang === 'en' ? 3 : 2];
+  // 純文字（放在 placeholder、title、圖片裡）：「中文 · 西文」
+  const t = key => { const z = zhOf(key), s = subOf(key); return z && s ? z + ' · ' + s : (z || s); };
+  // 雙行：上面中文、下面小字
+  function fill(el, key){
+    const z = zhOf(key), s = subOf(key);
+    el.textContent = '';
+    if(!s || !z){ el.textContent = z || s; return; }
+    const w = document.createElement('span'); w.className = 'dl';
+    const a = document.createElement('span'); a.className = 'z'; a.textContent = z;
+    const b = document.createElement('span'); b.className = 's'; b.textContent = s;
+    w.appendChild(a); w.appendChild(b); el.appendChild(w);
+  }
+  // 句子的翻譯：中＋英用英文（還沒有英文就先用西文）；只有中文就不顯示
+  const translationOf = s => lang === 'zh' ? '' : ((lang === 'en' && s.en) ? s.en : s.es);
   function applyLang(){
-    document.documentElement.lang = lang;
-    document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
-    document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPh); });
+    document.documentElement.lang = useSimplified ? 'zh-Hans' : 'zh-Hant';
+    document.querySelectorAll('[data-i18n]').forEach(el=> fill(el, el.dataset.i18n));
+    document.querySelectorAll('[data-zh]').forEach(el=>{ el.textContent = zhOf(el.dataset.zh); });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = (lang === 'zh' ? zhOf(el.dataset.i18nPh) : subOf(el.dataset.i18nPh)); });
     document.querySelectorAll('[data-i18n-title]').forEach(el=>{
       el.title = t(el.dataset.i18nTitle);
-      if(el.tagName === 'BUTTON') el.setAttribute('aria-label', el.title);
+      el.setAttribute('aria-label', el.title);
     });
-    document.title = '跑吧！漢字 · ' + (lang === 'en' ? 'A Few Minutes a Day' : 'Cada día unos minutos');
-    if(bankErrKey){ document.getElementById('bankErr').textContent = t(bankErrKey); }
+    document.title = zhOf('brand') + ' · ' + (lang === 'en' ? 'A Few Minutes a Day' : 'Cada día unos minutos');
+    if(bankErrKey){ fill(document.getElementById('bankErr'), bankErrKey); }
+    if(typeof onLangApplied === 'function') onLangApplied();
   }
+  let onLangApplied = null;   // 遊戲其他部分登記：換語言／字形後要重畫的東西
+  // 依 key 填文字，並記在元素上，之後換語言時 applyLang 會自動重畫
+  function setKey(el, key){ el.dataset.i18n = key; fill(el, key); }
 
-  const diffLabel = k => ({ facil:t('facil'), normal:t('normal'), dificil:t('dificil') }[k] || '');
+  const diffLabel = k => (['facil','normal','dificil'].includes(k) ? zhOf(k) : '');
 
+  function lbMsg(containerEl, key){
+    containerEl.textContent = '';
+    const p = document.createElement('p'); p.className = 'lb-msg'; fill(p, key);
+    containerEl.appendChild(p);
+  }
   function renderLeaderboard(containerEl, rows){
     if(rows===null){
-      containerEl.innerHTML = '<p class="lb-msg">' + t('noFirebase') + '</p>';
+      lbMsg(containerEl, 'noFirebase');
       return;
     }
     if(rows.length===0){
-      containerEl.innerHTML = '<p class="lb-msg">' + t('noScores') + '</p>';
+      lbMsg(containerEl, 'noScores');
       return;
     }
     containerEl.innerHTML = rows.map((r,i)=>`
@@ -754,7 +918,7 @@
   }
 
   async function refreshLeaderboard(containerEl){
-    containerEl.innerHTML = '<p class="lb-msg">' + t('loading') + '</p>';
+    lbMsg(containerEl, 'loading');
     const rows = await fetchTop(10);
     renderLeaderboard(containerEl, rows);
   }
@@ -829,7 +993,7 @@
       if(interrupt !== false) speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
       u.lang = 'zh-TW';
-      u.rate = 0.92;
+      u.rate = RATE_VALUE[SETTINGS.rate] || 0.92;
       const v = voicesList.find(v=>v.lang==='zh-TW') ||
                 voicesList.find(v=>v.lang && v.lang.toLowerCase().startsWith('zh')) || null;
       if(v) u.voice = v;
@@ -856,7 +1020,7 @@
         if(mySeq !== speakSeq) return;   // 等待的這一小段時間裡又有更新的語音，這一個就不念了
         const u = new SpeechSynthesisUtterance(text);
         u.lang = 'zh-TW';
-        u.rate = 0.92;
+        u.rate = RATE_VALUE[SETTINGS.rate] || 0.92;
         const v = pickVoice();
         if(v) u.voice = v;
         let started = false;
@@ -1139,8 +1303,7 @@
   const MAX_BANK_CHARS = 20;      // 每句最多漢字數（編輯頁已限制，這裡再把關一次）
   let bankName = '';
   let bankBoss = true;
-  let bankPhonetic = 'pinyin';   // 老師設定的注音/拼音顯示方式
-  let phKind = 'pinyin';         // 目前顯示：pinyin | zhuyin | both | off
+  let phKind = SETTINGS.phon;    // 目前顯示：pinyin | zhuyin | both | off（⚙️ 設定，老師句庫也由學生自己選）
   let bankErrKey = '';
   const CENTRAL_CONFIG = {
     apiKey: "AIzaSyCHZz8Hh7m45bJfZC9aK_f_NvUD-aUeuzU",
@@ -1267,10 +1430,9 @@
     rebuildWordPools();
     bankName = String(d.name || '').slice(0, 40);
     bankBoss = d.boss !== false;
-    bankPhonetic = (d.phonetic === 'zhuyin' || d.phonetic === 'both') ? d.phonetic : 'pinyin';
-    phKind = bankPhonetic;
     diffKey = (d.speed === 'facil' || d.speed === 'dificil') ? d.speed : 'normal';
     useSimplified = d.script === 'simp';
+    scriptLocked = true;   // 字形照老師設定，⚙️ 裡這一項會變灰
   }
 
   const DIFF = {
@@ -1283,7 +1445,7 @@
 
   // ================= STATE =================
   let playerName = 'Jugador';
-  let useSimplified = false;
+  let useSimplified = SETTINGS.script === 'simp';
   let diffKey = 'normal';
   let laneCount = 3;
   let laneY = [];
@@ -1305,7 +1467,7 @@
   let speed = 135;
   let spawnTimer = 0;
   let spawnInterval = 1500;
-  let showPinyin = true;
+  let showPinyin = SETTINGS.phon !== 'off';
   let trackW = 0;
   let trackH = 0;
   let coins = [];
@@ -1335,7 +1497,6 @@
   const finalScoreEl = document.getElementById('finalScore');
   const finalSentencesEl = document.getElementById('finalSentences');
   const celebrateEl = document.getElementById('celebrate');
-  const pinyinToggle = document.getElementById('pinyinToggle');
   const musicToggleEl = document.getElementById('musicToggle');
   const nameInput = document.getElementById('nameInput');
   const bannerWrapEl = document.getElementById('banner-wrap');
@@ -1353,6 +1514,20 @@
       pool = pool.concat(fallback.filter(c=>!tokens.includes(c) && !pool.includes(c)));
     }
     return pool;
+  }
+  // 老師在中心替這一句設的干擾字（decoy 繁體、decoySimp 簡體），最多 5 個、每個 1～4 字；
+  // 簡體沒填就用繁體那組。句子本身用到的詞不算。
+  function ownDecoys(s, tokens){
+    let list = useSimplified ? s.decoySimp : s.decoy;
+    if(useSimplified && !(Array.isArray(list) && list.length)) list = s.decoy;
+    if(!Array.isArray(list)) return [];
+    const out = [];
+    list.forEach(w=>{
+      w = typeof w === 'string' ? w.trim() : '';
+      const n = [...w].length;
+      if(n >= 1 && n <= 4 && !tokens.includes(w) && !out.includes(w)) out.push(w);
+    });
+    return out.slice(0, 5);
   }
   rebuildWordPools();
 
@@ -1567,15 +1742,19 @@
       makeCoin(tok, l);
     }
     const decoyCount = Math.max(1, laneCount-2);
-    const pool = getDecoyPool(tokens);
-    if(pool.length === 0) return;
+    // 先用老師設的干擾字（每一波隨機排序、不重複），不夠再從題庫隨機補
+    const own = shuffle(ownDecoys(sentence, tokens));
+    const pool = getDecoyPool(tokens).filter(w=>!own.includes(w));
+    if(own.length === 0 && pool.length === 0) return;
     const freeLanes = [];
     for(let i=0;i<laneCount;i++) if(!lanesUsed.has(i)) freeLanes.push(i);
     for(let k=0; k<decoyCount && freeLanes.length>0; k++){
       if(Math.random() > 0.85 && k>0) continue;
+      const word = own.length ? own.pop() : (pool.length ? pick(pool) : null);
+      if(!word) break;
       const idx = Math.floor(Math.random()*freeLanes.length);
       const l = freeLanes.splice(idx,1)[0];
-      makeCoin(pick(pool), l);
+      makeCoin(word, l);
     }
   }
 
@@ -1608,10 +1787,10 @@
     else c.el.style.left = c.x + 'px';
   }
 
-  function floatText(x,y,txt,color){
+  function floatText(x,y,txt,color,key){
     const f = document.createElement('div');
     f.className = 'float-txt';
-    f.textContent = txt;
+    if(key) fill(f, key); else f.textContent = txt;
     f.style.left = x+'px'; f.style.top = y+'%'; f.style.color = color;
     f.style.textShadow = '0 0 6px ' + color;
     trackEl.appendChild(f);
@@ -1681,7 +1860,7 @@
       lives = Math.min(maxLives, lives + 1);
       renderHearts();
       setTimeout(()=>{
-        floatText(trackW/2, 46, t('bossDefeated'), '#39ff88');
+        floatText(trackW/2, 46, '', '#39ff88', 'bossDefeated');
         sfxBonus();
       }, 250);
     }
@@ -1697,6 +1876,9 @@
     }, 2600);
   }
 
+  // 評語：依完成句數分五級
+  function commentKey(n){ return n <= 0 ? 'c0' : n <= 4 ? 'c1' : n <= 9 ? 'c2' : n <= 19 ? 'c3' : 'c4'; }
+
   function endGame(){
     if(!overOverlay.classList.contains('hidden')) return;   // 已經結束了，不要重複處理
     running = false;
@@ -1707,6 +1889,7 @@
     stopMusic();
     finalScoreEl.textContent = score;
     finalSentencesEl.textContent = sentencesDone;
+    setKey(document.getElementById('commentLine'), commentKey(sentencesDone));
     overOverlay.classList.remove('hidden');
     if(TEACHER_MODE || CLASS_MODE){
       // 教師版／班級版：不上傳公開排行榜，只提供成績圖片下載
@@ -1719,7 +1902,7 @@
     }
     // 先等分數存好，再讀一次排行榜（以前會讀兩次，第一次還沒有這局的分數）
     const lbEl = document.getElementById('lbListOver');
-    lbEl.innerHTML = '<p class="lb-msg">' + t('loading') + '</p>';
+    lbMsg(lbEl, 'loading');
     submitScore({ name: playerName, score, sentences: sentencesDone, difficulty: diffKey, script: useSimplified?'simp':'trad' })
       .then(()=> refreshLeaderboard(lbEl));
   }
@@ -1729,21 +1912,21 @@
     const msg = document.getElementById('classMsg'), retry = document.getElementById('classRetryBtn');
     const head = document.getElementById('lbHeadingOver'), list = document.getElementById('lbListOver');
     const entry = { nick: playerName, score, sentences: sentencesDone, difficulty: diffKey };
-    msg.hidden = false; msg.textContent = t('classSending'); retry.hidden = true;
+    msg.hidden = false; setKey(msg, 'classSending'); retry.hidden = true;
     try{
       await submitClassScore(entry);
-      msg.textContent = t('classSent');
+      setKey(msg, 'classSent');
       if(classData && classData.showBoard){
         head.hidden = false; list.hidden = false;
-        head.querySelector('span').textContent = t('classBoard');
-        list.innerHTML = '<p class="lb-msg">' + t('loading') + '</p>';
+        setKey(head.querySelector('span'), 'classBoard');
+        lbMsg(list, 'loading');
         try{ renderLeaderboard(list, await fetchClassBoard()); }
         catch(e){ list.hidden = true; head.hidden = true; }
       }
     }catch(e){
       console.warn('班級成績回傳失敗', e);
-      msg.textContent = t('classFail');
-      retry.textContent = t('classRetry'); retry.hidden = false;
+      setKey(msg, 'classFail');
+      setKey(retry, 'classRetry'); retry.hidden = false;
     }
   }
   document.getElementById('classRetryBtn').addEventListener('click', ()=>{ if(CLASS_MODE) sendClassResult(); });
@@ -1759,7 +1942,7 @@
     x.strokeStyle = 'rgba(255,47,208,0.6)'; x.lineWidth = 2; x.strokeRect(30, 30, W - 60, H - 60);
     x.textAlign = 'center';
     x.shadowColor = '#00fff2'; x.shadowBlur = 18;
-    x.fillStyle = '#00fff2'; x.font = '900 64px ' + F; x.fillText('跑吧！漢字', W / 2, 120);
+    x.fillStyle = '#00fff2'; x.font = '900 64px ' + F; x.fillText(zhOf('brand'), W / 2, 120);
     x.shadowBlur = 0;
     x.fillStyle = '#7fa3ac'; x.font = '26px ' + F; x.fillText('Cada día unos minutos', W / 2, 165);
     x.fillStyle = '#eafcff'; x.font = '700 46px ' + F;
@@ -1771,10 +1954,10 @@
     x.shadowColor = '#00fff2'; x.shadowBlur = 24;
     x.fillStyle = '#00fff2'; x.font = '900 170px ' + F; x.fillText(String(score), W / 2, 500);
     x.shadowBlur = 0;
-    x.fillStyle = '#7fa3ac'; x.font = '28px ' + F; x.fillText(t('points').toUpperCase(), W / 2, 548);
+    x.fillStyle = '#7fa3ac'; x.font = '28px ' + F; x.fillText(t('points'), W / 2, 548);
     x.fillStyle = '#eafcff'; x.font = '34px ' + F;
     x.fillText(t('sentences') + ': ' + sentencesDone, W / 2, 640);
-    x.fillText(t('speedLbl') + ': ' + diffLabel(diffKey) + ' · ' + (useSimplified ? '簡體' : '繁體'), W / 2, 700);
+    x.fillText(zhOf('speedLbl') + '：' + diffLabel(diffKey) + ' · ' + (useSimplified ? '简体' : '繁體'), W / 2, 700);
     x.fillStyle = '#7fa3ac'; x.font = '24px ' + F;
     x.fillText(new Date().toLocaleString(), W / 2, H - 70);
     cv.toBlob(b=>{
@@ -1917,21 +2100,6 @@
     dragPointerId = null;
   });
 
-  const PH_LABEL = { pinyin:'拼音', zhuyin:'注音', both:'拼+注', off:'音標關' };
-  function syncPhToggle(){
-    showPinyin = phKind !== 'off';
-    pinyinToggle.textContent = PH_LABEL[phKind];
-    pinyinToggle.classList.toggle('on', showPinyin);
-  }
-  pinyinToggle.addEventListener('click', ()=>{
-    // 一般模式：拼音 → 注音 → 拼+注 → 關；教師模式：老師決定顯示方式，學生只能開／關
-    const order = TEACHER_MODE ? [bankPhonetic, 'off'] : ['pinyin', 'zhuyin', 'both', 'off'];
-    phKind = order[(order.indexOf(phKind) + 1) % order.length];
-    syncPhToggle();
-    renderBanner();
-  });
-  syncPhToggle();
-
   musicToggleEl.classList.toggle('on', musicOn);
   musicToggleEl.addEventListener('click', toggleMusic);
 
@@ -1939,24 +2107,95 @@
   function wireToggleGroup(groupEl, onPick){
     groupEl.querySelectorAll('.toggle-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
+        if(btn.disabled) return;
         groupEl.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
         btn.classList.add('active');
         onPick(btn.dataset.value);
       });
     });
   }
-  wireToggleGroup(document.getElementById('scriptGroup'), v=>{ useSimplified = (v==='simp'); });
   wireToggleGroup(document.getElementById('diffGroup'), v=>{ diffKey = v; });
-  // 語言：選了就記住，下次開遊戲會是同一個語言
-  const langGroup = document.getElementById('langGroup');
-  langGroup.querySelectorAll('.toggle-btn').forEach(b=>b.classList.toggle('active', b.dataset.value === lang));
-  wireToggleGroup(langGroup, v=>{
-    lang = (v === 'en') ? 'en' : 'es';
-    try{ localStorage.setItem('correLang', lang); }catch(e){}
+
+  // ================= ⚙️ 設定視窗 =================
+  const setModal = document.getElementById('setModal');
+  const gearBtn = document.getElementById('gearBtn');
+  const gearFloat = document.getElementById('gearFloat');
+  let pausedBySettings = false;
+  function markGroup(id, val){
+    document.getElementById(id).querySelectorAll('.toggle-btn').forEach(b=>b.classList.toggle('active', b.dataset.value === val));
+  }
+  function syncSettingsUI(){
+    markGroup('setScript', useSimplified ? 'simp' : 'trad');
+    markGroup('setLang', lang);
+    markGroup('setPhon', phKind);
+    markGroup('setRate', SETTINGS.rate);
+    document.querySelectorAll('#setScript .toggle-btn').forEach(b=>{ b.disabled = scriptLocked; });
+    const lock = document.getElementById('scriptLock');
+    lock.hidden = !scriptLocked;
+    if(scriptLocked) lock.textContent = '🔒 ' + t('lockedByTeacher');
+  }
+  // 換了字形：畫面上舊字形的金幣要清掉，不然會吃不到
+  function onScriptChanged(){
+    coins.forEach(c=>c.el.remove()); coins = []; bag = [];
+    if(sentence) renderBanner();
+  }
+  // 設定變了之後，重畫所有跟它有關的東西
+  function applySettings(){
+    showPinyin = phKind !== 'off';
     applyLang();
-    if(startBtn.disabled) startBtn.textContent = t('loadingSent');
+    syncSettingsUI();
+    if(sentence) renderBanner();
+  }
+  wireToggleGroup(document.getElementById('setScript'), v=>{
+    if(scriptLocked) return;
+    useSimplified = v === 'simp'; SETTINGS.script = v; writeSettings(SETTINGS);
+    onScriptChanged(); applySettings();
   });
-  applyLang();
+  wireToggleGroup(document.getElementById('setLang'), v=>{
+    lang = v; SETTINGS.lang = v; writeSettings(SETTINGS);
+    applySettings();
+    if(sentence && !running && esLineEl.textContent) esLineEl.textContent = translationOf(sentence);
+  });
+  wireToggleGroup(document.getElementById('setPhon'), v=>{
+    phKind = v; SETTINGS.phon = v; writeSettings(SETTINGS); applySettings();
+  });
+  wireToggleGroup(document.getElementById('setRate'), v=>{
+    SETTINGS.rate = v; writeSettings(SETTINGS); applySettings();
+    speak(useSimplified ? '你好，我说中文' : '你好，我說中文');   // 試聽一下速度
+  });
+  function openSettings(){
+    if(running && !paused){ pauseGame(); pausedBySettings = true; }
+    syncSettingsUI();
+    setModal.classList.remove('hidden');
+  }
+  function closeSettings(){
+    setModal.classList.add('hidden');
+    if(pausedBySettings){ pausedBySettings = false; resumeGame(); }
+  }
+  gearBtn.addEventListener('click', openSettings);
+  gearFloat.addEventListener('click', openSettings);
+  document.getElementById('setDone').addEventListener('click', closeSettings);
+  setModal.addEventListener('click', e=>{ if(e.target === setModal) closeSettings(); });
+  // 另一個分頁（例如色數消消樂）改了共用設定 → 這裡也跟著更新（遊戲進行中不打擾）
+  window.addEventListener('storage', e=>{
+    if(e.key !== SETTINGS_KEY || running) return;
+    const n = readSettings();
+    Object.assign(SETTINGS, n);
+    lang = n.lang; phKind = n.phon;
+    if(!scriptLocked && useSimplified !== (n.script === 'simp')){ useSimplified = n.script === 'simp'; onScriptChanged(); }
+    applySettings();
+  });
+
+  // ⚙️ 右上角那顆：開始畫面、結果畫面才出現（遊戲中用標題列那顆）
+  function syncMenuGear(){
+    const menu = (!startOverlay.classList.contains('hidden') || !overOverlay.classList.contains('hidden')) && lbOverlay.classList.contains('hidden');
+    document.getElementById('stage').classList.toggle('menu', menu);
+  }
+  const ovObs = new MutationObserver(syncMenuGear);
+  [startOverlay, overOverlay, lbOverlay].forEach(el=> ovObs.observe(el, { attributes:true, attributeFilter:['class'] }));
+  syncMenuGear();
+
+  applySettings();
 
   document.getElementById('showLbBtn').addEventListener('click', ()=>{
     lbOverlay.classList.remove('hidden');
@@ -1969,10 +2208,10 @@
   // ================= START / RESTART =================
   function startGame(){
     if(CLASS_MODE && !(nameInput.value || '').trim()){
-      const h = document.getElementById('classHint'); h.hidden = false; h.style.color = 'var(--danger, #ff2f6d)'; h.textContent = t('classNeedName');
+      const h = document.getElementById('classHint'); h.hidden = false; h.style.color = 'var(--danger, #ff2f6d)'; setKey(h, 'classNeedName');
       nameInput.focus(); return;
     }
-    playerName = (nameInput.value || '').trim() || t('defaultName');
+    playerName = (nameInput.value || '').trim() || (lang === 'zh' ? zhOf('defaultName') : subOf('defaultName'));
     startOverlay.classList.add('hidden');
     overOverlay.classList.add('hidden');
     lbOverlay.classList.add('hidden');
@@ -2005,6 +2244,14 @@
   const startBtn = document.getElementById('startBtn');
   startBtn.addEventListener('click', startGame);
   document.getElementById('restartBtn').addEventListener('click', startGame);
+  // 主選單：回到開始畫面（可以改名字、難度，或看排行榜）
+  document.getElementById('menuBtn').addEventListener('click', ()=>{
+    overOverlay.classList.add('hidden');
+    lbOverlay.classList.add('hidden');
+    coins.forEach(c=>c.el.remove()); coins = [];
+    startOverlay.classList.remove('hidden');
+    startOverlay.scrollTop = 0;
+  });
 
   // ================= 除錯面板（?debug=1 才會出現） =================
   function initDebugHud(){
@@ -2068,38 +2315,37 @@
   function showBankErr(key){
     bankErrKey = key;
     const el = document.getElementById('bankErr');
-    el.textContent = t(key); el.hidden = false;
+    fill(el, key); el.hidden = false;
     startBtn.hidden = true;
     document.getElementById('homeLink').hidden = false;
   }
   function initClassMode(){
     document.getElementById('showLbBtn').hidden = true;
     document.getElementById('teacherLink').hidden = true;
-    const hint = document.getElementById('classHint'); hint.hidden = false; hint.textContent = t('classHint');
+    const hint = document.getElementById('classHint'); hint.hidden = false; setKey(hint, 'classHint');
     try{ nameInput.value = localStorage.getItem('correClassNick') || ''; }catch(e){}
     nameInput.addEventListener('input', ()=>{ try{ localStorage.setItem('correClassNick', nameInput.value); }catch(e){} });
     return fetchClass().then(d=>{
       classData = d;
       const tag = document.getElementById('classTag');
-      tag.textContent = '🏫 ' + String(d.name || '').slice(0, 40) + (PREVIEW ? ' · ' + t('preview') : '');
+      tag.textContent = '🏫 ' + String(d.name || '').slice(0, 40) + (PREVIEW ? ' · ' + zhOf('preview') : '');
       tag.hidden = false;
     });
   }
   function initTeacherMode(){
     document.getElementById('showLbBtn').hidden = true;
     document.getElementById('teacherLink').hidden = true;
-    document.getElementById('scriptGroup').parentElement.hidden = true;
     document.getElementById('diffGroup').parentElement.hidden = true;
     startBtn.disabled = true;
-    startBtn.textContent = t('loadingSent');
+    setKey(startBtn, 'loadingSent');
     fetchTeacherBank().then(d=>{
       applyTeacherBank(d);
-      syncPhToggle();
+      applySettings();   // 字形照老師設定 → 介面中文也跟著換
       const tag = document.getElementById('bankTag');
-      tag.textContent = '📚 ' + bankName + (PREVIEW ? ' · ' + t('preview') : '');
+      tag.textContent = '📚 ' + bankName + (PREVIEW ? ' · ' + zhOf('preview') : '');
       tag.hidden = false;
       startBtn.disabled = false;
-      startBtn.textContent = t('start');
+      setKey(startBtn, 'start');
     }).catch(e=>{
       console.warn('教師句庫載入失敗', e);
       const c = e && e.code;
@@ -2110,9 +2356,9 @@
   if(CLASS_MODE && !TEACHER_MODE){
     // 班級連結（用公開題庫）：先讀班級資料，再照一般流程載入題庫
     startBtn.disabled = true;
-    startBtn.textContent = t('loadingSent');
+    setKey(startBtn, 'loadingSent');
     initClassMode().then(()=> loadCloudSentences()).then(()=>{
-      startBtn.disabled = false; startBtn.textContent = t('start');
+      startBtn.disabled = false; setKey(startBtn, 'start');
     }).catch(e=>{
       console.warn('班級載入失敗', e);
       const c = e && e.code;
@@ -2127,10 +2373,10 @@
   }else{
     // load the shared sentence bank before allowing play to start
     startBtn.disabled = true;
-    startBtn.textContent = t('loadingSent');
+    setKey(startBtn, 'loadingSent');
     loadCloudSentences().finally(()=>{
       startBtn.disabled = false;
-      startBtn.textContent = t('start');
+      setKey(startBtn, 'start');
     });
   }
 })();
