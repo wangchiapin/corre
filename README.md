@@ -44,7 +44,7 @@
 - `teacher/index.html` 只剩**自動跳轉**到中心（舊書籤還能用）。`teacher/firestore.rules.txt` 保留當規則參考。`manager/`（Ben 的句子管理工具）不變。
 - **學生連結（照常可用）：** 練習 `corre/?bank=<連結碼>`；班級 `corre/?class=<班級碼>[&bank=<連結碼>]`；試玩加 `&preview=1`。句庫連結的速度、字形、Boss 關由老師設定；不上傳公開排行榜，結束時可下載成績圖片。
 - **干擾字：** 句庫每句可選填 `decoy`（繁體詞陣列）、`decoySimp`（簡體；沒填就用繁體那組），最多 5 個、每個 1～4 字。遊戲每一波先出這些，不夠再從其他句子隨機補。
-- **資料在中心專案 `subscription-48d3c`**（不是 corre-d16da）：`teacher_banks/{uid}`（位置表）、`shared_banks/{連結碼}`（句庫）、`classes/{cid}`、`class_scores/{cid}_corre_{暱稱雜湊}`。
+- **資料在中心專案 `subscription-48d3c`**（不是 corre-d16da）：`teacher_banks/{uid}`（位置表）、`shared_banks/{連結碼}`（句庫）、`classes/{cid}`、`class_scores/{cid}_corre_{句庫碼或 pool}_{暱稱雜湊}`（步驟 6-2：成績依句庫分開，班級排行只比同一個句庫）。
 - **注音：** 由拼音即時轉換（`ZY` 轉換器，已用 pypinyin 比對常用讀音）。
 - **Firestore 規則：** 見 `teacher/firestore.rules.txt`（中心專案不會自動部署）。
 

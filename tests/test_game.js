@@ -9,7 +9,7 @@ let pass = 0, fail = 0;
 function ok(c, name, extra){ if(c){ pass++; console.log('  ✓', name); } else { fail++; console.log('  ✗', name, extra !== undefined ? '→ ' + JSON.stringify(extra) : ''); } }
 
 const C = 'subscription-48d3c';
-const BANK = 'bank00001111', CID = 'class0000aaaa';
+const BANK = 'bank00001111', CID = 'class0000aaaa', CID2 = 'class0000bbbb';
 const SEED = {
   'corre-d16da': { mandarinRunnerSentences: {
     s1: { trad: ['我', '喜歡', '貓'], simp: ['我', '喜欢', '猫'], pinyin: ['wǒ', 'xǐ huān', 'māo'], es: 'Me gustan los gatos.', en: 'I like cats.', rand: 0.5 } } },
@@ -17,7 +17,10 @@ const SEED = {
     shared_banks: { [BANK]: { owner: 'u1', slot: 0, name: '干擾字測試', speed: 'facil', script: 'simp', boss: false, phonetic: 'zhuyin', pro: true, updatedAt: 1,
       sentences: [{ trad: ['我', '要', '紅茶'], simp: ['我', '要', '红茶'], pinyin: ['wǒ', 'yào', 'hóng chá'], es: 'Quiero té negro.', en: 'I want black tea.',
         decoy: ['綠茶', '咖啡'], decoySimp: ['绿茶', '咖啡'] }] } },
-    classes: { [CID]: { owner: 'u1', slot: 0, name: '週三班', showBoard: false, updatedAt: 1 } }
+    classes: { [CID]: { owner: 'u1', slot: 0, name: '週三班', showBoard: false, updatedAt: 1 }, [CID2]: { owner: 'u1', slot: 1, name: '週五班', showBoard: true, updatedAt: 1 } },
+    class_scores: {
+      [CID2 + '_corre_pool_' + 'a'.repeat(16)]: { cid: CID2, owner: 'u1', game: 'corre', k: 'pool', h: 'a'.repeat(16), nick: 'Zed', best: 999, plays: 1, lastAt: 1, extra: {} },
+      [CID2 + '_corre_' + BANK + '_' + 'b'.repeat(16)]: { cid: CID2, owner: 'u1', game: 'corre', k: BANK, h: 'b'.repeat(16), nick: 'Amy', best: 50, plays: 1, lastAt: 1, extra: {} } }
   }
 };
 
@@ -154,7 +157,25 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     ok((await txt(page, '#classMsg')) === '✅ 成績已回傳給老師 Result sent to your teacher', '「成績已回傳給老師」中＋英', await txt(page, '#classMsg'));
     const order = await page.$$eval('#overOverlay > *:not([hidden])', es => es.map(e => e.id || e.tagName));
     ok(order.indexOf('commentLine') < order.indexOf('classMsg') && order.indexOf('classMsg') < order.indexOf('restartBtn'), '順序：評語 → 回傳訊息 → 再玩一次', order);
-    ok(await page.evaluate(() => Object.keys(window.__DB['subscription-48d3c'].class_scores || {}).length) === 1, '成績寫進 class_scores');
+    const sc = Object.entries(await page.evaluate(() => window.__DB['subscription-48d3c'].class_scores || {})).filter(([k, v]) => v.cid === CID);
+    ok(sc.length === 1, '成績寫進 class_scores');
+    const [sid, rec] = sc[0] || [];
+    ok(rec.k === 'pool' && sid === CID + '_corre_pool_' + rec.h, '公開題庫：設定記成 pool，文件 id = 班級_corre_pool_暱稱', [sid, rec.k]);
+    ok(errors.length === 0, '沒有程式錯誤', errors);
+    await ctx.close(); }
+
+  console.log('\n[6b] 步驟 6-2：成績依句庫分開記；班級排行只比同一個句庫');
+  { const { page, ctx, errors } = await open(browser, { qs: '?class=' + CID2 + '&bank=' + BANK });
+    await page.fill('#nameInput', 'Leo');
+    await page.click('#startBtn'); await page.waitForTimeout(200);
+    await page.evaluate(() => document.getElementById('pauseBtn').click());
+    await page.click('#quitBtn');
+    await page.waitForFunction(() => document.querySelectorAll('#lbListOver .lb-row').length > 0, null, { timeout: 5000 }).catch(() => {});
+    const sc = await page.evaluate(() => window.__DB['subscription-48d3c'].class_scores);
+    const mine = Object.entries(sc).find(([k, v]) => v.nick === 'Leo');
+    ok(!!mine && mine[1].k === BANK && mine[0] === CID2 + '_corre_' + BANK + '_' + mine[1].h, '老師句庫：設定記成句庫碼，文件 id = 班級_corre_句庫碼_暱稱', mine);
+    const names = await page.$$eval('#lbListOver .lb-name', e => e.map(x => x.textContent));
+    ok(names.includes('Amy') && names.includes('Leo') && !names.includes('Zed'), '班級排行榜只列同一個句庫的成績（公開題庫的 Zed 不出現）', names);
     ok(errors.length === 0, '沒有程式錯誤', errors);
     await ctx.close(); }
 

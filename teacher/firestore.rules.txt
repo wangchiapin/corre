@@ -73,7 +73,7 @@
     // 資料：
     //   teacher_classes/{uid} → { slots: { "0": cid, "1": cid, "2": cid }, updatedAt }   （每位老師最多 3 班）
     //   classes/{cid}         → { owner, slot(0-2), name, showBoard, updatedAt }
-    //   class_scores/{cid}_{game}_{h} → { cid, owner, game, h, nick, best, plays, lastAt, extra }
+    //   class_scores/{cid}_{game}_{k}_{h} → { cid, owner, game, k, h, nick, best, plays, lastAt, extra }   （k＝用了哪個設定，步驟 6-2）
     // 規則：
     //   - 建立班級需要訂閱中；到期後老師仍可讀、改名、刪除，也能讀成績
     //   - 學生（匿名登入）回傳成績需要老師訂閱中；每次回傳 plays 只能 +1、best 只能增加
@@ -124,13 +124,15 @@
       function classDoc(cid) {
         return get(/databases/$(database)/documents/classes/$(cid)).data;
       }
+      // 步驟 6-2：多了 k（用了哪個設定：跑吧＝句庫碼或 pool；色數＝設定碼或 link），文件 id = 班級_遊戲_設定_暱稱雜湊
       function okScore() {
         let d = request.resource.data;
-        return d.keys().hasOnly(['cid','owner','game','h','nick','best','plays','lastAt','extra'])
-          && d.keys().hasAll(['cid','owner','game','h','nick','best','plays','lastAt'])
+        return d.keys().hasOnly(['cid','owner','game','k','h','nick','best','plays','lastAt','extra'])
+          && d.keys().hasAll(['cid','owner','game','k','h','nick','best','plays','lastAt'])
           && d.cid is string && d.game in ['corre','colores']
+          && d.k is string && d.k.matches('^[a-z0-9]{1,32}$')
           && d.h is string && d.h.matches('^[a-f0-9]{16}$')
-          && sid == d.cid + '_' + d.game + '_' + d.h
+          && sid == d.cid + '_' + d.game + '_' + d.k + '_' + d.h
           && d.owner == classDoc(d.cid).owner
           && d.nick is string && d.nick.size() >= 1 && d.nick.size() <= 16
           && d.best is int && d.best >= 0 && d.best <= 1000000
@@ -150,6 +152,7 @@
       allow update: if signedIn() && okScore()
         && request.resource.data.cid == resource.data.cid
         && request.resource.data.game == resource.data.game
+        && request.resource.data.k == resource.data.k
         && request.resource.data.h == resource.data.h
         && request.resource.data.owner == resource.data.owner
         && request.resource.data.plays == resource.data.plays + 1

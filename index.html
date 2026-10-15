@@ -1296,6 +1296,7 @@
   // 一般玩家完全不受影響；只有網址帶 ?bank= 才會載入中心專案連線。
   const BANK_ID = String(QS.get('bank') || '').toLowerCase();
   const TEACHER_MODE = /^[a-z0-9]{8,32}$/.test(BANK_ID);
+  const SET_KEY = TEACHER_MODE ? BANK_ID : 'pool';   // 成績依「用了哪個句庫」分開記（公開題庫＝pool）
   const PREVIEW = QS.has('preview') && (TEACHER_MODE || /^[a-z0-9]{8,32}$/.test(String(QS.get('class') || '').toLowerCase()));
   const CLASS_ID = String(QS.get('class') || '').toLowerCase();
   const CLASS_MODE = /^[a-z0-9]{8,32}$/.test(CLASS_ID);   // 班級模式：成績自動回傳給老師
@@ -1394,12 +1395,12 @@
   async function submitClassScore(entry){
     const app = await getCentral(), cdb = app.firestore();
     const h = await nickHash(entry.nick);
-    const ref = cdb.collection('class_scores').doc(CLASS_ID + '_corre_' + h);
+    const ref = cdb.collection('class_scores').doc(CLASS_ID + '_corre_' + SET_KEY + '_' + h);
     const ts = firebase.firestore.FieldValue.serverTimestamp();
     const extra = { sent: entry.sentences, diff: entry.difficulty };
     const old = await ref.get();
     if(!old.exists){
-      await ref.set({ cid: CLASS_ID, owner: classData.owner, game: 'corre', h, nick: entry.nick, best: entry.score, plays: 1, lastAt: ts, extra });
+      await ref.set({ cid: CLASS_ID, owner: classData.owner, game: 'corre', k: SET_KEY, h, nick: entry.nick, best: entry.score, plays: 1, lastAt: ts, extra });
     }else{
       const o = old.data(), upd = { nick: entry.nick, plays: (o.plays || 0) + 1, lastAt: ts, best: Math.max(o.best || 0, entry.score) };
       if(entry.score > (o.best || 0)) upd.extra = extra;
@@ -1410,7 +1411,7 @@
   async function fetchClassBoard(){
     const app = await getCentral();
     const snap = await app.firestore().collection('class_scores').where('cid', '==', CLASS_ID).limit(300).get();
-    return snap.docs.map(d => d.data()).filter(r => r.game === 'corre').sort((a, b) => b.best - a.best).slice(0, 10)
+    return snap.docs.map(d => d.data()).filter(r => r.game === 'corre' && r.k === SET_KEY).sort((a, b) => b.best - a.best).slice(0, 10)
       .map(r => ({ name: r.nick, score: r.best, sentences: r.extra && r.extra.sent, difficulty: r.extra && r.extra.diff }));
   }
   async function fetchTeacherBank(){
