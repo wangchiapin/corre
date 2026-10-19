@@ -756,7 +756,7 @@
   // 跑吧、色數、比比看都讀寫這一把鑰匙；格式說明在 README。
   const SETTINGS_KEY = 'hanziGames.settings';
   const SET_OPTS = { script:['trad','simp'], lang:['es','en','zh'], phon:['pinyin','zhuyin','both','off'], rate:['slow','normal','fast'] };
-  const RATE_VALUE = { slow:0.75, normal:0.92, fast:1.1 };
+  const RATE_VALUE = { slow:0.45, normal:0.65, fast:0.85 };
   function readSettings(){
     const out = { v:1, script:'trad', lang:'es', phon:'pinyin', rate:'normal' };
     let saved = null;
