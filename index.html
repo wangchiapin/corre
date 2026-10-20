@@ -575,6 +575,16 @@
       <p class="bank-err" id="classHint" hidden style="color:var(--text-dim);margin:6px 0 0"></p>
     </div>
 
+    <div class="field" id="levelField">
+      <label data-i18n="bankLvl">Nivel de frases</label>
+      <div class="toggle-group" id="levelGroup">
+        <button class="toggle-btn active" data-value="mix" data-i18n="lvMix" disabled>Mixto</button>
+        <button class="toggle-btn" data-value="A1" disabled>A1</button>
+        <button class="toggle-btn" data-value="A2" disabled>A2</button>
+        <button class="toggle-btn" data-value="B1" disabled>B1</button>
+      </div>
+    </div>
+
     <div class="field">
       <label data-i18n="diff">Dificultad (velocidad)</label>
       <div class="toggle-group" id="diffGroup">
@@ -777,6 +787,7 @@
         sentences: entry.sentences,
         difficulty: entry.difficulty,
         script: entry.script,
+        ...(entry.level ? { level: entry.level } : {}),
         ts: firebase.firestore.FieldValue.serverTimestamp()
       });
     }catch(e){ console.warn('No se pudo guardar la puntuación:', e); }
@@ -846,6 +857,7 @@
     diff:['難度（速度）','难度（速度）','Dificultad (velocidad)','Difficulty (speed)'],
     facil:['簡單','简单','Fácil','Easy'], normal:['普通','普通','Normal','Normal'], dificil:['困難','困难','Difícil','Hard'],
     start:['開始','开始','Empezar','Start'],
+    bankLvl:['句庫等級','句库等级','Nivel de frases','Sentence level'], lvMix:['綜合','综合','Mixto','Mixed'],
     loadingSent:['載入句子中…','载入句子中…','Cargando frases…','Loading sentences…'],
     viewLb:['排行榜','排行榜','Clasificación','Leaderboard'],
     over:['遊戲結束','游戏结束','Fin del juego','Game over'],
@@ -1949,7 +1961,7 @@
     // 先等分數存好，再讀一次排行榜（以前會讀兩次，第一次還沒有這局的分數）
     const lbEl = document.getElementById('lbListOver');
     lbMsg(lbEl, 'loading');
-    submitScore({ name: playerName, score, sentences: sentencesDone, difficulty: diffKey, script: useSimplified?'simp':'trad' })
+    submitScore({ name: playerName, score, sentences: sentencesDone, difficulty: diffKey, script: useSimplified?'simp':'trad', level: bankLevel === 'mix' ? '' : bankLevel })
       .then(()=> refreshLeaderboard(lbEl));
   }
 
@@ -2161,6 +2173,61 @@
     });
   }
   wireToggleGroup(document.getElementById('diffGroup'), v=>{ diffKey = v; });
+
+  // ===== 新句庫（bank/sentences.json）：A1／A2／B1 各 100 句 =====
+  // 「綜合」＝原本的公開題庫（Firebase），維持不動；選 A1／A2／B1 就改用新句庫，
+  // 新句庫整份只有一個檔案（讀取不計 Firebase 額度），干擾字也只會用同等級的詞。
+  const levelGroup = document.getElementById('levelGroup');
+  const LEVEL_KEY = 'correLevel';
+  let bankLevel = 'mix';
+  let newBankRows = null;      // bank/sentences.json 讀進來的全部句子
+  let oldBankSnap = null;      // 切到新句庫前，先把原本（綜合）的狀態存起來
+  async function loadNewBank(){
+    if(newBankRows) return newBankRows;
+    const r = await fetch('bank/sentences.json');
+    if(!r.ok) throw new Error('bank ' + r.status);
+    const j = await r.json();
+    newBankRows = (j.sentences || []).filter(isValidSentence);
+    return newBankRows;
+  }
+  function markLevel(v){
+    levelGroup.querySelectorAll('.toggle-btn').forEach(b=> b.classList.toggle('active', b.dataset.value === v));
+  }
+  async function setBankLevel(v){
+    if(v === bankLevel) return;
+    if(v === 'mix'){
+      if(oldBankSnap){ SENTENCES = oldBankSnap.S; usingCloud = oldBankSnap.uc; noMoreCloud = oldBankSnap.nm; }
+      bankLevel = 'mix';
+    }else{
+      const prevDisabled = startBtn.disabled;
+      startBtn.disabled = true;
+      try{
+        const rows = (await loadNewBank()).filter(r=>r.level === v);
+        if(!rows.length) throw new Error('empty level');
+        if(!oldBankSnap) oldBankSnap = { S: SENTENCES, uc: usingCloud, nm: noMoreCloud };
+        SENTENCES = rows; usingCloud = false; noMoreCloud = true;
+        bankLevel = v;
+      }catch(e){
+        console.warn('新句庫載入失敗，改回綜合。', e);
+        markLevel(bankLevel);     // 畫面選項退回原本的
+        startBtn.disabled = prevDisabled;
+        return;
+      }
+      startBtn.disabled = prevDisabled;
+    }
+    usedIds = new Set();
+    rebuildWordPools();
+    try{ localStorage.setItem(LEVEL_KEY, bankLevel); }catch(e){}
+  }
+  wireToggleGroup(levelGroup, v=>{ setBankLevel(v); });
+  // 原本題庫載入完成後才開放選等級（避免把還沒載完的內建句子當成「綜合」存起來）
+  function enableLevelPicker(){
+    levelGroup.querySelectorAll('.toggle-btn').forEach(b=>{ b.disabled = false; });
+    let saved = 'mix';
+    try{ saved = localStorage.getItem(LEVEL_KEY) || 'mix'; }catch(e){}
+    if(['A1','A2','B1'].includes(saved)){ markLevel(saved); setBankLevel(saved); }
+  }
+  if(TEACHER_MODE || CLASS_MODE){ const lf = document.getElementById('levelField'); lf.hidden = true; lf.style.display = 'none'; }
 
   // ================= ⚙️ 設定視窗 =================
   const setModal = document.getElementById('setModal');
@@ -2423,6 +2490,7 @@
     loadCloudSentences().finally(()=>{
       startBtn.disabled = false;
       setKey(startBtn, 'start');
+      enableLevelPicker();
     });
   }
 })();

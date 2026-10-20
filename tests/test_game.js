@@ -195,6 +195,40 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     ok(page.url().startsWith('https://wangchiapin.github.io/profesor/#/settings'), '帶 #/settings', page.url());
     await ctx.close(); }
 
+  console.log('\n[9] 新句庫：A1／A2／B1 選項（bank/sentences.json）');
+  { const bank = JSON.parse(fs.readFileSync(__dirname + '/../bank/sentences.json', 'utf8')).sentences;
+    const byLevel = L => new Set(bank.filter(x => x.level === L).map(x => x.trad.join('')));
+    const firstSentence = page => page.$$eval('#sentence-track .slot .hz', e => e.map(x => x.textContent).join(''));
+    ok(bank.length === 300 && ['A1', 'A2', 'B1'].every(L => bank.filter(x => x.level === L).length === 100), '句庫檔：三個等級各 100 句，共 300 句');
+    ok(bank.every(x => x.trad.length === x.simp.length && x.trad.length === x.pinyin.length && x.es && x.en && x.tags.length && x.grammar), '句庫檔：每句繁／簡／拼音一樣長，有西文、英文、標籤、語法點');
+    { const { page, ctx, errors } = await open(browser);
+      ok(await page.$eval('#levelGroup [data-value="A1"]', e => !e.disabled), '原本題庫載入完成後，等級選項開放');
+      ok((await txt(page, '#levelGroup .active')) === '綜合 Mixto', '預設是「綜合」', await txt(page, '#levelGroup .active'));
+      ok(errors.length === 0, '沒有程式錯誤', errors);
+      await ctx.close(); }
+    for(const L of ['A1', 'A2', 'B1']){
+      const { page, ctx } = await open(browser);
+      await page.click('#levelGroup [data-value="' + L + '"]');
+      await page.waitForFunction(() => !document.getElementById('startBtn').disabled);
+      await page.click('#startBtn'); await page.waitForTimeout(300);
+      const sen = await firstSentence(page);
+      ok(byLevel(L).has(sen), L + '：出的句子來自新句庫的 ' + L, sen);
+      await ctx.close();
+    }
+    { const { page, ctx } = await open(browser);
+      await page.click('#levelGroup [data-value="A1"]'); await page.waitForTimeout(200);
+      await page.click('#levelGroup [data-value="mix"]'); await page.waitForTimeout(200);
+      await page.click('#startBtn'); await page.waitForTimeout(300);
+      ok((await firstSentence(page)) === '我喜歡貓', '切回「綜合」：又是原本的公開題庫', await firstSentence(page));
+      await ctx.close(); }
+    { const { page, ctx } = await open(browser, { ls: { correLevel: 'B1' } });
+      await page.waitForTimeout(500);
+      ok((await txt(page, '#levelGroup .active')) === 'B1', '記得上次選的等級（B1）', await txt(page, '#levelGroup .active'));
+      await ctx.close(); }
+    { const { page, ctx } = await open(browser, { qs: '?class=' + CID });
+      ok(await page.$eval('#levelField', e => getComputedStyle(e).display === 'none'), '班級連結：不顯示等級選項（維持原本題庫）');
+      await ctx.close(); } }
+
   await browser.close();
   console.log('\n通過 ' + pass + '，失敗 ' + fail);
   process.exit(fail ? 1 : 0);
