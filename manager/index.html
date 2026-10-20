@@ -423,14 +423,21 @@
     '東西': 'dōng xi', '朋友': 'péng yǒu', '覺得': 'jué de', '著': 'zhe', '只': 'zhǐ',
     '著急': 'zháo jí',
     '同事': 'tóng shì', '冰塊': 'bīng kuài', '加料': 'jiā liào', '找您': 'zhǎo nín',
-    '會不會': 'huì bú huì', '算啊': 'suàn a', '了啦': 'le la', '做得': 'zuò de', '時候': 'shí hou', '記得': 'jì de',
+    '會不會': 'huì bú huì', '算啊': 'suàn a', '了啦': 'le la', '做得': 'zuò de', '時候': 'shí hòu', '記得': 'jì de',
     '蘋果': 'píng guǒ', '名字': 'míng zi', '這個': 'zhè ge',
     '垃圾': 'lè sè', '星期': 'xīng qí',
     '睡覺': 'shuì jiào', '公車': 'gōng chē', '公車站': 'gōng chē zhàn', '休息': 'xiū xí', '衣服': 'yī fú',
-    '意思': 'yì si', '媽媽': 'mā ma', '對不起': 'duì bu qǐ', '有空': 'yǒu kòng', '便宜': 'pián yí'
+    '意思': 'yì si', '媽媽': 'mā ma', '對不起': 'duì bu qǐ', '有空': 'yǒu kòng', '便宜': 'pián yí',
+    '他們': 'tā men', '她們': 'tā men', '它們': 'tā men',
+    '火車': 'huǒ chē', '要是': 'yào shì', '因為': 'yīn wèi', '為什麼': 'wèi shén me',
+    '怎麼': 'zěn me', '那麼': 'nà me', '這麼': 'zhè me',
+    '乾淨': 'gān jìng', '乾乾淨淨': 'gān gān jìng jìng', '乾杯': 'gān bēi', '高興': 'gāo xìng', '好處': 'hǎo chù',
+    '幾乎': 'jī hū', '寧可': 'nìng kě', '至於': 'zhì yú'
   };
   // 整格只有這一個字時才套用（避免影響「和平」「暖和」這類詞）
-  const TW_WHOLE_CELL = { '和': 'hàn', '了': 'le' };
+  // 「得」單獨一格時多半是補語的「得」（說得很好）念 de；若是「得(děi)」（你得去），請在拼音欄自己改成 děi
+  // 「還」單獨一格念 hái（還在、還要）；「車」單獨一格念 chē；「乾」單獨一格念 gān；「為」單獨一格多半是介詞（為孩子、為大家）念 wèi
+  const TW_WHOLE_CELL = { '和': 'hàn', '了': 'le', '得': 'de', '還': 'hái', '車': 'chē', '乾': 'gān', '為': 'wèi' };
 
   if(window.pinyinPro && typeof pinyinPro.customPinyin === 'function'){
     pinyinPro.customPinyin(TW_PINYIN);
@@ -456,6 +463,11 @@
     let py = pinyinPro.pinyin(trad, opt);
     // 極少數冷僻繁體字函式庫不認得，會原樣輸出漢字；這時改用簡體字再算一次
     if(HAS_HAN.test(py)) py = pinyinPro.pinyin(simp, opt);
+    // 通則：詞尾的「們」「麼」是輕聲（朋友們 men、什麼／怎麼 me），函式庫會誤標成 mén／mó
+    if(/們$/.test(trad)) py = py.replace(/mén$/, 'men');
+    if(/麼$/.test(trad)) py = py.replace(/mó$/, 'me');
+    // 詞尾的「間」（房間、時間、中間）函式庫會誤標成 jiàn，台灣讀 jiān
+    if(/間$/.test(trad)) py = py.replace(/jiàn$/, 'jiān');
     return py;
   }
   const translateZhToEs = text => translateZh(text, 'es');
@@ -495,10 +507,57 @@
       return 'yì';
     });
   }
+  // ===== GoodTeacher 多音字規則 =====
+  // 讀音表與規則來自 GoodTeacher 拼音字體（2026-10-13 版），檔案是同資料夾的 gt-readings.json。
+  // 這樣管理工具、字體、句庫三邊的多音字讀音是同一套。載入失敗時，退回上面的台灣讀音例外表。
+  // 下面這幾個詞 GoodTeacher 規則還沒涵蓋，維持上面例外表的讀音（東西 dōng xi、幾乎 jī hū、寧可 nìng kě、動不動 bu、介詞「為」wèi）
+  const GT_EXC = new Set(['東西','幾乎','寧可','動不動','為']);
+  const HANZI_RE = /[㐀-鿿]/;
+  let GT = null;
+  const GT_READY = fetch('gt-readings.json').then(r => r.ok ? r.json() : null).then(j => {
+    if(!j) return;
+    const seg = x => x.startsWith('@GT_') ? (x.slice(4) === 'HANZI' ? (ch => HANZI_RE.test(ch)) : (set => ch => set.includes(ch))(j.k[x.slice(4)] || '')) : (set => ch => set.includes(ch))(x);
+    const parse = x => x ? x.split('|').map(seg) : null;
+    const rules = {};
+    for(const ch in j.r) rules[ch] = j.r[ch].map(([chg, slot, pre, post, hint]) => ({ chg, slot, pre: parse(pre), post: parse(post), hint }));
+    GT = { c: j.c, rules };
+  }).catch(() => {});
+  function gtMatch(txt, i, segs, dir){
+    if(!segs) return true;
+    for(let k = 0; k < segs.length; k++){
+      const pos = dir < 0 ? i - (segs.length - k) : i + 1 + k;
+      if(pos < 0 || pos >= txt.length || !segs[k](txt[pos])) return false;
+    }
+    return true;
+  }
+  function gtReading(txt, i){
+    const ch = txt[i], rs = GT.c[ch];
+    if(!rs) return null;
+    for(const r of (GT.rules[ch] || [])){
+      if(gtMatch(txt, i, r.pre, -1) && gtMatch(txt, i, r.post, 1)){
+        if(!r.chg) return rs[0];
+        return r.slot >= 0 ? rs[r.slot] : (r.hint || rs[0]);
+      }
+    }
+    return rs[0];
+  }
+  // 整句用 GoodTeacher 規則逐字校正（句尾補一個句號，讓「句尾」的規則能判斷）
+  function applyGT(trad, pinyinArr){
+    if(!GT) return pinyinArr;
+    const full = trad.join('') + '。';
+    let pos = 0;
+    return trad.map((t, j) => {
+      const p0 = pinyinArr[j], at = pos; pos += t.length;
+      if(GT_EXC.has(t)) return p0;
+      const sy = p0.split(' ');
+      if(sy.length !== t.length) return p0;
+      return sy.map((x, k) => { const g = gtReading(full, at + k); return (g && g.normalize('NFC') !== x.normalize('NFC')) ? g : x; }).join(' ');
+    });
+  }
   function makeTokens(raw){
     const trad = raw.trim().split(/\s+/).filter(Boolean);
     const simp = trad.map(t => toSimplified(t));
-    const pinyin = fixYiBu(trad, trad.map((t,i) => toPinyinTW(t, simp[i])));
+    const pinyin = applyGT(trad, fixYiBu(trad, trad.map((t,i) => toPinyinTW(t, simp[i]))));
     return { trad, simp, pinyin };
   }
 
@@ -512,7 +571,8 @@
     setStatus(genStatus,'產生中…');
     try{
       const simp = trad.map(t => toSimplified(t));
-      const pinyinArr = fixYiBu(trad, trad.map((t,i) => toPinyinTW(t, simp[i])));
+      await GT_READY;
+      const pinyinArr = applyGT(trad, fixYiBu(trad, trad.map((t,i) => toPinyinTW(t, simp[i]))));
 
       let es = esInputTop.value.trim();
       let autoTranslated = false;
