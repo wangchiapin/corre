@@ -250,6 +250,7 @@
       <section>
         <h2><span id="listTitle">目前題庫</span> <span id="countLabel"></span></h2>
         <div class="toolbar">
+          <button class="btn btn-secondary btn-small" id="exportBtn">⬇️ 匯出公開題庫（JSON 檔）</button>
           <button class="btn btn-secondary btn-small" id="backfillBtn" hidden>補齊舊句子的隨機欄位</button>
           <span class="status" id="backfillStatus" style="margin-top:0;"></span>
         </div>
@@ -331,6 +332,7 @@
   const countLabel = $('countLabel');
   const listStatus = $('listStatus');
   const backfillBtn = $('backfillBtn');
+  const exportBtn = $('exportBtn');
   const backfillStatus = $('backfillStatus');
   const authStatus = $('authStatus');
   const authMsg = $('authMsg');
@@ -851,6 +853,32 @@
   }
   backfillBtn.addEventListener('click', backfillRand);
 
+  // ================= 匯出公開題庫 =================
+  // 把目前讀進來的公開題庫（Firebase mandarinRunnerSentences）整份存成 JSON 檔。
+  // 每句保留文件編號 id 和所有欄位（繁/簡/拼音/西/英/干擾字/rand/建立時間…）；Firebase 的時間欄位轉成 ISO 文字。
+  function plainValue(v){
+    if(v && typeof v.toDate === 'function') return v.toDate().toISOString();
+    if(Array.isArray(v)) return v.map(plainValue);
+    if(v && typeof v === 'object'){ const o = {}; Object.keys(v).forEach(k => { o[k] = plainValue(v[k]); }); return o; }
+    return v;
+  }
+  function exportBank(){
+    if(!allDocs.length){ setStatus(backfillStatus, '題庫還沒有讀到句子，沒有東西可匯出。', 'err'); return; }
+    const sentences = allDocs.map(d => Object.assign({ id: d.id }, plainValue(d.data)));
+    sentences.sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || '') || a.id.localeCompare(b.id));   // 舊的在前，順序固定
+    const out = { format: 'corre-sentences', version: 1, source: 'firestore:' + SENT_COLLECTION,
+                  exportedAt: new Date().toISOString(), count: sentences.length, sentences };
+    const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    const t = new Date(), pad = n => String(n).padStart(2, '0');
+    a.href = URL.createObjectURL(blob);
+    a.download = `corre-sentences-${t.getFullYear()}${pad(t.getMonth()+1)}${pad(t.getDate())}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    setStatus(backfillStatus, `已匯出 ${sentences.length} 句（檔名 ${a.download}）。`, 'ok');
+  }
+  exportBtn.addEventListener('click', exportBank);
+
   // ================= 批次匯入 =================
   const bulkInput = $('bulkInput'), bulkPreviewBtn = $('bulkPreviewBtn'), bulkImportBtn = $('bulkImportBtn');
   const bulkStatus = $('bulkStatus'), bulkPreview = $('bulkPreview');
@@ -987,11 +1015,12 @@
     bulkReady = []; bulkEnFill = []; bulkImportBtn.hidden = true; bulkPreview.textContent = ''; setStatus(bulkStatus, '');
     setStatus(saveStatus, '');
     if(m === 'pack'){
-      backfillBtn.hidden = true; setStatus(backfillStatus, '');
+      backfillBtn.hidden = true; exportBtn.hidden = true; setStatus(backfillStatus, '');
       renderPackView();
       if(cauth && isRealUser(cauth.currentUser) && PACKS.length === 0) loadPacks();
     }else{
       $('listTitle').textContent = '目前題庫';
+      exportBtn.hidden = false;
       countLabel.textContent = `（共 ${allDocs.length} 句）`;
       renderList(); updateBackfillUi();
     }
