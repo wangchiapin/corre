@@ -2162,7 +2162,6 @@
   });
   wireToggleGroup(document.getElementById('setRate'), v=>{
     SETTINGS.rate = v; writeSettings(SETTINGS); applySettings();
-    speak(useSimplified ? '你好，我说中文' : '你好，我說中文');   // 試聽一下速度
   });
   function openSettings(){
     if(running && !paused){ pauseGame(); pausedBySettings = true; }

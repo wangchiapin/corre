@@ -96,9 +96,11 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     ok(await page.$eval('#pauseOverlay', e => !e.classList.contains('hidden')), '遊戲中按 ⚙️ 先暫停');
     await page.click('#setPhon [data-value=zhuyin]');
     ok((await txt(page, '#sentence-track .slot .py')).includes('ㄨㄛˇ'), '改成注音，句子列馬上變注音', await txt(page, '#sentence-track .slot .py'));
+    const before = await page.evaluate(() => window.__rates.length);
     await page.click('#setRate [data-value=fast]'); await page.waitForTimeout(150);
-    const rates = await page.evaluate(() => window.__rates);
-    ok(rates[rates.length - 1] === 1.1, '語速「快」→ rate 1.1（按下去會試聽）', rates);
+    const after = await page.evaluate(() => window.__rates.length);
+    ok(after === before, '換語速時不會念任何句子（沒有試聽）', { before, after });
+    ok((await settings(page)).rate === 'fast', '語速「快」有存進設定', await settings(page));
     await page.click('#setDone');
     ok(await page.$eval('#pauseOverlay', e => e.classList.contains('hidden')), '按完成繼續遊戲');
     await page.evaluate(() => { document.getElementById('pauseBtn').click(); });
