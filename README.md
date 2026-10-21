@@ -44,6 +44,7 @@
   - `?level=B1`（或 A1／A2）：固定用該等級。
   - `?pack=food`：用 `bank/packs.json` 裡的題包；可再加 `&level=A1` 只取該等級。題包代碼：food、shopping、time、transport、school、weather、home、people、compare。
   - B1 和題包的成績**不進公開排行榜**（班級連結的成績另有記法，由老師中心處理）。
+- **班級連結**（`?class=班級碼`）也用新句庫：沒指定等級＝A1；可加 `&level=A2`、`&level=B1`、`&pack=food`、`&pack=food&level=A1`。成績回傳到老師中心時，「句庫設定名稱」`k` 依序記成 `pool-A1`／`pool-A2`／`pool-B1`／`pack-<代碼>`／`pack-<代碼>-<等級>`（舊的 `pool` 是改版前的舊公開題庫）。班級連結讀不到新句庫時會顯示錯誤，不會退回舊題庫。
 - 句庫是三個檔：`bank/A1.json`、`bank/A2.json`、`bank/B1.json`（每個等級一個，遊戲只讀選到的那一級；題包沒指定等級時才三個都讀）。每個檔頭有 `level`、`count`、`generated`，句子放在 `sentences`。每句有 1–3 個主題標籤；題包規則在 `bank/packs.json`（`rule.tags` 命中任一標籤，或 `rule.grammar` 語法點完全相符）。
 
 ## 教師版（已搬到老師管理中心）

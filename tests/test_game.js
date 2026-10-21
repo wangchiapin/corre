@@ -162,7 +162,7 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     const sc = Object.entries(await page.evaluate(() => window.__DB['subscription-48d3c'].class_scores || {})).filter(([k, v]) => v.cid === CID);
     ok(sc.length === 1, '成績寫進 class_scores');
     const [sid, rec] = sc[0] || [];
-    ok(rec.k === 'pool' && sid === CID + '_corre_pool_' + rec.h, '公開題庫：設定記成 pool，文件 id = 班級_corre_pool_暱稱', [sid, rec.k]);
+    ok(rec.k === 'pool-A1' && sid === CID + '_corre_pool-A1_' + rec.h, '班級連結（沒指定）：用 A1，設定記成 pool-A1，文件 id = 班級_corre_pool-A1_暱稱', [sid, rec.k]);
     ok(errors.length === 0, '沒有程式錯誤', errors);
     await ctx.close(); }
 
@@ -281,8 +281,30 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
       ok((await firstSentence(page)).length > 0, '?pack=不存在的代碼：仍能玩（退回備用題庫）');
       await ctx.close(); }
     { const { page, ctx } = await open(browser, { qs: '?class=' + CID });
-      ok(await page.$eval('#levelField', e => getComputedStyle(e).display === 'none'), '班級連結：不顯示等級選項（維持原本題庫）');
-      await ctx.close(); } }
+      ok(await page.$eval('#levelField', e => getComputedStyle(e).display === 'none'), '班級連結：不顯示等級選項');
+      await ctx.close(); }
+    // 班級連結 + 等級／題包：句子來自該句庫，成績設定名稱照規則
+    const packs = JSON.parse(fs.readFileSync(__dirname + '/../bank/packs.json', 'utf8')).packs;
+    const inPack = (p, x) => p.rule.tags ? x.tags.some(t => p.rule.tags.includes(t)) : p.rule.grammar.some(g => x.grammar.endsWith(' ' + g));
+    for(const [q, key, want] of [
+      ['&level=A2', 'pool-A2', byLevel('A2')],
+      ['&level=B1', 'pool-B1', byLevel('B1')],
+      ['&pack=compare', 'pack-compare', new Set(bank.filter(x => inPack(packs.find(p => p.id === 'compare'), x)).map(x => x.trad.join('')))],
+      ['&pack=food&level=A1', 'pack-food-A1', new Set(bank.filter(x => inPack(packs.find(p => p.id === 'food'), x) && x.level === 'A1').map(x => x.trad.join('')))],
+    ]){
+      const { page, ctx, errors } = await open(browser, { qs: '?class=' + CID + q });
+      await page.fill('#nameInput', 'Kai');
+      await page.click('#startBtn'); await page.waitForTimeout(300);
+      const sen = await firstSentence(page);
+      ok(want.has(sen), '班級連結 ' + q + '：句子來自對的句庫', sen);
+      await page.evaluate(() => document.getElementById('pauseBtn').click());
+      await page.click('#quitBtn');
+      await page.waitForFunction(() => document.getElementById('classMsg').innerText.includes('成績已回傳'), null, { timeout: 5000 }).catch(() => {});
+      const sc = Object.values(await page.evaluate(() => window.__DB['subscription-48d3c'].class_scores || {})).filter(v => v.cid === CID);
+      ok(sc.length === 1 && sc[0].k === key, '班級連結 ' + q + '：成績設定名稱記成 ' + key, sc.map(v => v.k));
+      ok(errors.length === 0, '沒有程式錯誤', errors);
+      await ctx.close();
+    } }
 
   await browser.close();
   console.log('\n通過 ' + pass + '，失敗 ' + fail);

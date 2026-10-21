@@ -1357,7 +1357,17 @@
   // 一般玩家完全不受影響；只有網址帶 ?bank= 才會載入中心專案連線。
   const BANK_ID = String(QS.get('bank') || '').toLowerCase();
   const TEACHER_MODE = /^[a-z0-9]{8,32}$/.test(BANK_ID);
-  const SET_KEY = TEACHER_MODE ? BANK_ID : 'pool';   // 成績依「用了哪個句庫」分開記（公開題庫＝pool）
+  // 隱藏參數：?level=A1／A2／B1、?pack=題包代碼（可再加 &level=）。公開頁和班級連結都會用到
+  const LEVEL_P = String(QS.get('level') || '').toUpperCase();
+  const PACK_P = String(QS.get('pack') || '').toLowerCase();
+  const PACK_OK = /^[a-z0-9_-]{1,24}$/.test(PACK_P);
+  const LEVEL_OK = ['A1', 'A2', 'B1'].includes(LEVEL_P);
+  // 成績依「用了哪個句庫」分開記：老師句庫＝連結碼；班級連結＝pool-A1／pool-A2／pool-B1 或 pack-代碼（有指定等級再加 -A1）；沒有參數的班級連結＝pool-A1
+  // （舊的 'pool' 是改版前的舊公開題庫，只留在老師中心的歷史成績裡）
+  const SET_KEY = TEACHER_MODE ? BANK_ID
+    : (/^[a-z0-9]{8,32}$/.test(String(QS.get('class') || '').toLowerCase())
+        ? (PACK_OK ? 'pack-' + PACK_P + (LEVEL_OK ? '-' + LEVEL_P : '') : 'pool-' + (LEVEL_OK ? LEVEL_P : 'A1'))
+        : 'pool');
   const PREVIEW = QS.has('preview') && (TEACHER_MODE || /^[a-z0-9]{8,32}$/.test(String(QS.get('class') || '').toLowerCase()));
   const CLASS_ID = String(QS.get('class') || '').toLowerCase();
   const CLASS_MODE = /^[a-z0-9]{8,32}$/.test(CLASS_ID);   // 班級模式：成績自動回傳給老師
@@ -2188,10 +2198,10 @@
   const LEVELS = ['A1', 'A2'];            // 公開頁只提供 A1／A2（免費）；B1 和題包只能用網址參數進來（付費老師的連結）
   const ALL_LEVELS = ['A1', 'A2', 'B1'];
   // 隱藏參數：?level=B1（或 A1／A2）、?pack=題包代碼（可再加 &level= 只取該等級）。這時不顯示等級選項，成績也不上公開排行榜。
-  const LEVEL_P = String(QS.get('level') || '').toUpperCase();
-  const PACK_P = String(QS.get('pack') || '').toLowerCase();
-  const HIDDEN_SET = !TEACHER_MODE && !CLASS_MODE && ( /^[a-z0-9_-]{1,24}$/.test(PACK_P) || ALL_LEVELS.includes(LEVEL_P) );
-  const PRIVATE_SET = HIDDEN_SET && (/^[a-z0-9_-]{1,24}$/.test(PACK_P) || LEVEL_P === 'B1');   // B1、題包：不進公開排行榜
+  const CLASS_SET = CLASS_MODE && !TEACHER_MODE;      // 班級連結（用新句庫）：等級／題包由網址決定，玩家不能換
+  const HIDDEN_SET = !TEACHER_MODE && !CLASS_MODE && ( PACK_OK || LEVEL_OK );
+  const PRIVATE_SET = HIDDEN_SET && (PACK_OK || LEVEL_P === 'B1');
+  const FIXED_SET = HIDDEN_SET || CLASS_SET;   // B1、題包：不進公開排行榜
   function boardLevel(){ return LEVELS.includes(bankLevel) ? bankLevel : ''; }
   let bankLevel = 'mix';       // 'mix' 只代表「正在用舊公開題庫（備用）」，玩家選不到
   const levelRows = {};        // 等級 → 讀進來的句子（每級一個檔：bank/A1.json 等）
@@ -2220,7 +2230,7 @@
     usedIds = new Set();
     rebuildWordPools();
     markLevel(v);
-    if(!HIDDEN_SET){ try{ localStorage.setItem(LEVEL_KEY, v); }catch(e){} }
+    if(!FIXED_SET){ try{ localStorage.setItem(LEVEL_KEY, v); }catch(e){} }
     return true;
   }
   // 題包：bank/packs.json 的規則（rule.tags 命中任一標籤，或 rule.grammar 語法點完全相符）；level 有給就只取該等級
@@ -2257,17 +2267,18 @@
     let saved = 'A1';
     try{ const x = localStorage.getItem(LEVEL_KEY); if(LEVELS.includes(x)) saved = x; }catch(e){}
     try{
-      if(HIDDEN_SET){
-        // 網址指定了等級或題包：固定用它，不給玩家切換
+      if(FIXED_SET){
+        // 網址指定了等級或題包（或班級連結）：固定用它，不給玩家切換
         const lf = document.getElementById('levelField'); lf.hidden = true; lf.style.display = 'none';
         if(PRIVATE_SET){ const lb = document.getElementById('showLbBtn'); if(lb) lb.style.display = 'none'; }
-        if(/^[a-z0-9_-]{1,24}$/.test(PACK_P)) await applyPack(PACK_P, ALL_LEVELS.includes(LEVEL_P) ? LEVEL_P : '');
-        else await applyLevel(LEVEL_P);
+        if(PACK_OK) await applyPack(PACK_P, LEVEL_OK ? LEVEL_P : '');
+        else await applyLevel(LEVEL_OK ? LEVEL_P : 'A1');
         return;
       }
       await applyLevel(saved);
       levelGroup.querySelectorAll('.toggle-btn').forEach(b=>{ b.disabled = false; });
     }catch(e){
+      if(CLASS_SET) throw e;     // 班級連結：成績要記在對的句庫名下，讀不到就顯示錯誤，不退回舊題庫
       console.warn('新句庫載入失敗，改用舊公開題庫。', e);
       const lf = document.getElementById('levelField'); lf.hidden = true; lf.style.display = 'none';
       await loadCloudSentences();
@@ -2513,10 +2524,11 @@
   }
 
   if(CLASS_MODE && !TEACHER_MODE){
-    // 班級連結（用公開題庫）：先讀班級資料，再照一般流程載入題庫
+    // 班級連結（用新句庫；?level= ／ ?pack= 指定，沒給就是 A1）：先讀班級資料，再載入句庫
     startBtn.disabled = true;
     setKey(startBtn, 'loadingSent');
-    initClassMode().then(()=> loadCloudSentences()).then(()=>{
+    initClassMode().then(()=> initLevel()).then(()=>{
+      { const tg = document.getElementById('classTag'); tg.textContent += ' · ' + (PACK_OK ? PACK_P : (LEVEL_OK ? LEVEL_P : 'A1')) + (PACK_OK && LEVEL_OK ? ' ' + LEVEL_P : ''); }
       startBtn.disabled = false; setKey(startBtn, 'start');
     }).catch(e=>{
       console.warn('班級載入失敗', e);
