@@ -1,0 +1,199 @@
+{
+ "format": "corre-packs",
+ "version": 1,
+ "note": "rule.tags=句子標籤命中任一即入包；rule.grammar=語法點完全相符",
+ "packs": [
+  {
+   "id": "food",
+   "name": {
+    "zh-TW": "飲食與點餐",
+    "zh-CN": "饮食与点餐",
+    "es": "Comida y pedir",
+    "en": "Food & ordering"
+   },
+   "rule": {
+    "tags": [
+     "飲食與點餐"
+    ]
+   },
+   "count": 61,
+   "byLevel": [
+    27,
+    22,
+    12
+   ]
+  },
+  {
+   "id": "shopping",
+   "name": {
+    "zh-TW": "購物與價錢",
+    "zh-CN": "购物与价钱",
+    "es": "Compras y precios",
+    "en": "Shopping & prices"
+   },
+   "rule": {
+    "tags": [
+     "購物與價錢"
+    ]
+   },
+   "count": 31,
+   "byLevel": [
+    13,
+    6,
+    12
+   ]
+  },
+  {
+   "id": "time",
+   "name": {
+    "zh-TW": "時間日期",
+    "zh-CN": "时间日期",
+    "es": "Tiempo y fechas",
+    "en": "Time & dates"
+   },
+   "rule": {
+    "tags": [
+     "時間日期"
+    ]
+   },
+   "count": 38,
+   "byLevel": [
+    17,
+    12,
+    9
+   ]
+  },
+  {
+   "id": "transport",
+   "name": {
+    "zh-TW": "交通與問路",
+    "zh-CN": "交通与问路",
+    "es": "Transporte y direcciones",
+    "en": "Transport & directions"
+   },
+   "rule": {
+    "tags": [
+     "交通",
+     "問路與地點"
+    ]
+   },
+   "count": 26,
+   "byLevel": [
+    8,
+    11,
+    7
+   ]
+  },
+  {
+   "id": "school",
+   "name": {
+    "zh-TW": "學校課堂",
+    "zh-CN": "学校课堂",
+    "es": "Escuela y clase",
+    "en": "School & class"
+   },
+   "rule": {
+    "tags": [
+     "學校課堂"
+    ]
+   },
+   "count": 46,
+   "byLevel": [
+    23,
+    14,
+    9
+   ]
+  },
+  {
+   "id": "weather",
+   "name": {
+    "zh-TW": "天氣",
+    "zh-CN": "天气",
+    "es": "El clima",
+    "en": "Weather"
+   },
+   "rule": {
+    "tags": [
+     "天氣"
+    ]
+   },
+   "count": 26,
+   "byLevel": [
+    5,
+    7,
+    14
+   ]
+  },
+  {
+   "id": "home",
+   "name": {
+    "zh-TW": "住家",
+    "zh-CN": "住家",
+    "es": "El hogar",
+    "en": "Home"
+   },
+   "rule": {
+    "tags": [
+     "住家"
+    ]
+   },
+   "count": 20,
+   "byLevel": [
+    3,
+    12,
+    5
+   ]
+  },
+  {
+   "id": "people",
+   "name": {
+    "zh-TW": "家人朋友",
+    "zh-CN": "家人朋友",
+    "es": "Familia y amigos",
+    "en": "Family & friends"
+   },
+   "rule": {
+    "tags": [
+     "家人朋友"
+    ]
+   },
+   "count": 52,
+   "byLevel": [
+    15,
+    17,
+    20
+   ]
+  },
+  {
+   "id": "compare",
+   "name": {
+    "zh-TW": "比較句",
+    "zh-CN": "比较句",
+    "es": "Comparaciones",
+    "en": "Comparisons"
+   },
+   "rule": {
+    "grammar": [
+     "比較",
+     "比",
+     "跟…一樣",
+     "更",
+     "沒有",
+     "得(比較)",
+     "比較的程度補語",
+     "差不多",
+     "比起來",
+     "像…一樣",
+     "一M比一M",
+     "不如"
+    ]
+   },
+   "count": 12,
+   "byLevel": [
+    7,
+    4,
+    1
+   ]
+  }
+ ]
+}
