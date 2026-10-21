@@ -95,7 +95,7 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     await page.click('#gearBtn');
     ok(await page.$eval('#pauseOverlay', e => !e.classList.contains('hidden')), '遊戲中按 ⚙️ 先暫停');
     await page.click('#setPhon [data-value=zhuyin]');
-    ok((await txt(page, '#sentence-track .slot .py')).includes('ㄨㄛˇ'), '改成注音，句子列馬上變注音', await txt(page, '#sentence-track .slot .py'));
+    ok(/[ㄅ-ㄩ]/.test(await txt(page, '#sentence-track .slot .py')) && !/[a-z]/.test(await txt(page, '#sentence-track .slot .py')), '改成注音，句子列馬上變注音（只有注音符號）', await txt(page, '#sentence-track .slot .py'));
     const before = await page.evaluate(() => window.__rates.length);
     await page.click('#setRate [data-value=fast]'); await page.waitForTimeout(150);
     const after = await page.evaluate(() => window.__rates.length);
@@ -203,7 +203,8 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     ok(bank.every(x => x.trad.length === x.simp.length && x.trad.length === x.pinyin.length && x.es && x.en && x.tags.length && x.grammar), '句庫檔：每句繁／簡／拼音一樣長，有西文、英文、標籤、語法點');
     { const { page, ctx, errors } = await open(browser);
       ok(await page.$eval('#levelGroup [data-value="A1"]', e => !e.disabled), '原本題庫載入完成後，等級選項開放');
-      ok((await txt(page, '#levelGroup .active')) === '綜合 Mixto', '預設是「綜合」', await txt(page, '#levelGroup .active'));
+      ok((await txt(page, '#levelGroup .active')) === 'A1', '預設是 A1', await txt(page, '#levelGroup .active'));
+      ok(await page.$$eval('#levelGroup .toggle-btn', e => e.map(x => x.dataset.value).join(',')) === 'A1,A2,B1', '沒有「綜合」選項');
       ok(errors.length === 0, '沒有程式錯誤', errors);
       await ctx.close(); }
     for(const L of ['A1', 'A2', 'B1']){
@@ -215,11 +216,29 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
       ok(byLevel(L).has(sen), L + '：出的句子來自新句庫的 ' + L, sen);
       await ctx.close();
     }
-    { const { page, ctx } = await open(browser);
-      await page.click('#levelGroup [data-value="A1"]'); await page.waitForTimeout(200);
-      await page.click('#levelGroup [data-value="mix"]'); await page.waitForTimeout(200);
+    { // 預設（沒選過）直接是 A1 的句子
+      const { page, ctx } = await open(browser);
       await page.click('#startBtn'); await page.waitForTimeout(300);
-      ok((await firstSentence(page)) === '我喜歡貓', '切回「綜合」：又是原本的公開題庫', await firstSentence(page));
+      const sen = await firstSentence(page);
+      ok(byLevel('A1').has(sen), '第一次進來沒選等級：出 A1 的句子', sen);
+      await ctx.close(); }
+    { // 舊使用者存過的 mix 之類無效值 → 當作 A1
+      const { page, ctx } = await open(browser, { ls: { correLevel: 'mix' } });
+      ok((await txt(page, '#levelGroup .active')) === 'A1', '舊的無效等級值改用 A1', await txt(page, '#levelGroup .active'));
+      await ctx.close(); }
+    { // 新句庫讀不到 → 退回舊公開題庫，等級選項隱藏，仍能玩
+      const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } }); const page = await ctx.newPage();
+      await page.route('**/*', r => { const u = r.request().url();
+        if(u.includes('bank/sentences.json')) return r.fulfill({ status: 404, body: 'no' });
+        if(u.startsWith('http://localhost')) return r.continue();
+        if(/\.js(\?|$)/.test(u) || u.includes('gstatic')) return r.fulfill({ status: 200, contentType: 'application/javascript', body: '' });
+        return r.abort(); });
+      await page.addInitScript('window.__SEED=' + JSON.stringify(SEED) + ';'); await page.addInitScript(MOCK);
+      await page.goto(BASE + '/index.html');
+      await page.waitForFunction(() => !document.getElementById('startBtn').disabled, null, { timeout: 15000 });
+      await page.click('#startBtn'); await page.waitForTimeout(300);
+      ok((await firstSentence(page)) === '我喜歡貓', '新句庫讀不到：退回舊公開題庫仍能玩', await firstSentence(page));
+      ok(await page.$eval('#levelField', e => getComputedStyle(e).display === 'none'), '這時隱藏等級選項');
       await ctx.close(); }
     { const { page, ctx } = await open(browser, { ls: { correLevel: 'B1' } });
       await page.waitForTimeout(500);

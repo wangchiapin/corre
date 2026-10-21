@@ -578,8 +578,7 @@
     <div class="field" id="levelField">
       <label data-i18n="bankLvl">Nivel de frases</label>
       <div class="toggle-group" id="levelGroup">
-        <button class="toggle-btn active" data-value="mix" data-i18n="lvMix" disabled>Mixto</button>
-        <button class="toggle-btn" data-value="A1" disabled>A1</button>
+        <button class="toggle-btn active" data-value="A1" disabled>A1</button>
         <button class="toggle-btn" data-value="A2" disabled>A2</button>
         <button class="toggle-btn" data-value="B1" disabled>B1</button>
       </div>
@@ -857,7 +856,7 @@
     diff:['難度（速度）','难度（速度）','Dificultad (velocidad)','Difficulty (speed)'],
     facil:['簡單','简单','Fácil','Easy'], normal:['普通','普通','Normal','Normal'], dificil:['困難','困难','Difícil','Hard'],
     start:['開始','开始','Empezar','Start'],
-    bankLvl:['句庫等級','句库等级','Nivel de frases','Sentence level'], lvMix:['綜合','综合','Mixto','Mixed'],
+    bankLvl:['句庫等級','句库等级','Nivel de frases','Sentence level'],
     loadingSent:['載入句子中…','载入句子中…','Cargando frases…','Loading sentences…'],
     viewLb:['排行榜','排行榜','Clasificación','Leaderboard'],
     over:['遊戲結束','游戏结束','Fin del juego','Game over'],
@@ -2174,14 +2173,15 @@
   }
   wireToggleGroup(document.getElementById('diffGroup'), v=>{ diffKey = v; });
 
-  // ===== 新句庫（bank/sentences.json）：A1／A2／B1 各 100 句 =====
-  // 「綜合」＝原本的公開題庫（Firebase），維持不動；選 A1／A2／B1 就改用新句庫，
-  // 新句庫整份只有一個檔案（讀取不計 Firebase 額度），干擾字也只會用同等級的詞。
+  // ===== 句庫（bank/sentences.json）：A1／A2／B1 各 100 句 =====
+  // 一般玩法只用這個新句庫（一個 JSON 檔，不佔 Firebase 讀取額度），干擾字也只會用同等級的詞。
+  // 舊的公開題庫（Firebase）只在「新句庫讀不到」時當備用（這時等級選項會隱藏）；
+  // 老師句庫（?bank=）與班級連結不受影響。
   const levelGroup = document.getElementById('levelGroup');
   const LEVEL_KEY = 'correLevel';
-  let bankLevel = 'mix';
+  const LEVELS = ['A1', 'A2', 'B1'];
+  let bankLevel = 'mix';       // 'mix' 只代表「正在用舊公開題庫（備用）」，玩家選不到
   let newBankRows = null;      // bank/sentences.json 讀進來的全部句子
-  let oldBankSnap = null;      // 切到新句庫前，先把原本（綜合）的狀態存起來
   async function loadNewBank(){
     if(newBankRows) return newBankRows;
     const r = await fetch('bank/sentences.json');
@@ -2193,39 +2193,39 @@
   function markLevel(v){
     levelGroup.querySelectorAll('.toggle-btn').forEach(b=> b.classList.toggle('active', b.dataset.value === v));
   }
-  async function setBankLevel(v){
-    if(v === bankLevel) return;
-    if(v === 'mix'){
-      if(oldBankSnap){ SENTENCES = oldBankSnap.S; usingCloud = oldBankSnap.uc; noMoreCloud = oldBankSnap.nm; }
-      bankLevel = 'mix';
-    }else{
-      const prevDisabled = startBtn.disabled;
-      startBtn.disabled = true;
-      try{
-        const rows = (await loadNewBank()).filter(r=>r.level === v);
-        if(!rows.length) throw new Error('empty level');
-        if(!oldBankSnap) oldBankSnap = { S: SENTENCES, uc: usingCloud, nm: noMoreCloud };
-        SENTENCES = rows; usingCloud = false; noMoreCloud = true;
-        bankLevel = v;
-      }catch(e){
-        console.warn('新句庫載入失敗，改回綜合。', e);
-        markLevel(bankLevel);     // 畫面選項退回原本的
-        startBtn.disabled = prevDisabled;
-        return;
-      }
-      startBtn.disabled = prevDisabled;
-    }
+  // 套用某個等級；成功回傳 true
+  async function applyLevel(v){
+    const rows = (await loadNewBank()).filter(r=>r.level === v);
+    if(!rows.length) throw new Error('empty level');
+    SENTENCES = rows; usingCloud = false; noMoreCloud = true;
+    bankLevel = v;
     usedIds = new Set();
     rebuildWordPools();
-    try{ localStorage.setItem(LEVEL_KEY, bankLevel); }catch(e){}
+    markLevel(v);
+    try{ localStorage.setItem(LEVEL_KEY, v); }catch(e){}
+    return true;
+  }
+  async function setBankLevel(v){
+    if(v === bankLevel || !LEVELS.includes(v)) return;
+    const prev = bankLevel, prevDisabled = startBtn.disabled;
+    startBtn.disabled = true;
+    try{ await applyLevel(v); }
+    catch(e){ console.warn('句庫載入失敗，維持原本等級。', e); markLevel(prev); }
+    startBtn.disabled = prevDisabled;
   }
   wireToggleGroup(levelGroup, v=>{ setBankLevel(v); });
-  // 原本題庫載入完成後才開放選等級（避免把還沒載完的內建句子當成「綜合」存起來）
-  function enableLevelPicker(){
-    levelGroup.querySelectorAll('.toggle-btn').forEach(b=>{ b.disabled = false; });
-    let saved = 'mix';
-    try{ saved = localStorage.getItem(LEVEL_KEY) || 'mix'; }catch(e){}
-    if(['A1','A2','B1'].includes(saved)){ markLevel(saved); setBankLevel(saved); }
+  // 開啟頁面：用上次選的等級（沒有就 A1）；新句庫讀不到才退回舊公開題庫
+  async function initLevel(){
+    let saved = 'A1';
+    try{ const x = localStorage.getItem(LEVEL_KEY); if(LEVELS.includes(x)) saved = x; }catch(e){}
+    try{
+      await applyLevel(saved);
+      levelGroup.querySelectorAll('.toggle-btn').forEach(b=>{ b.disabled = false; });
+    }catch(e){
+      console.warn('新句庫載入失敗，改用舊公開題庫。', e);
+      const lf = document.getElementById('levelField'); lf.hidden = true; lf.style.display = 'none';
+      await loadCloudSentences();
+    }
   }
   if(TEACHER_MODE || CLASS_MODE){ const lf = document.getElementById('levelField'); lf.hidden = true; lf.style.display = 'none'; }
 
@@ -2487,10 +2487,9 @@
     // load the shared sentence bank before allowing play to start
     startBtn.disabled = true;
     setKey(startBtn, 'loadingSent');
-    loadCloudSentences().finally(()=>{
+    initLevel().finally(()=>{
       startBtn.disabled = false;
       setKey(startBtn, 'start');
-      enableLevelPicker();
     });
   }
 })();
