@@ -204,10 +204,10 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     { const { page, ctx, errors } = await open(browser);
       ok(await page.$eval('#levelGroup [data-value="A1"]', e => !e.disabled), '原本題庫載入完成後，等級選項開放');
       ok((await txt(page, '#levelGroup .active')) === 'A1', '預設是 A1', await txt(page, '#levelGroup .active'));
-      ok(await page.$$eval('#levelGroup .toggle-btn', e => e.map(x => x.dataset.value).join(',')) === 'A1,A2,B1', '沒有「綜合」選項');
+      ok(await page.$$eval('#levelGroup .toggle-btn', e => e.map(x => x.dataset.value).join(',')) === 'A1,A2', '公開頁只有 A1、A2（沒有 B1，也沒有「綜合」）');
       ok(errors.length === 0, '沒有程式錯誤', errors);
       await ctx.close(); }
-    for(const L of ['A1', 'A2', 'B1']){
+    for(const L of ['A1', 'A2']){
       const { page, ctx } = await open(browser);
       await page.click('#levelGroup [data-value="' + L + '"]');
       await page.waitForFunction(() => !document.getElementById('startBtn').disabled);
@@ -242,7 +242,41 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
       await ctx.close(); }
     { const { page, ctx } = await open(browser, { ls: { correLevel: 'B1' } });
       await page.waitForTimeout(500);
-      ok((await txt(page, '#levelGroup .active')) === 'B1', '記得上次選的等級（B1）', await txt(page, '#levelGroup .active'));
+      ok((await txt(page, '#levelGroup .active')) === 'A1', '舊存的 B1（公開頁已不提供）→ 改回 A1', await txt(page, '#levelGroup .active'));
+      await ctx.close(); }
+    { const { page, ctx } = await open(browser, { ls: { correLevel: 'A2' } });
+      await page.waitForTimeout(500);
+      ok((await txt(page, '#levelGroup .active')) === 'A2', '記得上次選的等級（A2）', await txt(page, '#levelGroup .active'));
+      await ctx.close(); }
+    // 隱藏參數
+    { const { page, ctx, errors } = await open(browser, { qs: '?level=B1' });
+      ok(await page.$eval('#levelField', e => getComputedStyle(e).display === 'none'), '?level=B1：不顯示等級選項');
+      ok(await page.$eval('#showLbBtn', e => getComputedStyle(e).display === 'none'), '?level=B1：不顯示公開排行榜按鈕');
+      await page.click('#startBtn'); await page.waitForTimeout(300);
+      const sen = await firstSentence(page);
+      ok(byLevel('B1').has(sen), '?level=B1：出 B1 的句子', sen);
+      ok(errors.length === 0, '沒有程式錯誤', errors);
+      await ctx.close(); }
+    { const { page, ctx } = await open(browser, { qs: '?level=A2', ls: { correLevel: 'A1' } });
+      await page.click('#startBtn'); await page.waitForTimeout(300);
+      ok(byLevel('A2').has(await firstSentence(page)), '?level=A2：固定出 A2（不管上次選什麼）');
+      ok(await page.$eval('#levelField', e => getComputedStyle(e).display === 'none'), '?level=A2：不顯示等級選項');
+      await ctx.close(); }
+    { const packs = JSON.parse(fs.readFileSync(__dirname + '/../bank/packs.json', 'utf8')).packs;
+      ok(packs.length >= 9 && packs.every(p => p.id && p.name['zh-TW'] && p.name.es && p.name.en && p.name['zh-CN']), '題包檔：每個題包有四種語言名稱');
+      const inPack = (p, x) => p.rule.tags ? x.tags.some(t => p.rule.tags.includes(t)) : p.rule.grammar.some(g => x.grammar.endsWith(' ' + g));
+      for(const [id, lv] of [['compare', ''], ['food', 'A1']]){
+        const p = packs.find(q => q.id === id);
+        const want = new Set(bank.filter(x => inPack(p, x) && (!lv || x.level === lv)).map(x => x.trad.join('')));
+        const { page, ctx } = await open(browser, { qs: '?pack=' + id + (lv ? '&level=' + lv : '') });
+        ok(await page.$eval('#levelField', e => getComputedStyle(e).display === 'none'), '?pack=' + id + '：不顯示等級選項');
+        await page.click('#startBtn'); await page.waitForTimeout(300);
+        const sen = await firstSentence(page);
+        ok(want.has(sen), '?pack=' + id + (lv ? '&level=' + lv : '') + '：句子都在題包裡', sen);
+        await ctx.close(); }
+      const { page, ctx } = await open(browser, { qs: '?pack=nosuchpack' });
+      await page.click('#startBtn'); await page.waitForTimeout(300);
+      ok((await firstSentence(page)).length > 0, '?pack=不存在的代碼：仍能玩（退回備用題庫）');
       await ctx.close(); }
     { const { page, ctx } = await open(browser, { qs: '?class=' + CID });
       ok(await page.$eval('#levelField', e => getComputedStyle(e).display === 'none'), '班級連結：不顯示等級選項（維持原本題庫）');

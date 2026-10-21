@@ -580,7 +580,6 @@
       <div class="toggle-group" id="levelGroup">
         <button class="toggle-btn active" data-value="A1" disabled>A1</button>
         <button class="toggle-btn" data-value="A2" disabled>A2</button>
-        <button class="toggle-btn" data-value="B1" disabled>B1</button>
       </div>
     </div>
 
@@ -611,7 +610,7 @@
     <div class="comment" id="commentLine"></div>
     <p id="classMsg" class="lb-msg" hidden></p>
     <button class="primary-btn ghost" id="classRetryBtn" hidden></button>
-    <div class="lb-heading" id="lbHeadingOver">🏆 <span data-i18n="best">Mejores puntuaciones</span></div>
+    <div class="lb-heading" id="lbHeadingOver">🏆 <span data-i18n="best">Mejores puntuaciones</span> <span class="lb-lvl" id="lbLvlOver"></span></div>
     <div class="lb-list" id="lbListOver"><p class="lb-msg">Cargando…</p></div>
     <p id="noRecordMsg" hidden data-i18n="noRecord">Este resultado no se guarda en la clasificación. Descarga la imagen para compartirlo.</p>
     <button class="primary-btn ghost" id="dlBtn" hidden><span class="ic">⬇</span><span data-i18n="download">Descargar imagen</span></button>
@@ -628,7 +627,7 @@
 
   <!-- LEADERBOARD -->
   <div class="overlay hidden" id="lbOverlay">
-    <h1 data-i18n="lbTitle">Clasificación</h1>
+    <h1><span data-i18n="lbTitle">Clasificación</span> <span class="lb-lvl" id="lbLvlMain"></span></h1>
     <div class="lb-list" id="lbListMain"><p class="lb-msg">Cargando…</p></div>
     <button class="primary-btn" id="lbCloseBtn" data-i18n="close">Cerrar</button>
   </div>
@@ -792,11 +791,14 @@
     }catch(e){ console.warn('No se pudo guardar la puntuación:', e); }
   }
 
-  async function fetchTop(limitN){
+  // level 有給的話，只留那個等級的成績（先多抓一些再在本機篩，不用另外建索引）
+  async function fetchTop(limitN, level){
     if(!firebaseReady) return null;
     try{
-      const snap = await db.collection(LB_COLLECTION).orderBy('score','desc').limit(limitN||10).get();
-      return snap.docs.map(d=>d.data());
+      const n = limitN || 10;
+      const snap = await db.collection(LB_COLLECTION).orderBy('score','desc').limit(level ? 200 : n).get();
+      const rows = snap.docs.map(d=>d.data());
+      return level ? rows.filter(r=>r.level === level).slice(0, n) : rows;
     }catch(e){ console.warn(e); return null; }
   }
 
@@ -974,7 +976,10 @@
 
   async function refreshLeaderboard(containerEl){
     lbMsg(containerEl, 'loading');
-    const rows = await fetchTop(10);
+    const lv = boardLevel();
+    const tag = document.getElementById(containerEl.id === 'lbListMain' ? 'lbLvlMain' : 'lbLvlOver');
+    if(tag) tag.textContent = lv ? '· ' + lv : '';
+    const rows = await fetchTop(10, lv);
     renderLeaderboard(containerEl, rows);
   }
 
@@ -1948,8 +1953,8 @@
     try{ if(!PREVIEW && window.HGPlays) HGPlays.end({score: score, name: playerName}); }catch(e){}
     setKey(document.getElementById('commentLine'), commentKey(sentencesDone));
     overOverlay.classList.remove('hidden');
-    if(TEACHER_MODE || CLASS_MODE){
-      // 教師版／班級版：不上傳公開排行榜，只提供成績圖片下載
+    if(TEACHER_MODE || CLASS_MODE || PRIVATE_SET){
+      // 教師版／班級版／B1／題包：不上傳公開排行榜，只提供成績圖片下載
       document.getElementById('lbHeadingOver').hidden = true;
       document.getElementById('lbListOver').hidden = true;
       document.getElementById('noRecordMsg').hidden = CLASS_MODE;
@@ -1960,7 +1965,7 @@
     // 先等分數存好，再讀一次排行榜（以前會讀兩次，第一次還沒有這局的分數）
     const lbEl = document.getElementById('lbListOver');
     lbMsg(lbEl, 'loading');
-    submitScore({ name: playerName, score, sentences: sentencesDone, difficulty: diffKey, script: useSimplified?'simp':'trad', level: bankLevel === 'mix' ? '' : bankLevel })
+    submitScore({ name: playerName, score, sentences: sentencesDone, difficulty: diffKey, script: useSimplified?'simp':'trad', level: boardLevel() })
       .then(()=> refreshLeaderboard(lbEl));
   }
 
@@ -2179,7 +2184,14 @@
   // 老師句庫（?bank=）與班級連結不受影響。
   const levelGroup = document.getElementById('levelGroup');
   const LEVEL_KEY = 'correLevel';
-  const LEVELS = ['A1', 'A2', 'B1'];
+  const LEVELS = ['A1', 'A2'];            // 公開頁只提供 A1／A2（免費）；B1 和題包只能用網址參數進來（付費老師的連結）
+  const ALL_LEVELS = ['A1', 'A2', 'B1'];
+  // 隱藏參數：?level=B1（或 A1／A2）、?pack=題包代碼（可再加 &level= 只取該等級）。這時不顯示等級選項，成績也不上公開排行榜。
+  const LEVEL_P = String(QS.get('level') || '').toUpperCase();
+  const PACK_P = String(QS.get('pack') || '').toLowerCase();
+  const HIDDEN_SET = !TEACHER_MODE && !CLASS_MODE && ( /^[a-z0-9_-]{1,24}$/.test(PACK_P) || ALL_LEVELS.includes(LEVEL_P) );
+  const PRIVATE_SET = HIDDEN_SET && (/^[a-z0-9_-]{1,24}$/.test(PACK_P) || LEVEL_P === 'B1');   // B1、題包：不進公開排行榜
+  function boardLevel(){ return LEVELS.includes(bankLevel) ? bankLevel : ''; }
   let bankLevel = 'mix';       // 'mix' 只代表「正在用舊公開題庫（備用）」，玩家選不到
   let newBankRows = null;      // bank/sentences.json 讀進來的全部句子
   async function loadNewBank(){
@@ -2202,7 +2214,27 @@
     usedIds = new Set();
     rebuildWordPools();
     markLevel(v);
-    try{ localStorage.setItem(LEVEL_KEY, v); }catch(e){}
+    if(!HIDDEN_SET){ try{ localStorage.setItem(LEVEL_KEY, v); }catch(e){} }
+    return true;
+  }
+  // 題包：bank/packs.json 的規則（rule.tags 命中任一標籤，或 rule.grammar 語法點完全相符）；level 有給就只取該等級
+  async function applyPack(id, level){
+    const r = await fetch('bank/packs.json');
+    if(!r.ok) throw new Error('packs ' + r.status);
+    const pack = ((await r.json()).packs || []).find(p=>p.id === id);
+    if(!pack) throw new Error('no pack');
+    const rule = pack.rule || {};
+    const rows = (await loadNewBank()).filter(x=>{
+      if(level && x.level !== level) return false;
+      if(rule.tags) return (x.tags||[]).some(t=>rule.tags.includes(t));
+      if(rule.grammar) return rule.grammar.some(g=>String(x.grammar||'').endsWith(' ' + g));
+      return false;
+    });
+    if(rows.length < 3) throw new Error('empty pack');
+    SENTENCES = rows; usingCloud = false; noMoreCloud = true;
+    bankLevel = 'pack:' + id;
+    usedIds = new Set();
+    rebuildWordPools();
     return true;
   }
   async function setBankLevel(v){
@@ -2219,6 +2251,14 @@
     let saved = 'A1';
     try{ const x = localStorage.getItem(LEVEL_KEY); if(LEVELS.includes(x)) saved = x; }catch(e){}
     try{
+      if(HIDDEN_SET){
+        // 網址指定了等級或題包：固定用它，不給玩家切換
+        const lf = document.getElementById('levelField'); lf.hidden = true; lf.style.display = 'none';
+        if(PRIVATE_SET){ const lb = document.getElementById('showLbBtn'); if(lb) lb.style.display = 'none'; }
+        if(/^[a-z0-9_-]{1,24}$/.test(PACK_P)) await applyPack(PACK_P, ALL_LEVELS.includes(LEVEL_P) ? LEVEL_P : '');
+        else await applyLevel(LEVEL_P);
+        return;
+      }
       await applyLevel(saved);
       levelGroup.querySelectorAll('.toggle-btn').forEach(b=>{ b.disabled = false; });
     }catch(e){

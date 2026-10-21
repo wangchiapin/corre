@@ -38,6 +38,14 @@
 - 老師入口：單一按鈕「👩‍🏫 老師管理中心」→ `https://wangchiapin.github.io/profesor/#/settings`。
 - 開始畫面最下面有小小的版本號（現在 `v5-2`），用來確認手機拿到的是新版。
 
+## 句庫等級與題包（網址參數）
+- 公開頁只提供 **A1／A2**（免費）；排行榜依等級分開，各看各的前 10 名。
+- 付費老師的連結可加隱藏參數（玩家看不到選項）：
+  - `?level=B1`（或 A1／A2）：固定用該等級。
+  - `?pack=food`：用 `bank/packs.json` 裡的題包；可再加 `&level=A1` 只取該等級。題包代碼：food、shopping、time、transport、school、weather、home、people、compare。
+  - B1 和題包的成績**不進公開排行榜**（班級連結的成績另有記法，由老師中心處理）。
+- `bank/sentences.json` 每句有 1–3 個主題標籤；題包規則在 `bank/packs.json`（`rule.tags` 命中任一標籤，或 `rule.grammar` 語法點完全相符）。
+
 ## 教師版（已搬到老師管理中心）
 
 - **老師端都在中心：** https://wangchiapin.github.io/profesor/ （repo `profesor`）：句庫編輯、干擾字、QR、班級、成績簿、學習單。
