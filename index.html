@@ -791,14 +791,15 @@
     }catch(e){ console.warn('No se pudo guardar la puntuación:', e); }
   }
 
-  // level 有給的話，只留那個等級的成績（先多抓一些再在本機篩，不用另外建索引）
+  // level 有給的話，只讀那個等級的前 N 名（只讀 N 筆；需要 Firestore 複合索引：level 升冪 + score 降冪）
   async function fetchTop(limitN, level){
     if(!firebaseReady) return null;
     try{
       const n = limitN || 10;
-      const snap = await db.collection(LB_COLLECTION).orderBy('score','desc').limit(level ? 200 : n).get();
-      const rows = snap.docs.map(d=>d.data());
-      return level ? rows.filter(r=>r.level === level).slice(0, n) : rows;
+      let q = db.collection(LB_COLLECTION);
+      if(level) q = q.where('level', '==', level);
+      const snap = await q.orderBy('score','desc').limit(n).get();
+      return snap.docs.map(d=>d.data());
     }catch(e){ console.warn(e); return null; }
   }
 
