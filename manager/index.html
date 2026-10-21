@@ -132,6 +132,22 @@
   #pickList label.pick{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;background:#fffdf7;cursor:pointer;}
   #pickList label.pick.off{opacity:.45;cursor:not-allowed;}
   @media(max-width:700px){#packBar .grid{grid-template-columns:1fr;}}
+  #bankBar{margin:12px 24px 0;padding:14px 16px;border:1.5px solid var(--jade);border-radius:12px;background:#eef6ee;}
+  #bankBar h2{margin:0 0 6px;}
+  #bankBar .grid{display:grid;grid-template-columns:140px 1fr;gap:8px;margin-top:8px;}
+  #bankBar input[type=text],#bankBar select{font-size:14px;padding:8px 10px;width:100%;border:1.5px solid var(--line);border-radius:8px;background:#fffdf7;font-family:'Work Sans';}
+  #bankBar .lbl{font-size:11.5px;color:var(--ink-soft);display:block;margin-top:6px;}
+  .tagbox{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+  .tagbox label{display:inline-flex;align-items:center;gap:4px;border:1.5px solid var(--line);border-radius:14px;padding:3px 10px;background:#fffdf7;font-size:12.5px;cursor:pointer;}
+  .tagbox label.on{background:var(--jade);color:#fdf6e3;border-color:var(--jade-dark);}
+  .tagbox input{display:none;}
+  #bankBar details{margin-top:12px;border-top:1px dashed var(--line);padding-top:8px;}
+  #bankBar summary{cursor:pointer;font-weight:700;font-size:13px;}
+  #bankTabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;}
+  #bankTabs .btn.on{background:var(--jade);color:#fdf6e3;border-color:var(--jade-dark);}
+  .meta-chip{display:inline-block;font-size:11px;padding:1px 8px;border-radius:10px;background:#e3efe3;color:var(--jade-dark);margin:3px 4px 0 0;}
+  .meta-chip.warn{background:#fde8e4;color:var(--seal);}
+  .sent-card.marked{opacity:.45;text-decoration:line-through;}
 </style>
 </head>
 <body>
@@ -151,8 +167,9 @@
   </header>
 
   <div id="modeBar">
-    <button class="btn btn-secondary on" data-mode="pool" id="modePool">📚 公開題庫</button>
-    <button class="btn btn-secondary" data-mode="pack" id="modePack">🎁 主題包（訂閱者專用）</button>
+    <button class="btn btn-secondary on" data-mode="bank" id="modeBank">📗 新句庫（A1／A2／B1＋題包）</button>
+    <button class="btn btn-secondary" data-mode="pool" id="modePool">📚 舊公開題庫（Firebase，備用）</button>
+    <button class="btn btn-secondary" data-mode="pack" id="modePack" hidden title="舊的主題包（site_content）已改用新句庫的題包，這個入口先收起來，資料還在 Firebase">🎁 主題包（訂閱者專用）</button>
   </div>
   <div id="packBar" hidden>
     <h2>主題包</h2>
@@ -189,6 +206,38 @@
       </div>
       <div class="status" id="packStatus"></div>
     </div>
+  </div>
+
+  <div id="bankBar">
+    <h2>新句庫（公開句庫 A1／A2／B1 與題包）</h2>
+    <p class="hint">新增的句子先放進「草稿」，只存在這台電腦的瀏覽器，遊戲讀不到。做好後按「下載草稿」，把檔案交給 Claude 說「發布草稿」，Claude 會用詞表檢查再放進句庫，你確認後才公開。</p>
+    <div class="grid">
+      <div><span class="lbl">放進哪個句庫</span><select id="bkLevel"><option>A1</option><option>A2</option><option>B1</option></select></div>
+      <div><span class="lbl">語法點（選填，例如「當代1-L3 吧」）</span><input type="text" id="bkGram" maxlength="40"></div>
+    </div>
+    <span class="lbl">主題標籤（選 1–3 個，下面新增或批次匯入的句子都套用這組設定）</span>
+    <div id="bkTags" class="tagbox"></div>
+    <div class="row">
+      <button class="btn btn-primary btn-small" id="bkDownload">⬇️ 下載草稿</button>
+      <button class="btn btn-secondary btn-small" id="bkUploadBtn">⬆️ 匯入草稿檔</button>
+      <input type="file" id="bkUpload" accept=".json,application/json" hidden>
+      <button class="btn btn-secondary btn-small" id="bkClear">🗑 清空草稿</button>
+    </div>
+    <div class="status" id="bkStatus"></div>
+    <details id="bkPackBox">
+      <summary>🎁 新增／修改題包（寫進草稿，一樣由 Claude 發布）</summary>
+      <div class="grid">
+        <div><span class="lbl">代碼（英文小寫，例 food）</span><input type="text" id="bkPkId" maxlength="24"></div>
+        <div><span class="lbl">名稱（繁體中文）</span><input type="text" id="bkPkZh" maxlength="20"></div>
+        <div><span class="lbl">Nombre (español)</span><input type="text" id="bkPkEs" maxlength="40"></div>
+        <div><span class="lbl">Name (English)</span><input type="text" id="bkPkEn" maxlength="40"></div>
+      </div>
+      <span class="lbl">挑句子的規則：命中任一標籤的句子（A1／A2／B1 全部等級）</span>
+      <div id="bkPkTags" class="tagbox"></div>
+      <span class="lbl">或：用語法點挑（用逗號分隔，例如：比較, 比, 更；有填就忽略上面的標籤）</span>
+      <input type="text" id="bkPkGram" maxlength="200">
+      <div class="row"><button class="btn btn-primary btn-small" id="bkPkAdd">＋ 加入題包草稿</button></div>
+    </details>
   </div>
 
   <div id="layout">
@@ -249,6 +298,7 @@
     <div id="colRight">
       <section>
         <h2><span id="listTitle">目前題庫</span> <span id="countLabel"></span></h2>
+        <div id="bankTabs" hidden></div>
         <div class="toolbar">
           <button class="btn btn-secondary btn-small" id="exportBtn">⬇️ 匯出公開題庫（JSON 檔）</button>
           <button class="btn btn-secondary btn-small" id="backfillBtn" hidden>補齊舊句子的隨機欄位</button>
@@ -647,7 +697,7 @@
   }
 
   // ================= 題庫資料（列表與重複檢查共用） =================
-  let MODE = 'pool';         // 'pool' = 公開題庫（corre）；'pack' = 主題包（中心專案）
+  let MODE = 'bank';         // 'pool' = 公開題庫（corre）；'pack' = 主題包（中心專案）
   let allDocs = [];          // [{ id, data }]
   let editingId = null;      // 正在編輯的文件 id（null = 新增）
   const keyOf = trad => (trad || []).join('');
@@ -660,7 +710,7 @@
     previewSection.style.display = 'none';
     editBanner.hidden = true;
     cancelEditBtn.hidden = true;
-    saveBtn.textContent = MODE === 'pack' ? '💾 加入主題包' : '💾 儲存到題庫';
+    saveBtn.textContent = MODE === 'pack' ? '💾 加入主題包' : MODE === 'bank' ? '💾 存到草稿' : '💾 儲存到題庫';
     setStatus(genStatus,'','');
   }
 
@@ -673,10 +723,11 @@
   const curPack = () => PACKS.find(p => p.id === curPackId) || null;
   // 目前正在編輯的句子清單（公開題庫或主題包），格式統一成 { id, data }
   function currentDocs(){
+    if(MODE === 'bank') return bankDocs();
     if(MODE === 'pack'){ const p = curPack(); return p ? (p.data.sentences || []).map((x, i) => ({ id: String(i), data: x })) : []; }
     return allDocs;
   }
-  function afterChange(){ if(MODE === 'pack') renderPackView(); else refreshList(); }
+  function afterChange(){ if(MODE === 'bank') renderBankView(); else if(MODE === 'pack') renderPackView(); else refreshList(); }
   function requirePackLogin(statusEl){
     if(cauth && isRealUser(cauth.currentUser)) return true;
     setStatus(statusEl, '請先登入主題包資料庫（上方「登入主題包資料庫」）。', 'err');
@@ -729,6 +780,7 @@
     }
     if(!es){ setStatus(saveStatus,'請填寫西班牙文翻譯。','err'); return; }
     if(MODE === 'pack') return savePackSentence(tokens, es, en, saveStatus);
+    if(MODE === 'bank') return saveBankSentence(tokens, es, en, saveStatus);
     if(!firebaseReady){ setStatus(saveStatus,'Firebase 尚未載入完成，請重新整理頁面。','err'); return; }
     if(!requireLogin(saveStatus)) return;
 
@@ -782,6 +834,7 @@
   function startEdit(doc){
     const d = doc.data;
     editingId = doc.id;
+    if(MODE === 'bank') bankFillFields(d);
     sentInput.value = (d.trad || []).join(' ');
     esInputTop.value = d.es || '';
     enInputTop.value = d.en || '';
@@ -799,6 +852,7 @@
 
   async function deleteDoc(doc){
     setStatus(listStatus,'','');
+    if(MODE === 'bank') return bankDelete(doc);
     if(MODE === 'pack'){
       const p = curPack(); if(!p || !requirePackLogin(listStatus)) return;
       if(!confirm('確定要從主題包刪除這句話嗎？')) return;
@@ -824,7 +878,9 @@
 
   function renderList(){
     sentenceList.textContent = '';
+    if(MODE === 'bank' && bkView === 'packs'){ renderBankPacks(); return; }
     const docs = currentDocs();
+    if(docs.length === 0 && MODE === 'bank'){ sentenceList.appendChild(mk('p','empty-msg', bkView === 'draft' ? '草稿是空的。在左邊新增句子或批次匯入，就會先放在這裡。' : (BANK_PUB ? '這個等級沒有句子。' : '句庫載入中…'))); return; }
     if(docs.length === 0){
       sentenceList.appendChild(mk('p','empty-msg', MODE === 'pack' ? (curPack() ? '這個主題包還沒有句子。可以在左邊新增、批次匯入，或按上方「從公開題庫挑句子加入」。' : '請先選一個主題包，或按「＋ 新增主題包」。') : '還沒有句子，先在左邊新增第一句吧！'));
       return;
@@ -837,6 +893,7 @@
       info.appendChild(mk('div','py',(d.pinyin||[]).join('  ')));
       info.appendChild(mk('div','es',d.es||''));
       info.appendChild(mk('div','en', d.en || '（尚無英文）'));
+      if(MODE === 'bank') bankCardMeta(info, doc, card);
       const actions = mk('div','card-actions');
       const edit = mk('button','edit','✏️'); edit.title = '編輯';
       edit.addEventListener('click', ()=>startEdit(doc));
@@ -953,7 +1010,7 @@
     if(lines.length === 0){ setStatus(bulkStatus,'請先貼上要匯入的句子。','err'); return; }
     bulkPreviewBtn.disabled = true;
     setStatus(bulkStatus,'處理中…');
-    const existing = new Map(currentDocs().map(d => [keyOf(d.data.trad), d]));
+    const existing = new Map((MODE === 'bank' ? bankAllDocs() : currentDocs()).map(d => [keyOf(d.data.trad), d]));
     const seen = new Set();
     let ok = 0, skip = 0, bad = 0, translated = 0, filled = 0;
     try{
@@ -968,7 +1025,7 @@
         let note = '';
         const key = keyOf(tk.trad);
         const old = existing.get(key);
-        if(MODE === 'pack' && countHan(tk.trad) > MAX_HAN){ note = `超過 ${MAX_HAN} 個漢字，略過`; skip++; }
+        if((MODE === 'pack' || MODE === 'bank') && countHan(tk.trad) > MAX_HAN){ note = `超過 ${MAX_HAN} 個漢字，略過`; skip++; }
         else if(old){
           if(en && !old.data.en && !seen.has(key)){ bulkEnFill.push({ id: old.id, en }); seen.add(key); note = '已存在，補上英文'; filled++; }
           else{ note = '已存在，略過'; skip++; }
@@ -1004,6 +1061,14 @@
     }
   }
   async function bulkImport(){
+    if(MODE === 'bank'){
+      const meta = bankMeta(bulkStatus); if(!meta) return;
+      bulkReady.forEach(r => BK.sentences.push(Object.assign({ uid: bkUid() }, meta, { trad: r.trad, simp: r.simp, pinyin: r.pinyin, es: r.es, en: r.en || '' })));
+      const n = bulkReady.length;
+      bkSave(); bulkReady = []; bulkEnFill = []; bulkImportBtn.hidden = true; bulkInput.value = ''; bulkPreview.textContent = '';
+      setStatus(bulkStatus, `已放進草稿 ${n} 句（${meta.level}）。`, 'ok'); renderBankView();
+      return;
+    }
     if(MODE === 'pack'){
       const p = curPack();
       if(!p){ setStatus(bulkStatus,'請先選一個主題包。','err'); return; }
@@ -1069,22 +1134,28 @@
 
   function setMode(m){
     MODE = m;
-    modePoolBtn.classList.toggle('on', m === 'pool'); modePackBtn.classList.toggle('on', m === 'pack');
-    packBar.hidden = m !== 'pack';
+    modePoolBtn.classList.toggle('on', m === 'pool'); modePackBtn.classList.toggle('on', m === 'pack'); modeBankBtn.classList.toggle('on', m === 'bank');
+    packBar.hidden = m !== 'pack'; $('bankBar').hidden = m !== 'bank'; $('bankTabs').hidden = m !== 'bank';
     clearForm();
     bulkReady = []; bulkEnFill = []; bulkImportBtn.hidden = true; bulkPreview.textContent = ''; setStatus(bulkStatus, '');
     setStatus(saveStatus, '');
-    if(m === 'pack'){
+    if(m === 'bank'){
+      backfillBtn.hidden = true; exportBtn.hidden = true; setStatus(backfillStatus, '');
+      loadBankPublished(); renderBankView();
+    }else if(m === 'pack'){
       backfillBtn.hidden = true; exportBtn.hidden = true; setStatus(backfillStatus, '');
       renderPackView();
       if(cauth && isRealUser(cauth.currentUser) && PACKS.length === 0) loadPacks();
     }else{
-      $('listTitle').textContent = '目前題庫';
+      $('listTitle').textContent = '舊公開題庫（Firebase，備用）';
       exportBtn.hidden = false;
+      if(!oldPoolLoaded){ oldPoolLoaded = true; refreshList(); }
       countLabel.textContent = `（共 ${allDocs.length} 句）`;
       renderList(); updateBackfillUi();
     }
   }
+  const modeBankBtn = $('modeBank'); let oldPoolLoaded = false;
+  modeBankBtn.addEventListener('click', ()=>setMode('bank'));
   modePoolBtn.addEventListener('click', ()=>setMode('pool'));
   modePackBtn.addEventListener('click', ()=>setMode('pack'));
 
@@ -1268,7 +1339,166 @@
   }
   pruneBtn.addEventListener('click', pruneScores);
 
-  refreshList();
+  // ================= 新句庫模式：草稿（只存這台瀏覽器）→ 下載 → 交給 Claude 發布 =================
+  const BK_KEY = 'corre_bank_draft_v1';
+  const BANK_TAGS = ['飲食與點餐','購物與價錢','時間日期','交通','問路與地點','學校課堂','天氣','住家','家人朋友','工作職場','打招呼與禮貌','情緒感受','興趣休閒','健康','旅行','邀請約定','自我介紹'];
+  let BK = { sentences: [], packs: [], deletes: [] };
+  try{ const j = JSON.parse(localStorage.getItem(BK_KEY) || 'null'); if(j && Array.isArray(j.sentences)) BK = { sentences: j.sentences, packs: j.packs || [], deletes: j.deletes || [] }; }catch(e){}
+  function bkSave(){ try{ localStorage.setItem(BK_KEY, JSON.stringify(BK)); }catch(e){ setStatus($('bkStatus'), '這個瀏覽器不讓我存草稿，請盡快按「下載草稿」。', 'err'); } }
+  const bkUid = () => 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  let BANK_PUB = null, bkView = 'draft';      // BANK_PUB = { A1:[…], A2:[…], B1:[…], packs:[…] }
+  async function loadBankPublished(){
+    if(BANK_PUB) return;
+    try{
+      const [a1, a2, b1, pk] = await Promise.all(['A1','A2','B1','packs'].map(n => fetch('../bank/' + n + '.json').then(r => { if(!r.ok) throw new Error(n + ' ' + r.status); return r.json(); })));
+      BANK_PUB = { A1: a1.sentences || [], A2: a2.sentences || [], B1: b1.sentences || [], packs: pk.packs || [] };
+      if(MODE === 'bank') renderBankView();
+    }catch(e){ console.warn(e); setStatus($('bkStatus'), '讀不到已公開的句庫（' + e.message + '），只能看草稿。', 'err'); }
+  }
+  function tagBox(box, max, onChange){
+    box.textContent = '';
+    BANK_TAGS.forEach(t => {
+      const l = document.createElement('label'), c = document.createElement('input'); c.type = 'checkbox'; c.value = t;
+      c.addEventListener('change', () => {
+        const on = box.querySelectorAll('input:checked');
+        if(max && on.length > max){ c.checked = false; return; }
+        l.classList.toggle('on', c.checked); if(onChange) onChange();
+      });
+      l.appendChild(c); l.appendChild(document.createTextNode(t)); box.appendChild(l);
+    });
+  }
+  const tagsOf = box => Array.from(box.querySelectorAll('input:checked')).map(c => c.value);
+  function setTags(box, arr){ box.querySelectorAll('input').forEach(c => { c.checked = (arr || []).includes(c.value); c.parentNode.classList.toggle('on', c.checked); }); }
+  tagBox($('bkTags'), 3); tagBox($('bkPkTags'), 0);
+
+  function bankMeta(statusEl){
+    const tags = tagsOf($('bkTags'));
+    if(tags.length < 1 || tags.length > 3){ setStatus(statusEl, '請在上方「主題標籤」選 1–3 個標籤。', 'err'); return null; }
+    return { level: $('bkLevel').value, tags, grammar: $('bkGram').value.trim() };
+  }
+  function bankFillFields(d){ if(d.level) $('bkLevel').value = d.level; $('bkGram').value = d.grammar || ''; setTags($('bkTags'), d.tags); }
+  // 草稿＋已公開，統一成 { id, data }；已公開的 id 是 "pub:A1-001"
+  const pubDocs = L => ((BANK_PUB && BANK_PUB[L]) || []).map(r => ({ id: 'pub:' + r.id, data: r }));
+  const draftDocs = () => BK.sentences.map(x => ({ id: x.uid, data: x }));
+  const bankAllDocs = () => draftDocs().concat(pubDocs('A1'), pubDocs('A2'), pubDocs('B1'));
+  function bankDocs(){ return bkView === 'draft' ? draftDocs() : (['A1','A2','B1'].includes(bkView) ? pubDocs(bkView) : []); }
+  function bankCardMeta(info, doc, card){
+    const d = doc.data, pub = doc.id.startsWith('pub:');
+    const lv = mk('span','meta-chip', (d.level || '') + (pub ? ' · ' + d.id : (d.replaces ? ' · 取代 ' + d.replaces : ' · 新')));
+    info.appendChild(lv);
+    (d.tags || []).forEach(t => info.appendChild(mk('span','meta-chip', t)));
+    if(d.grammar) info.appendChild(mk('span','meta-chip', d.grammar));
+    if(pub && BK.deletes.includes(d.id)){ card.classList.add('marked'); info.appendChild(mk('span','meta-chip warn','已標記刪除（發布時移除）')); }
+    if(pub && BK.sentences.some(x => x.replaces === d.id)) info.appendChild(mk('span','meta-chip warn','草稿裡有修改版'));
+  }
+  function renderBankTabs(){
+    const box = $('bankTabs'); box.textContent = '';
+    [['draft', `📝 草稿（${BK.sentences.length}）`], ['A1','A1'], ['A2','A2'], ['B1','B1'], ['packs', `🎁 題包（${BK.packs.length ? '草稿 ' + BK.packs.length : (BANK_PUB ? BANK_PUB.packs.length : '…')}）`]].forEach(([k, t]) => {
+      const b = mk('button','btn btn-secondary btn-small' + (k === bkView ? ' on' : ''), t + (['A1','A2','B1'].includes(k) && BANK_PUB ? `（${BANK_PUB[k].length}）` : ''));
+      b.addEventListener('click', () => { bkView = k; renderBankView(); }); box.appendChild(b);
+    });
+  }
+  function renderBankView(){
+    $('listTitle').textContent = '新句庫';
+    countLabel.textContent = '';
+    renderBankTabs(); renderList();
+    const nd = BK.sentences.length + BK.packs.length + BK.deletes.length;
+    setStatus($('bkStatus'), nd ? `草稿：${BK.sentences.length} 句、${BK.packs.length} 個題包、${BK.deletes.length} 句標記刪除。記得按「下載草稿」。` : '', '');
+  }
+  async function saveBankSentence(tokens, es, en, statusEl){
+    const meta = bankMeta(statusEl); if(!meta) return;
+    if(countHan(tokens.trad) > MAX_HAN){ setStatus(statusEl, `這句有 ${countHan(tokens.trad)} 個漢字，句庫的句子最多 ${MAX_HAN} 個。`, 'err'); return; }
+    const key = keyOf(tokens.trad), obj = Object.assign({}, meta, { trad: tokens.trad, simp: tokens.simp, pinyin: tokens.pinyin, es, en: en || '' });
+    const editingPub = editingId && editingId.startsWith('pub:') ? editingId.slice(4) : null;
+    const editingDraft = editingId && !editingPub ? editingId : null;
+    const dup = bankAllDocs().find(d => keyOf(d.data.trad) === key && d.id !== editingId && d.id !== 'pub:' + (BK.sentences.find(x => x.uid === editingDraft) || {}).replaces);
+    if(dup){ setStatus(statusEl, '已經有一樣的句子了（' + (dup.id.startsWith('pub:') ? dup.data.id : '草稿') + '），請先確認。', 'err'); return; }
+    if(editingPub){
+      obj.replaces = editingPub;
+      const i = BK.sentences.findIndex(x => x.replaces === editingPub);
+      if(i >= 0) BK.sentences[i] = Object.assign({ uid: BK.sentences[i].uid }, obj); else BK.sentences.push(Object.assign({ uid: bkUid() }, obj));
+    }else if(editingDraft){
+      const i = BK.sentences.findIndex(x => x.uid === editingDraft);
+      if(i >= 0) BK.sentences[i] = Object.assign({ uid: editingDraft }, BK.sentences[i].replaces ? { replaces: BK.sentences[i].replaces } : {}, obj); else BK.sentences.push(Object.assign({ uid: bkUid() }, obj));
+    }else BK.sentences.push(Object.assign({ uid: bkUid() }, obj));
+    bkSave(); clearForm(); bkView = 'draft';
+    setStatus(statusEl, `已放進草稿（${meta.level}）。`, 'ok'); renderBankView();
+  }
+  function bankDelete(doc){
+    if(doc.id.startsWith('pub:')){
+      const id = doc.data.id, i = BK.deletes.indexOf(id);
+      if(i >= 0) BK.deletes.splice(i, 1); else if(confirm('把這句標記為「發布時刪除」嗎？（草稿發布前都可以再按一次取消）')) BK.deletes.push(id); else return;
+    }else{
+      if(!confirm('確定要從草稿刪除這句嗎？')) return;
+      BK.sentences = BK.sentences.filter(x => x.uid !== doc.id); if(editingId === doc.id) clearForm();
+    }
+    bkSave(); renderBankView();
+  }
+  function renderBankPacks(){
+    const add = (p, draft) => {
+      const card = mk('div','sent-card'), info = mk('div');
+      info.appendChild(mk('div','hz', (p.name && p.name['zh-TW'] || '') + '  ·  ' + p.id));
+      info.appendChild(mk('div','es', (p.name && p.name.es) || ''));
+      info.appendChild(mk('div','en', (p.name && p.name.en) || ''));
+      const r = p.rule || {};
+      info.appendChild(mk('span','meta-chip', r.tags ? '標籤：' + r.tags.join('、') : '語法點：' + (r.grammar || []).join('、')));
+      if(!draft && typeof p.count === 'number') info.appendChild(mk('span','meta-chip', p.count + ' 句'));
+      if(draft) info.appendChild(mk('span','meta-chip warn', BANK_PUB && BANK_PUB.packs.some(x => x.id === p.id) ? '草稿：修改這個題包' : '草稿：新題包'));
+      card.appendChild(info);
+      const actions = mk('div','card-actions');
+      const edit = mk('button','edit','✏️'); edit.title = '編輯規則／名稱';
+      edit.addEventListener('click', () => { bankPackFill(p); });
+      actions.appendChild(edit);
+      if(draft){ const del = mk('button','del','🗑'); del.title = '從草稿移除'; del.addEventListener('click', () => { BK.packs = BK.packs.filter(x => x.id !== p.id); bkSave(); renderBankView(); }); actions.appendChild(del); }
+      card.appendChild(actions); sentenceList.appendChild(card);
+    };
+    if(BK.packs.length){ sentenceList.appendChild(mk('p','hint','題包草稿（還沒公開）')); BK.packs.forEach(p => add(p, true)); }
+    sentenceList.appendChild(mk('p','hint','已公開的題包（老師中心與遊戲都讀這份）'));
+    if(!BANK_PUB) sentenceList.appendChild(mk('p','empty-msg','載入中…')); else BANK_PUB.packs.forEach(p => add(p, false));
+  }
+  function bankPackFill(p){
+    $('bkPackBox').open = true;
+    $('bkPkId').value = p.id; $('bkPkZh').value = (p.name && p.name['zh-TW']) || ''; $('bkPkEs').value = (p.name && p.name.es) || ''; $('bkPkEn').value = (p.name && p.name.en) || '';
+    const r = p.rule || {}; setTags($('bkPkTags'), r.tags || []); $('bkPkGram').value = (r.grammar || []).join(', ');
+    $('bkPackBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  $('bkPkAdd').addEventListener('click', () => {
+    const st = $('bkStatus'), id = $('bkPkId').value.trim().toLowerCase();
+    if(!/^[a-z0-9_-]{1,24}$/.test(id)){ setStatus(st, '題包代碼要是 1–24 個英文小寫字母、數字、- 或 _。', 'err'); return; }
+    const zh = $('bkPkZh').value.trim(), es = $('bkPkEs').value.trim(), en = $('bkPkEn').value.trim();
+    if(!zh || !es){ setStatus(st, '請填中文名稱和西文名稱（英文名稱可以空著）。', 'err'); return; }
+    const gram = $('bkPkGram').value.split(/[,，、]/).map(x => x.trim()).filter(Boolean), tags = tagsOf($('bkPkTags'));
+    if(!gram.length && !tags.length){ setStatus(st, '請選至少一個標籤，或填語法點。', 'err'); return; }
+    const pack = { id, name: { 'zh-TW': zh, 'es': es, 'en': en || es }, rule: gram.length ? { grammar: gram } : { tags } };
+    const i = BK.packs.findIndex(x => x.id === id); if(i >= 0) BK.packs[i] = pack; else BK.packs.push(pack);
+    bkSave(); bkView = 'packs'; renderBankView(); setStatus(st, '已加入題包草稿「' + zh + '」。', 'ok');
+  });
+  $('bkDownload').addEventListener('click', () => {
+    if(!BK.sentences.length && !BK.packs.length && !BK.deletes.length){ setStatus($('bkStatus'), '草稿是空的，沒有東西可下載。', 'err'); return; }
+    const out = { format: 'corre-draft', version: 1, exportedAt: new Date().toISOString(), sentences: BK.sentences, packs: BK.packs, deletes: BK.deletes };
+    const a = document.createElement('a'), t = new Date(), pad = n => String(n).padStart(2, '0');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' }));
+    a.download = `corre-draft-${t.getFullYear()}${pad(t.getMonth()+1)}${pad(t.getDate())}-${pad(t.getHours())}${pad(t.getMinutes())}.json`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    setStatus($('bkStatus'), `已下載 ${a.download}。把這個檔案交給 Claude，說「發布草稿」。`, 'ok');
+  });
+  $('bkUploadBtn').addEventListener('click', () => $('bkUpload').click());
+  $('bkUpload').addEventListener('change', ev => {
+    const f = ev.target.files[0]; if(!f) return;
+    f.text().then(t => {
+      const j = JSON.parse(t); if(j.format !== 'corre-draft') throw new Error('這不是草稿檔');
+      if((BK.sentences.length || BK.packs.length) && !confirm('現有的草稿會被這個檔案取代，確定嗎？')) return;
+      BK = { sentences: j.sentences || [], packs: j.packs || [], deletes: j.deletes || [] }; bkSave(); renderBankView();
+      setStatus($('bkStatus'), '已匯入草稿。', 'ok');
+    }).catch(e => setStatus($('bkStatus'), '匯入失敗：' + e.message, 'err')).finally(() => { ev.target.value = ''; });
+  });
+  $('bkClear').addEventListener('click', () => {
+    if(!BK.sentences.length && !BK.packs.length && !BK.deletes.length) return;
+    if(!confirm('確定要清空整個草稿嗎？（沒下載的話就找不回來了）')) return;
+    BK = { sentences: [], packs: [], deletes: [] }; bkSave(); clearForm(); renderBankView();
+  });
+
+  setMode('bank');
 })();
 </script>
 </body>

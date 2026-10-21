@@ -228,7 +228,7 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
       const { page, ctx } = await open(browser, { ls: { correLevel: 'mix' } });
       ok((await txt(page, '#levelGroup .active')) === 'A1', '舊的無效等級值改用 A1', await txt(page, '#levelGroup .active'));
       await ctx.close(); }
-    { // 新句庫讀不到 → 退回舊公開題庫，等級選項隱藏，仍能玩
+    { // 新句庫讀不到 → 用內建句子（不再讀舊 Firebase 題庫），等級選項隱藏，仍能玩
       const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } }); const page = await ctx.newPage();
       await page.route('**/*', r => { const u = r.request().url();
         if(/bank\/(A1|A2|B1)\.json/.test(u)) return r.fulfill({ status: 404, body: 'no' });
@@ -239,7 +239,7 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
       await page.goto(BASE + '/index.html');
       await page.waitForFunction(() => !document.getElementById('startBtn').disabled, null, { timeout: 15000 });
       await page.click('#startBtn'); await page.waitForTimeout(300);
-      ok((await firstSentence(page)) === '我喜歡貓', '新句庫讀不到：退回舊公開題庫仍能玩', await firstSentence(page));
+      { const fs0 = await firstSentence(page); ok(['我喜歡吃蘋果','你叫什麼名字','今天天氣很好','謝謝你的幫忙'].includes(fs0), '新句庫讀不到：改用內建句子仍能玩（不讀舊 Firebase 題庫，舊題庫的「我喜歡貓」沒出現）', fs0); }
       ok(await page.$eval('#levelField', e => getComputedStyle(e).display === 'none'), '這時隱藏等級選項');
       await ctx.close(); }
     { const { page, ctx } = await open(browser, { ls: { correLevel: 'B1' } });

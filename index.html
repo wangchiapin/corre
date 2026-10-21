@@ -1262,18 +1262,7 @@
     { trad:["謝謝","你","的","幫忙"], simp:["谢谢","你","的","帮忙"], pinyin:["xiè xie","nǐ","de","bāng máng"], es:"Gracias por tu ayuda.", en:"Thank you for your help." }
   ];
   DEFAULT_SENTENCES.forEach((s,i)=>{ s.id = 'default-' + i; });
-  const SENT_COLLECTION = 'mandarinRunnerSentences';
-  let SENTENCES = DEFAULT_SENTENCES.slice();
-
-  // ---- 分批隨機讀取題庫 ----
-  // 每次只從 Firebase 讀 BATCH_SIZE 句（隨機抽），玩到剩下不多時才背景再抽下一批，
-  // 這樣題庫再大，每個玩家每次開遊戲也只會用掉幾十次讀取額度。
-  // 每一句在管理工具存檔時都會有一個 rand（0~1 的隨機數字）欄位，抽題就靠它。
-  const BATCH_SIZE = 25;
-  const REFILL_WHEN_LEFT = 5;     // 還沒玩過的句子少於或等於這個數字時，再抽下一批
-  let usingCloud = false;         // 目前使用的是雲端題庫（不是內建句子）
-  let noMoreCloud = false;        // 雲端題庫已經全部讀完了，不用再抽
-  let fetchingMore = false;
+  let SENTENCES = DEFAULT_SENTENCES.slice();   // 只有新句庫讀不到時才用這幾句內建句子（舊 Firebase 題庫已不再讀取）
   let usedIds = new Set();        // 這一輪已經出過的句子
 
   function isValidSentence(r){
@@ -1283,58 +1272,6 @@
       typeof r.es === 'string' && r.es;
   }
 
-  async function fetchRandomBatch(){
-    const col = db.collection(SENT_COLLECTION);
-    const r = Math.random();
-    let docs = [];
-    const snap1 = await col.where('rand','>=',r).orderBy('rand').limit(BATCH_SIZE).get();
-    docs = snap1.docs;
-    if(docs.length < BATCH_SIZE){
-      // 抽到尾巴了，從頭補滿
-      const snap2 = await col.where('rand','<',r).orderBy('rand').limit(BATCH_SIZE - docs.length).get();
-      docs = docs.concat(snap2.docs);
-    }
-    if(docs.length === 0){
-      // 舊句子還沒有 rand 欄位時的備援：直接取前幾句
-      const snap3 = await col.limit(BATCH_SIZE).get();
-      docs = snap3.docs;
-    }
-    return {
-      rawCount: docs.length,
-      rows: docs.map(d=>Object.assign({ id: d.id }, d.data())).filter(isValidSentence)
-    };
-  }
-
-  async function loadCloudSentences(){
-    if(firebaseReady){
-      try{
-        const batch = await fetchRandomBatch();
-        if(batch.rows.length > 0){
-          SENTENCES = batch.rows;
-          usingCloud = true;
-          if(batch.rawCount < BATCH_SIZE) noMoreCloud = true;   // 整個題庫都讀進來了
-        }
-      }catch(e){ console.warn('無法讀取雲端句子庫，使用內建句子。', e); }
-    }
-    rebuildWordPools();
-  }
-
-  async function fetchMoreSentences(){
-    if(!usingCloud || noMoreCloud || fetchingMore || !firebaseReady) return;
-    fetchingMore = true;
-    try{
-      const batch = await fetchRandomBatch();
-      const have = new Set(SENTENCES.map(s=>s.id));
-      const fresh = batch.rows.filter(r=>!have.has(r.id));
-      if(fresh.length > 0){
-        SENTENCES = SENTENCES.concat(fresh);
-        rebuildWordPools();
-      }
-      // 抽到的新句子很少，代表題庫差不多都載入了，這次遊戲不再重複去讀（省讀取次數）
-      if(fresh.length < 5) noMoreCloud = true;
-    }catch(e){ console.warn('無法讀取更多句子。', e); }
-    finally{ fetchingMore = false; }
-  }
   const FALLBACK_DECOY_TRAD = ["他","她","貓","狗","水","茶","書","車","山","海","花","門","不","也","都","很","對","錯","大","小","多","少","上","下","左","右"];
   const FALLBACK_DECOY_SIMP = ["他","她","猫","狗","水","茶","书","车","山","海","花","门","不","也","都","很","对","错","大","小","多","少","上","下","左","右"];
 
@@ -1498,7 +1435,6 @@
       .filter(s => { const n = countHan(s.trad); return n >= 1 && n <= MAX_BANK_CHARS; });
     if(rows.length === 0) throw { code: 'not-found' };
     SENTENCES = rows;
-    usingCloud = false; noMoreCloud = true;
     rebuildWordPools();
     bankName = String(d.name || '').slice(0, 40);
     bankBoss = d.boss !== false;
@@ -1695,10 +1631,6 @@
     sentence = pickNextSentence(excludeId);
     dbg('new-sentence');
     usedIds.add(sentence.id);
-    // 還沒玩過的句子快用完了，就在背景再抽下一批
-    if(usingCloud && !noMoreCloud && SENTENCES.filter(s=>!usedIds.has(s.id)).length <= REFILL_WHEN_LEFT){
-      fetchMoreSentences();
-    }
     targetIndex = 0;
     targetMissWaves = 0;
     bag = [];
@@ -2225,7 +2157,7 @@
   async function applyLevel(v){
     const rows = await loadLevel(v);
     if(!rows.length) throw new Error('empty level');
-    SENTENCES = rows; usingCloud = false; noMoreCloud = true;
+    SENTENCES = rows;
     bankLevel = v;
     usedIds = new Set();
     rebuildWordPools();
@@ -2247,7 +2179,7 @@
       return false;
     });
     if(rows.length < 3) throw new Error('empty pack');
-    SENTENCES = rows; usingCloud = false; noMoreCloud = true;
+    SENTENCES = rows;
     bankLevel = 'pack:' + id;
     usedIds = new Set();
     rebuildWordPools();
@@ -2279,9 +2211,9 @@
       levelGroup.querySelectorAll('.toggle-btn').forEach(b=>{ b.disabled = false; });
     }catch(e){
       if(CLASS_SET) throw e;     // 班級連結：成績要記在對的句庫名下，讀不到就顯示錯誤，不退回舊題庫
-      console.warn('新句庫載入失敗，改用舊公開題庫。', e);
+      console.warn('新句庫載入失敗，改用內建句子。', e);
       const lf = document.getElementById('levelField'); lf.hidden = true; lf.style.display = 'none';
-      await loadCloudSentences();
+      rebuildWordPools();
     }
   }
   if(TEACHER_MODE || CLASS_MODE){ const lf = document.getElementById('levelField'); lf.hidden = true; lf.style.display = 'none'; }

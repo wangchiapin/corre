@@ -60,3 +60,14 @@
 ## 測試
 
 `node tests/run.js`（Playwright＋`tests/firebase-mock.js`，見 `tests/README.md`）。
+
+
+## 新增句子／題包的流程（管理工具「新句庫」模式）
+
+1. 開 `manager/`，預設就是「📗 新句庫」。選等級（A1／A2／B1）、1–3 個標籤（17 個固定標籤）、語法點（選填），再新增句子或批次匯入。句子先放在「草稿」，只存這台電腦的瀏覽器，遊戲讀不到。
+2. 已公開的句子可以在 A1／A2／B1 分頁按 ✏️ 修改（草稿裡會變成「取代某句」，可改等級），或按 🗑 標記刪除（發布時才真的移除）。
+3. 題包：在「🎁 新增／修改題包」填代碼、中／西／英名稱，規則選標籤（命中任一）或語法點。題包存進草稿。
+4. 按「⬇️ 下載草稿」，把檔案交給 Claude 說「發布草稿」。Claude 會跑 `game-kit/bank/import_draft.js`：併進原稿、用八千詞詞表檢查、校對拼音、更新 `bank/A1.json／A2.json／B1.json` 與 `bank/packs.json` 的句數。確認後才 commit 與推送。
+5. 題包存在 `bank/packs.json`，遊戲（`?pack=`）和老師中心都讀這一份，所以新題包不用另外改老師中心。
+
+舊的 Firebase 題庫（`mandarinRunnerSentences`）與舊主題包（`site_content` 的 `corre_pack_*`）：遊戲已不再讀取，資料還留在 Firebase 當備份；管理工具的「舊公開題庫」模式還能看，舊主題包入口已收起。
