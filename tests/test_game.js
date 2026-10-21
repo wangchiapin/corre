@@ -195,8 +195,8 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     ok(page.url().startsWith('https://wangchiapin.github.io/profesor/#/settings'), '帶 #/settings', page.url());
     await ctx.close(); }
 
-  console.log('\n[9] 新句庫：A1／A2／B1 選項（bank/sentences.json）');
-  { const bank = JSON.parse(fs.readFileSync(__dirname + '/../bank/sentences.json', 'utf8')).sentences;
+  console.log('\n[9] 新句庫：A1／A2／B1 選項（bank/A1.json、A2.json、B1.json）');
+  { const bank = ['A1', 'A2', 'B1'].flatMap(L => JSON.parse(fs.readFileSync(__dirname + '/../bank/' + L + '.json', 'utf8')).sentences);
     const byLevel = L => new Set(bank.filter(x => x.level === L).map(x => x.trad.join('')));
     const firstSentence = page => page.$$eval('#sentence-track .slot .hz', e => e.map(x => x.textContent).join(''));
     ok(['A1', 'A2', 'B1'].every(L => bank.filter(x => x.level === L).length >= 100), '句庫檔：三個等級每級至少 100 句');
@@ -231,7 +231,7 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     { // 新句庫讀不到 → 退回舊公開題庫，等級選項隱藏，仍能玩
       const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } }); const page = await ctx.newPage();
       await page.route('**/*', r => { const u = r.request().url();
-        if(u.includes('bank/sentences.json')) return r.fulfill({ status: 404, body: 'no' });
+        if(/bank\/(A1|A2|B1)\.json/.test(u)) return r.fulfill({ status: 404, body: 'no' });
         if(u.startsWith('http://localhost')) return r.continue();
         if(/\.js(\?|$)/.test(u) || u.includes('gstatic')) return r.fulfill({ status: 200, contentType: 'application/javascript', body: '' });
         return r.abort(); });

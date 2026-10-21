@@ -2179,8 +2179,8 @@
   }
   wireToggleGroup(document.getElementById('diffGroup'), v=>{ diffKey = v; });
 
-  // ===== 句庫（bank/sentences.json）：A1／A2／B1 各 100 句 =====
-  // 一般玩法只用這個新句庫（一個 JSON 檔，不佔 Firebase 讀取額度），干擾字也只會用同等級的詞。
+  // ===== 句庫（bank/A1.json、A2.json、B1.json）：每個等級一個檔 =====
+  // 一般玩法只用這個新句庫（每級一個 JSON 檔，只讀選到的那一級，不佔 Firebase 讀取額度），干擾字也只會用同等級的詞。
   // 舊的公開題庫（Firebase）只在「新句庫讀不到」時當備用（這時等級選項會隱藏）；
   // 老師句庫（?bank=）與班級連結不受影響。
   const levelGroup = document.getElementById('levelGroup');
@@ -2194,21 +2194,26 @@
   const PRIVATE_SET = HIDDEN_SET && (/^[a-z0-9_-]{1,24}$/.test(PACK_P) || LEVEL_P === 'B1');   // B1、題包：不進公開排行榜
   function boardLevel(){ return LEVELS.includes(bankLevel) ? bankLevel : ''; }
   let bankLevel = 'mix';       // 'mix' 只代表「正在用舊公開題庫（備用）」，玩家選不到
-  let newBankRows = null;      // bank/sentences.json 讀進來的全部句子
-  async function loadNewBank(){
-    if(newBankRows) return newBankRows;
-    const r = await fetch('bank/sentences.json');
-    if(!r.ok) throw new Error('bank ' + r.status);
+  const levelRows = {};        // 等級 → 讀進來的句子（每級一個檔：bank/A1.json 等）
+  async function loadLevel(L){
+    if(levelRows[L]) return levelRows[L];
+    const r = await fetch('bank/' + L + '.json');
+    if(!r.ok) throw new Error('bank ' + L + ' ' + r.status);
     const j = await r.json();
-    newBankRows = (j.sentences || []).filter(isValidSentence);
-    return newBankRows;
+    levelRows[L] = (j.sentences || []).filter(isValidSentence);
+    return levelRows[L];
+  }
+  // 題包沒指定等級時，要把三個等級都讀進來
+  async function loadNewBank(levels){
+    const rows = await Promise.all((levels || ALL_LEVELS).map(loadLevel));
+    return [].concat(...rows);
   }
   function markLevel(v){
     levelGroup.querySelectorAll('.toggle-btn').forEach(b=> b.classList.toggle('active', b.dataset.value === v));
   }
   // 套用某個等級；成功回傳 true
   async function applyLevel(v){
-    const rows = (await loadNewBank()).filter(r=>r.level === v);
+    const rows = await loadLevel(v);
     if(!rows.length) throw new Error('empty level');
     SENTENCES = rows; usingCloud = false; noMoreCloud = true;
     bankLevel = v;
@@ -2225,7 +2230,7 @@
     const pack = ((await r.json()).packs || []).find(p=>p.id === id);
     if(!pack) throw new Error('no pack');
     const rule = pack.rule || {};
-    const rows = (await loadNewBank()).filter(x=>{
+    const rows = (await loadNewBank(level ? [level] : null)).filter(x=>{
       if(level && x.level !== level) return false;
       if(rule.tags) return (x.tags||[]).some(t=>rule.tags.includes(t));
       if(rule.grammar) return rule.grammar.some(g=>String(x.grammar||'').endsWith(' ' + g));

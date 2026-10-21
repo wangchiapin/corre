@@ -1,32 +1,43 @@
 // 句庫檢查（不用瀏覽器，純 Node）：node tests/check_bank.js [--write-meta] [--coverage]
-// 檢查 bank/sentences.json 的格式、有沒有完全重複的句子、用字是否超過等級（只警告）、
+// 檢查 bank/A1.json、A2.json、B1.json（三個等級各一個檔）的格式、有沒有完全重複的句子、用字是否超過等級（只警告）、
 // 題包（bank/packs.json）和檔頭的數量對不對。有「錯誤」就以非 0 結束；「警告」不會讓它失敗。
-//   --write-meta  先把檔頭 count、題包 count／byLevel 依句子重算再寫回，然後再檢查
+//   --write-meta  先把各檔檔頭 count、題包 count／byLevel 依句子重算再寫回，然後再檢查；
+//                 可加 --date=YYYY-MM-DD 把有變動的檔案的檔頭 generated 設成那天
 //   --coverage    印出每一課的句數，方便挑出句子最少的語法點
 const fs = require('fs'), path = require('path');
 const root = path.join(__dirname, '..');
-const BANK = path.join(root, 'bank/sentences.json'), PACKS = path.join(root, 'bank/packs.json');
+const PACKS = path.join(root, 'bank/packs.json');
 const TOCFL = path.join(root, 'bank/ref/tocfl-levels.json');
 const LEVELS = ['A1', 'A2', 'B1'];
+const FILES = Object.fromEntries(LEVELS.map(L => [L, path.join(root, 'bank/' + L + '.json')]));
 const BOOK = { A1: '1', A2: '2', B1: '3' };
 const CAP = { A1: 'L1', A2: 'L2', B1: 'L3' };            // 用字上限：入門級／基礎級／進階級
 const ORDER = ['N1', 'N2', 'L1', 'L2', 'L3', 'L4', 'L5'];
 const MAX_CHARS = 20;
 const args = process.argv.slice(2);
+const dateArg = (args.find(a => a.startsWith('--date=')) || '').slice(7);
 
-const bank = JSON.parse(fs.readFileSync(BANK, 'utf8'));
+const banks = Object.fromEntries(LEVELS.map(L => [L, JSON.parse(fs.readFileSync(FILES[L], 'utf8'))]));
 const packs = JSON.parse(fs.readFileSync(PACKS, 'utf8'));
-const S = bank.sentences;
+const S = LEVELS.flatMap(L => banks[L].sentences);
+const bank = { count: S.length };   // 相容舊寫法（檔頭總數）
 
 if (args.includes('--write-meta')) {
-  bank.count = S.length;
+  for (const L of LEVELS) {
+    const b = banks[L], n = b.sentences.length;
+    const changed = b.count !== n;
+    b.format = 'corre-sentences'; b.version = 3; b.level = L; b.count = n;
+    if (dateArg && changed) b.generated = dateArg;
+    // 固定欄位順序
+    const out = { format: b.format, version: b.version, level: b.level, generated: b.generated, count: b.count, sentences: b.sentences };
+    fs.writeFileSync(FILES[L], JSON.stringify(out));
+  }
   for (const p of packs.packs) {
     const hit = s => (p.rule.tags && s.tags.some(t => p.rule.tags.includes(t))) ||
       (p.rule.grammar && p.rule.grammar.includes(s.grammar.replace(/^當代\d-L\d+ /, '')));
     const m = S.filter(hit);
     p.count = m.length; p.byLevel = LEVELS.map(L => m.filter(s => s.level === L).length);
   }
-  fs.writeFileSync(BANK, JSON.stringify(bank));
   fs.writeFileSync(PACKS, JSON.stringify(packs, null, 1));
 }
 
@@ -90,7 +101,12 @@ for (const L of LEVELS) {
   a.forEach((n, i) => { if (n !== i + 1) { err(L, '編號不連續（第 ' + (i + 1) + ' 個是 ' + n + '）'); a.length = 0; } });
 }
 // 檔頭與題包數量
-if (bank.count !== S.length) err('檔頭', 'count 是 ' + bank.count + '，實際 ' + S.length + '（可用 --write-meta 重算）');
+for (const L of LEVELS) {
+  const b = banks[L];
+  if (b.level !== L) err(L + '.json', '檔頭 level 不是 ' + L);
+  if (b.count !== b.sentences.length) err(L + '.json', '檔頭 count 是 ' + b.count + '，實際 ' + b.sentences.length + '（可用 --write-meta 重算）');
+  b.sentences.forEach(x => { if (x.level !== L) err(x.id || '(沒有編號)', '放錯檔案：等級是 ' + x.level + '，卻在 ' + L + '.json'); });
+}
 for (const p of packs.packs) {
   const hit = s => (p.rule.tags && s.tags.some(t => p.rule.tags.includes(t))) ||
     (p.rule.grammar && p.rule.grammar.includes((s.grammar || '').replace(/^當代\d-L\d+ /, '')));

@@ -27,4 +27,4 @@ node tests/run.js
 
 ## 句庫檢查（不用瀏覽器）
 
-`node tests/check_bank.js`：檢查 `bank/sentences.json` 的格式、有沒有完全重複的句子、標籤是否在清單內、用字有沒有超過等級（只警告），以及題包／檔頭的數量。`--write-meta` 會先重算檔頭 `count` 與題包 `count`／`byLevel`，`--coverage` 列出每一課的句數。參考檔在 `bank/ref/`：`tocfl-levels.json`（華語八千詞等級）、`grammar-points.json`（當代 Book 1–3 語法點）、`tags.json`（17 個標籤）。
+`node tests/check_bank.js`：檢查 `bank/A1.json`、`A2.json`、`B1.json` 的格式、有沒有完全重複的句子、標籤是否在清單內、用字有沒有超過等級（只警告），以及題包／檔頭的數量。`--write-meta` 會先重算各檔檔頭 `count` 與題包 `count`／`byLevel`（加 `--date=YYYY-MM-DD` 會把有新增句子的檔案的 `generated` 設成那天），`--coverage` 列出每一課的句數。參考檔在 `bank/ref/`：`tocfl-levels.json`（華語八千詞等級）、`grammar-points.json`（當代 Book 1–3 語法點）、`tags.json`（17 個標籤）。
