@@ -1,0 +1,473 @@
+{
+ "source": "當代中文課程與實用視聽華語對照表 20161227 版（只取當代 Book 1–3）",
+ "books": {
+  "1": "A1",
+  "2": "A2",
+  "3": "B1"
+ },
+ "lessons": {
+  "1-1": {
+   "title": "歡迎你來台灣！",
+   "points": [
+    "Ways to Ask Questions in Chinese / Asking Questions with 嗎 ma",
+    "Answering Questions in Chinese / Affirmative Answers / Negative Replies with 不 bù",
+    "Modification Marker 很 hěn",
+    "Contrastive Questions with 呢 ne"
+   ]
+  },
+  "1-2": {
+   "title": "我的家人",
+   "points": [
+    "的 de possessive",
+    "Modifier Marker 的 de",
+    "有 yǒu possessive",
+    "都 dōu totality",
+    "Measures 個 ge and 張 zhāng"
+   ]
+  },
+  "1-3": {
+   "title": "週末做什麼？",
+   "points": [
+    "Placement of Time Words",
+    "To Go Do Something with 去 qù",
+    "Topic Sentences",
+    "The Word Order of Adverbs 也 yě,都 dōu and 常 cháng",
+    "Making Suggestions 吧 ba"
+   ]
+  },
+  "1-4": {
+   "title": "請問一共多少錢？",
+   "points": [
+    "Measures 塊 kuài, 杯 bēi,支 zhī and 種 zhǒng",
+    "Preposition 幫 bāng on behalf of",
+    "的 De-phrase with the Head Noun Omitted",
+    "太…了 tài…le overly",
+    "能 néng    capability",
+    "多 duō     …and more"
+   ]
+  },
+  "1-5": {
+   "title": "牛肉麵真好吃",
+   "points": [
+    "有一點 yǒu yìdiǎn slightly",
+    "Complement Marker 得 de",
+    "Acquired Skills 會 huì",
+    "Destination Marker 到 dào"
+   ]
+  },
+  "1-6": {
+   "title": "他們學校在山上",
+   "points": [
+    "Locative Marker 在 zài",
+    "Existential Sentence with 有 yǒu",
+    "Softened Action V（一）V",
+    "不是 búshì Negation",
+    "Location of an Activity"
+   ]
+  },
+  "1-7": {
+   "title": "早上九點去 KTV",
+   "points": [
+    "Time and Place of Events",
+    "從 cóng…到 dào… from A to B",
+    "Progressive, On-going Actions 在 zài",
+    "每 měi each and every",
+    "可以 kěyǐ permission"
+   ]
+  },
+  "1-8": {
+   "title": "坐火車去台南",
+   "points": [
+    "Companionship with 跟 gēn",
+    "Asking How with 怎麼 zěnme",
+    "Implicit Comparison with 比較 bǐjiào",
+    "又 yòu…又 yòu…… both A and B",
+    "Comparison with 比 bǐ"
+   ]
+  },
+  "1-9": {
+   "title": "放假去哪裡玩？",
+   "points": [
+    "Time-When vs. Time-Duration",
+    "Time-Duration ‘for a period of time’",
+    "…的時候 de shíhòu when",
+    "有時候 yǒu shíhòu…有時候 yǒu shíhòu…         sometimes … sometimes …",
+    "Condition and Consequence with 要是 yaoshi…就 jiu…"
+   ]
+  },
+  "1-10": {
+   "title": "台灣的水果很好吃",
+   "points": [
+    "V V 看 kàn to try and see",
+    "Intensification with Reduplicated State Verbs",
+    "Clause as Modifiers of Nouns",
+    "Change in Situation with Sentential 了 le",
+    "Cause and Effect with 因為 yīnwèi，所以 suǒyǐ"
+   ]
+  },
+  "1-11": {
+   "title": "我要租房子",
+   "points": [
+    "To Come to Do Something with 來 lái",
+    "Sooner Than Expected with 就 jiù",
+    "Existential Subject with 有 yǒu",
+    "Different Types of 會 huì",
+    "Omitting Nouns at 2nd mention"
+   ]
+  },
+  "1-12": {
+   "title": "你在台灣學多久的中文？",
+   "points": [
+    "先 xiān…再 zài… first…, and then …",
+    "To Focus with 是 shì…的 de…",
+    "以後 yǐhòu after…",
+    "Special Meanings of 好 hǎo/難 nán +Verbs"
+   ]
+  },
+  "1-13": {
+   "title": "生日快樂",
+   "points": [
+    "一 yī…就 jiù… …as soon as…",
+    "Completed Action with Verbal 了 le",
+    "不 Negation vs.沒 Negation",
+    "All-inclusive with Question Words",
+    "More/less…Than Planned with 多 duō /少 shǎo＋ Verb…",
+    "是不是 shìbú shì is it true?",
+    "Comparison with 跟 gēn…一樣 yíyàng"
+   ]
+  },
+  "1-14": {
+   "title": "天氣這麼冷！",
+   "points": [
+    "Time-Duration after Verbal 了 le",
+    "Completion-to-date with Double 了 le",
+    "快 kuài…了 le about to",
+    "Comparison 更 gèng even more so",
+    "Inferior Comparison 沒有 méiyǒu…"
+   ]
+  },
+  "1-15": {
+   "title": "我很不舒服",
+   "points": [
+    "Non-committal Stance with Question Words",
+    "To Dispose of Something with 把 bǎ",
+    "V 了 le…就 jiù… do…right after doing…",
+    "一點 yìdiǎn a bit",
+    "Comparing Actions with a 得 de Complement",
+    "Complements of Degree in Comparison Structures",
+    "Separable Verbs 當代"
+   ]
+  },
+  "2-1": {
+   "title": "請問，到師到怎麼走？",
+   "points": [
+    "從 cóng…往 wǎng… go…from…",
+    "Judgmental V-起來 qǐlái It’s my assessment that…",
+    "Ongoing Action with -著 zhe",
+    "Two Simultaneously Actions with 一邊 yìbiān…一邊 yìbiān…",
+    "Distance from with 離 lí…"
+   ]
+  },
+  "2-2": {
+   "title": "還是坐捷運吧！",
+   "points": [
+    "Emphatic Negation with 一點也不 yìdiǎn yě bù V …",
+    "還是 háishì…吧 ba！ It would be better if …",
+    "Form Adverbials with 一點 yìdiǎn",
+    "Reduplication of Disyllabic Adjectives",
+    "不太 bútài not very",
+    "Locations with 部 bù /邊 biān"
+   ]
+  },
+  "2-3": {
+   "title": "你的中文進步了！",
+   "points": [
+    "Various Functions of 差不 chàbùduō",
+    "Experience Particle 過 guò",
+    "才 cái merely, only",
+    "想起來 xiǎngqǐlái to have remembered",
+    "Longer/Later Than Expected with 才 cái",
+    "Tentative Action with Reduplicated Disyllabic Verbs ABAB"
+   ]
+  },
+  "2-4": {
+   "title": "我打工，我教法文",
+   "points": [
+    "除了 chúle…，還 hái… in addition to…",
+    "按照…ànzhào… in accordance with",
+    "Various Meaning of the Preposition 跟 gēn",
+    "Various Meanings of 給 gěi",
+    "對 duì… towards…"
+   ]
+  },
+  "2-5": {
+   "title": "吃喜酒",
+   "points": [
+    "還 hái still",
+    "Manner of an Action with V 著 zhe",
+    "Multiple Verb Phrases in a Sentence",
+    "When A Comes, Then B…with 等 děng 就…jiù…",
+    "While Doing A, B Happens with V 著 zhe V 著 zhe， 就 jiù…了 le"
+   ]
+  },
+  "2-6": {
+   "title": "我打算搬到學校附近",
+   "points": [
+    "Destination Marker 到 dào",
+    "Indirect Object Marker 給 gěi",
+    "Resultant Location with V+在 zài…",
+    "Moving an Object to a Location with 把 bǎ",
+    "而且 érqiě furthermore"
+   ]
+  },
+  "2-7": {
+   "title": "垃圾車來了！",
+   "points": [
+    "Directional ConstructionsV1V2 and V1V2V3",
+    "把 bǎ with V1V2V3",
+    "Confrontation with 嗎?",
+    "Existential Sentence with Posture Verbs",
+    "為了 wèile in order to"
+   ]
+  },
+  "2-8": {
+   "title": "學功夫",
+   "points": [
+    "見 jiàn as a Perceptual Result",
+    "懂 dǒng as a Cognitive Result",
+    "會 huìas an Achievement Result",
+    "Potential Capability with -得 de- or -不 bù-",
+    "Capability Complement 了 liǎo",
+    "Vs +得 de + complement so …that…",
+    "To Keep on Doing Something with 下去 xiàqù",
+    "Completion of an Action with V+完 wán"
+   ]
+  },
+  "2-9": {
+   "title": "那個城市好漂亮",
+   "points": [
+    "All Set and Ready with Verb Complement 好 hǎo",
+    "To Be Successful in …with Verb Complement 到 dào",
+    "Comparison with 比起來 bǐ qǐlái",
+    "像 xiàng…一樣 yí yàng … is just like…",
+    "Adverbial Complements 極了 jíle、得不得了 de bùdéliǎo、得很 de hěn terribly, extremely",
+    "Verb Complement 起 qǐ to be able to afford"
+   ]
+  },
+  "2-10": {
+   "title": "歡迎到我家來包餃子",
+   "points": [
+    "To Figure out with the Complement 出來 chūlái",
+    "Enough Space to Accommodate with Verb Complement 下 xià",
+    "Disposal Construction 把 bǎ with Verb Reduplication 把 bǎ…V(一)V",
+    "Disposal Construction 把 bǎ with Resultative Complements",
+    "趁 chèn seize the moment"
+   ]
+  },
+  "2-11": {
+   "title": "台灣好玩的地方真多",
+   "points": [
+    "The Others 其他 qítā de vs. Other 別的 biéde vs.",
+    "Verbal Classifiers 下 xià , 趟 tàng ,遍 biàn , and 次 cì",
+    "Expressing Next in Sequence with 然後 ránhòu, 後來 hòulái, and 以後 yǐhòu",
+    "才 cái then and only then",
+    "Passive Sentences with 被 bèi",
+    "Verb Reduplication in V 了 le V",
+    "Verb Particle 上 shàng coming into contact"
+   ]
+  },
+  "2-12": {
+   "title": "怎麼吃才健康？",
+   "points": [
+    "讓 ràng to let someone do something",
+    "快一點 kuài yìdiǎn hurry up",
+    "Verb Particle 起 qǐ to touch upon",
+    "只要 zhǐyào……就 jiù… …as long as…",
+    "越 yuè…越 yuè…the more…, the more…",
+    "Topic as Contrastive"
+   ]
+  },
+  "2-13": {
+   "title": "我的手機掉了",
+   "points": [
+    "Completion of Action with V+過 guò",
+    "Verb Particle 走 zǒu away",
+    "Imperative Sentences with 叫 jiào",
+    "別再 bié zài…了 le        stop doing it",
+    "To offer assurance with 會 huì…的 de…",
+    "透過 tòuguò… by means of…",
+    "才 cái…就 jiù… only just…, and…already",
+    "Frequency with 每 měi + Time Expression",
+    "只有 zhǐyǒu…，才 cái… cannot …, unless…"
+   ]
+  },
+  "2-14": {
+   "title": "我要開始工作了",
+   "points": [
+    "就要 jiù yào…了 le will soon…",
+    "說到 shuōdào/談到 tándào… talking of…",
+    "對 duìA 有 yǒu B to be B in A",
+    "連 lián…都 dōu… even",
+    "不但 búdàn…，而且 érqiě… not only…but also…",
+    "Unintentional 把 bǎ Construction"
+   ]
+  },
+  "2-15": {
+   "title": "過春節",
+   "points": [
+    "Post-verbal Preposition 到 dào upto, till",
+    "Manner 一 M 一 M one at a time",
+    "Intensifying a State with 一 M 一 M more and more X; more X than the last…",
+    "Inchoative Meaning with 起來 qǐlái",
+    "Four-character Phrases 四字格 sìzìgé 當代"
+   ]
+  },
+  "3-1": {
+   "title": "開學了",
+   "points": [
+    "…的話 if, supposing",
+    "不到 less than",
+    "差一點（就）… almost",
+    "恐怕… probably",
+    "好不容易 finally managed to",
+    "Instantly without Prior Warning with 說…就…",
+    "不管…都 … regardless of whether or not"
+   ]
+  },
+  "3-2": {
+   "title": "八折起",
+   "points": [
+    "一般來說 generally speaking",
+    "General Verb 弄",
+    "再說 besides, moreover",
+    "V+成 to become, to turn into",
+    "Contrary to Expectation with 並",
+    "尤其是 especially",
+    "Concession with 只好 could only, have no choice but to"
+   ]
+  },
+  "3-3": {
+   "title": "外套帶了沒有？",
+   "points": [
+    "受到…的影響 to be influenced by, affected by",
+    "幸虧… fortunately…",
+    "算是… can be considered…",
+    "是… It is indeed true that…",
+    "難怪 no wonder",
+    "A Post-verbal Intensifier 死了 terribly",
+    "幾乎 almost",
+    "多少 somewhat",
+    "再…也… no matter how…, still…"
+   ]
+  },
+  "3-4": {
+   "title": "我愛台灣的人情味",
+   "points": [
+    "不但…，還… not only…, but also",
+    "Speak 說 vs Talk 談",
+    "…不是…，而是… not…; rather…",
+    "從來+Negation never",
+    "Various Meanings of the Verb 上",
+    "非…不可 it is imperative that…",
+    "對…來說 as far as...is concerned, for",
+    "對…講究 to be discerning, discriminating, particular about"
+   ]
+  },
+  "3-5": {
+   "title": "現在流行什麼？",
+   "points": [
+    "Verb Plus Complement V+滿 crowded with",
+    "Verb Particle 出 to have emerged",
+    "不如 not as good as",
+    "Urgent Conditional with 再不…就…了",
+    "Verb Particle 掉 separated from",
+    "居然 to one’s surprise",
+    "Concession with 既然…（就）… since…(then)…",
+    "V+個不停 keep on…"
+   ]
+  },
+  "3-6": {
+   "title": "到鄉下住一晚！",
+   "points": [
+    "因為…才… only because…",
+    "Complaining with …S1…不說，S2 也… not merely, but also",
+    "再加上 furthermore",
+    "什麼都…，就是… everything but …",
+    "寧可…也要… would rather…, in order to…",
+    "像…的+noun such (nouns) as",
+    "一方面…，一方面… on the one hand, …, on the other",
+    "隨著 S1…，S2 也… as a consequence of…"
+   ]
+  },
+  "3-7": {
+   "title": "我最親的家「人」",
+   "points": [
+    "亂＋V to do something in an irresponsible manner,",
+    "各 V 各的 each doing her/his own…",
+    "就算…，也… even if…(S1) …, would…(S2)…",
+    "因為 NP，S… because of NP, S…",
+    "一來…，二來… on the one hand…, and on the other…; first…, second…",
+    "Repetitively, Back and Forth with V 來 V 去",
+    "不再…了 not…any more"
+   ]
+  },
+  "3-8": {
+   "title": "我想做自己",
+   "points": [
+    "不是…就是… if it's not…, then it’s…",
+    "算了 forget it, drop it",
+    "這樣一來 that being the case, that way",
+    "早就…了 long since…",
+    "從…起 starting from…",
+    "卻 however",
+    "因為…而… therefore, consequently",
+    "經過 after"
+   ]
+  },
+  "3-9": {
+   "title": "網購時代",
+   "points": [
+    "靠 to rely on, by means of",
+    "既…又… not merely…, but…as well",
+    "…以內 within …",
+    "占 to constitute",
+    "（在） NP 上 regarding NP",
+    "給…帶來 to bring… to…",
+    "結果 consequently, in the end"
+   ]
+  },
+  "3-10": {
+   "title": "我住院了",
+   "points": [
+    "Introducing a New Topic with 至於…, as to, as far",
+    "看 depends on",
+    "一向 all along, has always…",
+    "拿…來說 take…as an example",
+    "Passive Sentences with 受",
+    "動不動就… to do something impetuously"
+   ]
+  },
+  "3-11": {
+   "title": "台灣故事",
+   "points": [
+    "到底 after all? how on earth…?",
+    "甚至 even",
+    "這麼說 that being the case, in that case",
+    "跟 B 有關的 A A is related to B",
+    "不得不 have no choice but to",
+    "以及 as well as"
+   ]
+  },
+  "3-12": {
+   "title": "我要去投票",
+   "points": [
+    "只不過… (而已) merely…; nothing more than…",
+    "Introducing an Agent with 由",
+    "難道… how could it possibly be true",
+    "To Reach a Ceiling with 滿",
+    "Beneficiary marker 為",
+    "（在）…方面 with respect to; regarding 13 14 當代"
+   ]
+  }
+ }
+}

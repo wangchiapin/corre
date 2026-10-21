@@ -199,7 +199,9 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
   { const bank = JSON.parse(fs.readFileSync(__dirname + '/../bank/sentences.json', 'utf8')).sentences;
     const byLevel = L => new Set(bank.filter(x => x.level === L).map(x => x.trad.join('')));
     const firstSentence = page => page.$$eval('#sentence-track .slot .hz', e => e.map(x => x.textContent).join(''));
-    ok(bank.length === 300 && ['A1', 'A2', 'B1'].every(L => bank.filter(x => x.level === L).length === 100), '句庫檔：三個等級各 100 句，共 300 句');
+    ok(['A1', 'A2', 'B1'].every(L => bank.filter(x => x.level === L).length >= 100), '句庫檔：三個等級每級至少 100 句');
+    ok(new Set(bank.map(x => x.trad.join(''))).size === bank.length, '句庫檔：沒有完全重複的句子');
+    ok(new Set(bank.map(x => x.id)).size === bank.length, '句庫檔：編號沒有重複');
     ok(bank.every(x => x.trad.length === x.simp.length && x.trad.length === x.pinyin.length && x.es && x.en && x.tags.length && x.grammar), '句庫檔：每句繁／簡／拼音一樣長，有西文、英文、標籤、語法點');
     { const { page, ctx, errors } = await open(browser);
       ok(await page.$eval('#levelGroup [data-value="A1"]', e => !e.disabled), '原本題庫載入完成後，等級選項開放');

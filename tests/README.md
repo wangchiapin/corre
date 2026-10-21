@@ -24,3 +24,7 @@ node tests/run.js
 - **Firestore 安全規則**：模擬器不驗規則。請用非管理員的 Gmail 在實機測（管理員會繞過規則）。
 - QR code、學習單 PDF、班級成績冊：以前有測試，但舊檔已遺失，尚未重寫。
 - 模擬環境沒有載入 OpenCC／pinyin-pro，所以不測繁簡轉換與拼音結果。
+
+## 句庫檢查（不用瀏覽器）
+
+`node tests/check_bank.js`：檢查 `bank/sentences.json` 的格式、有沒有完全重複的句子、標籤是否在清單內、用字有沒有超過等級（只警告），以及題包／檔頭的數量。`--write-meta` 會先重算檔頭 `count` 與題包 `count`／`byLevel`，`--coverage` 列出每一課的句數。參考檔在 `bank/ref/`：`tocfl-levels.json`（華語八千詞等級）、`grammar-points.json`（當代 Book 1–3 語法點）、`tags.json`（17 個標籤）。
