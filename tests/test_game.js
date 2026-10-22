@@ -58,7 +58,7 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     const s = await settings(page);
     ok(s && s.v === 1 && s.script === 'trad' && s.lang === 'es' && s.phon === 'pinyin' && s.rate === 'normal', '第一次打開寫入預設設定', s);
     ok((await txt(page, '#startBtn')) === '開始 Empezar', '開始按鈕雙行：中文＋西文', await txt(page, '#startBtn'));
-    ok(await page.$eval('#teacherLink', e => e.href) === 'https://wangchiapin.github.io/profesor/#/settings', '老師管理中心按鈕連到中心');
+    ok(await page.$eval('#teacherLink', e => e.href) === 'https://wangchiapin.github.io/profesor/#/home', '老師管理中心按鈕連到中心');
     ok(!(await page.$('#langGroup')) && !(await page.$('#scriptGroup')) && !(await page.$('#pinyinToggle')), '開始畫面不再有字形／翻譯語言，標題列沒有拼音鈕');
     ok(await page.$eval('#gearFloat', e => getComputedStyle(e).display !== 'none'), '開始畫面右上角有 ⚙️');
     ok(errors.length === 0, '沒有程式錯誤', errors);
@@ -192,7 +192,7 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     await page.goto(BASE + '/teacher/').catch(() => {});
     await page.waitForTimeout(500);
     ok(target === 'https://wangchiapin.github.io/profesor/', 'teacher/ 跳到老師管理中心', target);
-    ok(page.url().startsWith('https://wangchiapin.github.io/profesor/#/settings'), '帶 #/settings', page.url());
+    ok(page.url().startsWith('https://wangchiapin.github.io/profesor/#/home'), '帶 #/home', page.url());
     await ctx.close(); }
 
   console.log('\n[9] 新句庫：A1／A2／B1 選項（bank/A1.json、A2.json、B1.json）');
