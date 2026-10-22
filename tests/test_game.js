@@ -239,7 +239,7 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
       await page.goto(BASE + '/index.html');
       await page.waitForFunction(() => !document.getElementById('startBtn').disabled, null, { timeout: 15000 });
       await page.click('#startBtn'); await page.waitForTimeout(300);
-      { const fs0 = await firstSentence(page); ok(['我喜歡吃蘋果','你叫什麼名字','今天天氣很好','謝謝你的幫忙'].includes(fs0), '新句庫讀不到：改用內建句子仍能玩（不讀舊 Firebase 題庫，舊題庫的「我喜歡貓」沒出現）', fs0); }
+      { const fs0 = await firstSentence(page); ok(['我喜歡吃蘋果','你叫什麼名字','今天天氣很好','這個顏色是紅色','我喜歡學中文','謝謝你的幫忙'].includes(fs0), '新句庫讀不到：改用內建句子仍能玩（不讀舊 Firebase 題庫，舊題庫的「我喜歡貓」沒出現）', fs0); }
       ok(await page.$eval('#levelField', e => getComputedStyle(e).display === 'none'), '這時隱藏等級選項');
       await ctx.close(); }
     { const { page, ctx } = await open(browser, { ls: { correLevel: 'B1' } });
