@@ -472,7 +472,8 @@
     '火車': 'huǒ chē', '要是': 'yào shì', '因為': 'yīn wèi', '為什麼': 'wèi shén me',
     '怎麼': 'zěn me', '那麼': 'nà me', '這麼': 'zhè me',
     '乾淨': 'gān jìng', '乾乾淨淨': 'gān gān jìng jìng', '乾杯': 'gān bēi', '高興': 'gāo xìng', '好處': 'hǎo chù',
-    '幾乎': 'jī hū', '寧可': 'nìng kě', '至於': 'zhì yú'
+    '幾乎': 'jī hū', '寧可': 'nìng kě', '至於': 'zhì yú',
+    '鑰匙': 'yuè shi', '當真': 'dāng zhēn'
   };
   // 整格只有這一個字時才套用（避免影響「和平」「暖和」這類詞）
   // 「得」單獨一格時多半是補語的「得」（說得很好）念 de；若是「得(děi)」（你得去），請在拼音欄自己改成 děi
@@ -506,6 +507,8 @@
     // 通則：詞尾的「們」「麼」是輕聲（朋友們 men、什麼／怎麼 me），函式庫會誤標成 mén／mó
     if(/們$/.test(trad)) py = py.replace(/mén$/, 'men');
     if(/麼$/.test(trad)) py = py.replace(/mó$/, 'me');
+    // 詞尾的「車」（開車、公車、火車）函式庫可能誤標成 jū（象棋的車），這裡一律念 chē
+    if(/車$/.test(trad)) py = py.replace(/jū$/, 'chē');
     // 詞尾的「間」（房間、時間、中間）函式庫會誤標成 jiàn，台灣讀 jiān
     if(/間$/.test(trad)) py = py.replace(/jiàn$/, 'jiān');
     return py;
@@ -550,8 +553,8 @@
   // ===== GoodTeacher 多音字規則 =====
   // 讀音表與規則來自 GoodTeacher 拼音字體（2026-10-13 版），檔案是同資料夾的 gt-readings.json。
   // 這樣管理工具、字體、句庫三邊的多音字讀音是同一套。載入失敗時，退回上面的台灣讀音例外表。
-  // 下面這幾個詞 GoodTeacher 規則還沒涵蓋，維持上面例外表的讀音（東西 dōng xi、幾乎 jī hū、寧可 nìng kě、動不動 bu、介詞「為」wèi）
-  const GT_EXC = new Set(['東西','幾乎','寧可','動不動','為']);
+  // 下面這幾個詞 GoodTeacher 規則還沒涵蓋，維持上面例外表的讀音（東西 dōng xi、幾乎 jī hū、寧可 nìng kě、動不動 bu、介詞「為」wèi、鑰匙 yuè shi、當真 dāng zhēn）
+  const GT_EXC = new Set(['東西','幾乎','寧可','動不動','為','鑰匙','當真']);
   const HANZI_RE = /[㐀-鿿]/;
   let GT = null;
   const GT_READY = fetch('gt-readings.json').then(r => r.ok ? r.json() : null).then(j => {
