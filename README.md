@@ -71,3 +71,7 @@
 5. 題包存在 `bank/packs.json`，遊戲（`?pack=`）和老師中心都讀這一份，所以新題包不用另外改老師中心。
 
 舊的 Firebase 題庫（`mandarinRunnerSentences`）與舊主題包（`site_content` 的 `corre_pack_*`）：遊戲已不再讀取，資料還留在 Firebase 當備份；管理工具的「舊公開題庫」模式還能看，舊主題包入口已收起。
+
+## 手機瀏覽器備註：捲動後回不到頂端（2026-10-24）
+iPhone 版 Chrome 上，頁面可以捲動時，往下捲之後有時回不到最上面（Safari 正常）。
+本遊戲整頁固定不捲動（`overflow:hidden`），不受影響，不需要修改。之後若新增可以捲動的畫面，請設 `<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">`（不要加 `viewport-fit=cover`）並加 `html{color-scheme:light}`（見 game-kit README）。
