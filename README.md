@@ -3,7 +3,7 @@
 > 跑酷式的漢字學習遊戲，含句子庫管理頁
 
 - **網址：** https://wangchiapin.github.io/corre/（管理頁：corre/manager/）
-- **Firebase 專案：** corre-d16da
+- **Firebase 專案：** corre-d16da（排行榜）；遊玩紀錄另寫到 memorma-24dab 的 `plays`、`visits`（遊戲代號 `corre`）；老師連結／班級資料在 subscription-48d3c
 - **登入方式：** Google 登入（管理頁）
 - **狀態：** 使用中
 - **備註：** 句子庫管理工具就在本 repo 的 `manager/`（原獨立 repo `corre-sentence-manager` 已併入）。
@@ -36,7 +36,8 @@
 - 結果畫面順序：分數 → 一句評語 → 「成績已回傳給老師」（班級連結才有）→（排行榜）→ 再玩一次 → 主選單。
 - 跑吧評語依完成句數：0／1–4／5–9／10–19／20 以上。
 - 老師入口：單一按鈕「老師管理中心」→ `https://wangchiapin.github.io/profesor/#/home`。
-- 開始畫面最下面有小小的版本號（現在 `v5-2`），用來確認手機拿到的是新版。
+- 開始畫面最下面有小小的版本號（現在 `v5-2`），用來確認手機拿到的是新版；版本號下面是版權說明（© 2026 @cadadiaunosminutos_ben_chino，2026-10-24 加入）。
+- 分享連結預覽（2026-10-28）：`<head>` 有 Open Graph 標籤，根目錄的 `og.jpg`（1200x630）是貼到 LINE／WhatsApp 時顯示的縮圖；名稱來自 `og:title`「跑吧！漢字 · ¡Corre, caracteres!」。
 
 ## 句庫等級與題包（網址參數）
 - 公開頁只提供 **A1／A2**（免費）；排行榜依等級分開，各看各的前 10 名。
@@ -50,12 +51,12 @@
 ## 教師版（已搬到老師管理中心）
 
 - **老師端都在中心：** https://wangchiapin.github.io/profesor/ （repo `profesor`）：句庫編輯、干擾字、QR、班級、成績簿、學習單。
-- `teacher/index.html` 只剩**自動跳轉**到中心（舊書籤還能用）。`teacher/firestore.rules.txt` 保留當規則參考。`manager/`（Ben 的句子管理工具）不變。
+- `teacher/index.html` 只剩**自動跳轉**到中心（舊書籤還能用）。規則不再放在 repo 裡，正本在 game-kit（私人 repo）的 `firebase-rules/`。`manager/`（Ben 的句子管理工具）不變。
 - **學生連結（照常可用）：** 練習 `corre/?bank=<連結碼>`；班級 `corre/?class=<班級碼>[&bank=<連結碼>]`；試玩加 `&preview=1`。句庫連結的速度、字形、Boss 關由老師設定；不上傳公開排行榜，結束時可下載成績圖片。
 - **干擾字：** 句庫每句可選填 `decoy`（繁體詞陣列）、`decoySimp`（簡體；沒填就用繁體那組），最多 5 個、每個 1～4 字。遊戲每一波先出這些，不夠再從其他句子隨機補。
 - **資料在中心專案 `subscription-48d3c`**（不是 corre-d16da）：`teacher_banks/{uid}`（位置表）、`shared_banks/{連結碼}`（句庫）、`classes/{cid}`、`class_scores/{cid}_corre_{句庫碼或 pool}_{暱稱雜湊}`（步驟 6-2：成績依句庫分開，班級排行只比同一個句庫）。
 - **注音：** 由拼音即時轉換（`ZY` 轉換器，已用 pypinyin 比對常用讀音）。
-- **Firestore 規則：** 見 `teacher/firestore.rules.txt`（中心專案不會自動部署）。
+- **Firestore 規則：** 正本在 game-kit（私人 repo）的 `firebase-rules/``subscription-48d3c.rules.txt`（中心專案不會自動部署，要整份貼進 Firebase）。
 
 ## 測試
 
