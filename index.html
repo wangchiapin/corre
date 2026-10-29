@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Noto+Sans+TC:wght@500;700;900&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+html{color-scheme:light}
   :root{
     --bg:#060911;
     --bg2:#0a1018;
@@ -905,6 +906,7 @@
     classSent:['✅ 成績已回傳給老師','✅ 成绩已回传给老师','Resultado enviado a tu profesor','Result sent to your teacher'],
     classSending:['正在回傳成績…','正在回传成绩…','Enviando resultado…','Sending result…'],
     classFail:['成績回傳失敗。','成绩回传失败。','No se pudo enviar el resultado.','Could not send the result.'],
+    classExpired:['這個班級連結目前無法記錄成績，請通知老師。','这个班级链接目前无法记录成绩，请通知老师。','Este enlace de clase no puede guardar resultados; avisa a tu profesor.','This class link cannot save results; please tell your teacher.'],
     classRetry:['再試一次','再试一次','Reintentar','Retry'],
     classBoard:['班級排行榜','班级排行榜','Clasificación de la clase','Class leaderboard'],
     settings:['設定','设置','Ajustes','Settings'],
@@ -1943,8 +1945,8 @@
       }
     }catch(e){
       console.warn('班級成績回傳失敗', e);
-      setKey(msg, 'classFail');
-      setKey(retry, 'classRetry'); retry.hidden = false;
+      if(e && e.code === 'permission-denied'){ setKey(msg, 'classExpired'); retry.hidden = true; }   // 老師訂閱到期：重試也沒用，直接請學生通知老師
+      else{ setKey(msg, 'classFail'); setKey(retry, 'classRetry'); retry.hidden = false; }
     }
   }
   document.getElementById('classRetryBtn').addEventListener('click', ()=>{ if(CLASS_MODE) sendClassResult(); });

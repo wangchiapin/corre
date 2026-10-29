@@ -166,6 +166,18 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     ok(errors.length === 0, '沒有程式錯誤', errors);
     await ctx.close(); }
 
+  console.log('\n[6a] 2026-10-29：老師訂閱到期（寫入被拒）→ 明確提示、不出現重試鈕');
+  { const { page, ctx, errors } = await open(browser, { qs: '?class=' + CID, ls: { [KEY]: JSON.stringify({ v: 1, script: 'trad', lang: 'tc', phon: 'pinyin', rate: 'normal' }) } });
+    await page.evaluate(() => { window.__DENY_SCORES = true; });
+    await page.fill('#nameInput', 'Leo');
+    await page.click('#startBtn'); await page.waitForTimeout(200);
+    await page.evaluate(() => document.getElementById('pauseBtn').click());
+    await page.click('#quitBtn');
+    await page.waitForFunction(() => document.getElementById('classMsg').innerText.includes('無法記錄') || document.getElementById('classMsg').innerText.includes('cannot save'), null, { timeout: 5000 }).catch(() => {});
+    ok(/無法記錄|cannot save/.test(await txt(page, '#classMsg')), '訂閱到期：提示請通知老師', await txt(page, '#classMsg'));
+    ok(await page.$eval('#classRetryBtn', b => b.hidden), '訂閱到期：不出現重試鈕');
+    await ctx.close(); }
+
   console.log('\n[6b] 步驟 6-2：成績依句庫分開記；班級排行只比同一個句庫');
   { const { page, ctx, errors } = await open(browser, { qs: '?class=' + CID2 + '&bank=' + BANK });
     await page.fill('#nameInput', 'Leo');

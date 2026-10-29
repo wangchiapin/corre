@@ -57,7 +57,7 @@
         doc: id => ({
           id,
           get: async () => { window.__reads[pid] = (window.__reads[pid] || 0) + 1; return docSnap(pid, c, id); },
-          set: async d => { col(pid, c)[id] = clone(d); },
+          set: async d => { if(window.__DENY_SCORES && c === 'class_scores') throw { code: 'permission-denied' }; col(pid, c)[id] = clone(d); },
           update: async d => { if(!col(pid, c)[id]) throw { code: 'not-found' }; Object.assign(col(pid, c)[id], clone(d)); },
           delete: async () => { delete col(pid, c)[id]; }
         })
