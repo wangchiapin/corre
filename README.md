@@ -78,3 +78,8 @@ iPhone 版 Chrome 上，頁面可以捲動時，往下捲之後有時回不到�
 本遊戲整頁固定不捲動（`overflow:hidden`），不受影響，不需要修改。之後若新增可以捲動的畫面，請設 `<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">`（不要加 `viewport-fit=cover`）並加 `html{color-scheme:light}`（見 game-kit README）。
 
 - 老師訂閱到期（成績寫入被拒）時，結果畫面顯示「這個班級連結目前無法記錄成績，請通知老師」，不再出現重試鈕（2026-10-29，與墨龍、把、被一致）。
+
+## 維修開關（2026-10-29）
+- 只有一個開關：老師管理中心（分享區 `stats.html` 的「老師管理中心遊戲開關」，`portalStatus/center-corre`，`off:true`＝維修中）。
+- 維修中時，帶 `?class=`／老師連結的學生連結顯示「🔧 維修中」，不能玩、不記成績；網址加 `?preview` 不受影響；讀不到開關就照常放行；公開玩法不受影響。
+- 測試：`tests/` 裡的維修測試。

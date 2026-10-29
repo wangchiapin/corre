@@ -24,7 +24,7 @@ const SEED = {
   }
 };
 
-async function open(browser, { qs = '', ls = null, speech = false } = {}){
+async function open(browser, { qs = '', ls = null, speech = false, maint = false } = {}){
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
   const errors = [];
@@ -36,6 +36,7 @@ async function open(browser, { qs = '', ls = null, speech = false } = {}){
     return r.abort();
   });
   await page.addInitScript('window.__SEED=' + JSON.stringify(SEED) + ';');
+  if(maint) await page.addInitScript('window.__SEED[' + JSON.stringify(C) + '].portalStatus={"center-corre":{off:true}};');
   if(ls) await page.addInitScript('try{' + Object.keys(ls).map(k => 'localStorage.setItem(' + JSON.stringify(k) + ',' + JSON.stringify(ls[k]) + ');').join('') + '}catch(e){}');
   if(speech) await page.addInitScript(`
     window.__rates = [];
@@ -44,7 +45,7 @@ async function open(browser, { qs = '', ls = null, speech = false } = {}){
   `);
   await page.addInitScript(MOCK);
   await page.goto(BASE + '/index.html' + qs);
-  await page.waitForFunction(() => !document.getElementById('startBtn').disabled, null, { timeout: 15000 });
+  if(!maint) await page.waitForFunction(() => !document.getElementById('startBtn').disabled, null, { timeout: 15000 });
   return { page, ctx, errors };
 }
 const settings = page => page.evaluate(k => JSON.parse(localStorage.getItem(k) || 'null'), KEY);
@@ -176,6 +177,18 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     await page.waitForFunction(() => document.getElementById('classMsg').innerText.includes('無法記錄') || document.getElementById('classMsg').innerText.includes('cannot save'), null, { timeout: 5000 }).catch(() => {});
     ok(/無法記錄|cannot save/.test(await txt(page, '#classMsg')), '訂閱到期：提示請通知老師', await txt(page, '#classMsg'));
     ok(await page.$eval('#classRetryBtn', b => b.hidden), '訂閱到期：不出現重試鈕');
+    await ctx.close(); }
+
+  console.log('\n[6c] 2026-10-29：老師中心維修開關開啟 → 班級連結／老師句庫連結都不能玩、不記成績；預覽照常');
+  for(const q of ['?class=' + CID, '?bank=' + BANK, '?class=' + CID + '&bank=' + BANK]){
+    const { page, ctx, errors } = await open(browser, { qs: q, maint: true });
+    await page.waitForTimeout(400);
+    ok(/維修中|mantenimiento|maintenance/.test(await txt(page, '#bankErr')) && await page.$eval('#startBtn', b => b.hidden), '維修中：顯示維修中、沒有開始鈕 ' + q);
+    ok(Object.keys(await page.evaluate(() => (window.__DB['subscription-48d3c'] || {}).class_scores || {})).length === 2, '維修中：沒有新增成績（原本種子 2 筆） ' + q);
+    ok(errors.length === 0, '沒有程式錯誤', errors); await ctx.close(); }
+  { const { page, ctx } = await open(browser, { qs: '?class=' + CID + '&preview=1', maint: true });
+    await page.waitForFunction(() => !document.getElementById('startBtn').disabled, null, { timeout: 5000 }).catch(() => {});
+    ok(await page.$eval('#bankErr', b => b.hidden) && !(await page.$eval('#startBtn', b => b.hidden)), '預覽（?preview）不受維修影響');
     await ctx.close(); }
 
   console.log('\n[6b] 步驟 6-2：成績依句庫分開記；班級排行只比同一個句庫');

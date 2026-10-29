@@ -896,6 +896,7 @@ html{color-scheme:light}
     preview:['預覽','预览','Vista previa','Preview'],
     noRecord:['這次成績不會上排行榜，可以下載圖片分享。','这次成绩不会上排行榜，可以下载图片分享。','Este resultado no se guarda en la clasificación. Descarga la imagen para compartirlo.','This result is not saved on the leaderboard. Download the image to share it.'],
     download:['下載圖片','下载图片','Descargar imagen','Download image'],
+    maintStudent:['🔧 維修中，請稍後再來。','🔧 维修中，请稍后再来。','🔧 En mantenimiento; vuelve más tarde.','🔧 Under maintenance — please come back later.'],
     linkUnavailable:['這個連結無法使用（可能已刪除，或老師的訂閱已到期）。','这个链接无法使用（可能已删除，或老师的订阅已到期）。',
       'Este enlace no está disponible (puede haber sido eliminado o la suscripción del profesor venció).',
       'This link is not available (it may have been removed, or the teacher\'s subscription has expired).'],
@@ -1408,8 +1409,16 @@ html{color-scheme:light}
       return h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0');
     }
   }
+  // 維修開關：老師管理中心的 portalStatus/center-corre（off:true＝維修中）。維修中：班級／老師連結都不能玩，也不記成績。預覽（?preview）不受影響；讀不到開關就照常放行。
+  async function checkMaint(app){
+    if(PREVIEW) return;
+    let off = false;
+    try{ const m = await app.firestore().collection('portalStatus').doc('center-corre').get(); off = m.exists && m.data().off === true; }catch(e){}
+    if(off) throw { code: 'maint' };
+  }
   async function fetchClass(){
     const app = await getCentral();
+    await checkMaint(app);
     const snap = await app.firestore().collection('classes').doc(CLASS_ID).get();
     if(!snap.exists) throw { code: 'not-found' };
     return snap.data();
@@ -1439,6 +1448,7 @@ html{color-scheme:light}
   }
   async function fetchTeacherBank(){
     const app = await getCentral();
+    await checkMaint(app);
     const snap = await app.firestore().collection('shared_banks').doc(BANK_ID).get();
     if(!snap.exists) throw { code: 'not-found' };
     return snap.data();
@@ -2466,7 +2476,7 @@ html{color-scheme:light}
     }).catch(e=>{
       console.warn('教師句庫載入失敗', e);
       const c = e && e.code;
-      showBankErr((c === 'permission-denied' || c === 'not-found') ? 'linkUnavailable' : 'linkError');
+      showBankErr(c === 'maint' ? 'maintStudent' : (c === 'permission-denied' || c === 'not-found') ? 'linkUnavailable' : 'linkError');
     });
   }
 
@@ -2480,12 +2490,12 @@ html{color-scheme:light}
     }).catch(e=>{
       console.warn('班級載入失敗', e);
       const c = e && e.code;
-      showBankErr((c === 'permission-denied' || c === 'not-found') ? 'linkUnavailable' : 'linkError');
+      showBankErr(c === 'maint' ? 'maintStudent' : (c === 'permission-denied' || c === 'not-found') ? 'linkUnavailable' : 'linkError');
     });
   }else if(TEACHER_MODE){
     if(CLASS_MODE){
       initClassMode().then(initTeacherMode).catch(e=>{
-        const c = e && e.code; showBankErr((c === 'permission-denied' || c === 'not-found') ? 'linkUnavailable' : 'linkError');
+        const c = e && e.code; showBankErr(c === 'maint' ? 'maintStudent' : (c === 'permission-denied' || c === 'not-found') ? 'linkUnavailable' : 'linkError');
       });
     }else initTeacherMode();
   }else{
