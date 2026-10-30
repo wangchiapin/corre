@@ -62,6 +62,8 @@
 
 `node tests/run.js`（Playwright＋`tests/firebase-mock.js`，見 `tests/README.md`）。
 
+2026-10-30 補了 5 個測試檔（`test_phon_rate.js`、`test_packs.js`、`test_difficulty_audio.js`、`test_controls.js`、`test_leaderboard.js`，共用 `helpers.js`）：拼音注音四個值、語速三檔、9 個題包、難度三檔、音樂／靜音／重聽、鍵盤與拖曳、排行榜上傳與班級榜。已知待決定：網址指定 `?level=A1`／`A2` 會上傳公開榜（程式註解說不上榜）；題包加等級的句子不足 3 句時會退回內建句。
+
 
 ## 新增句子／題包的流程（管理工具「新句庫」模式）
 
