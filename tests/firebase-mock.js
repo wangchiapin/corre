@@ -19,12 +19,12 @@
     const data = col(pid, c)[id];
     return { id, exists: data !== undefined, data: () => (data === undefined ? undefined : clone(data)), _c: c };
   }
-  function Query(pid, c, filters, order, after, lim){
+  function Query(pid, c, filters, order, after, lim, dir){
     const q = {
-      where: (f, op, v) => Query(pid, c, filters.concat([[f, op, v]]), order, after, lim),
-      orderBy: f => Query(pid, c, filters, f, after, lim),
-      startAfter: s => Query(pid, c, filters, order, s, lim),
-      limit: n => Query(pid, c, filters, order, after, n),
+      where: (f, op, v) => Query(pid, c, filters.concat([[f, op, v]]), order, after, lim, dir),
+      orderBy: (f, d) => Query(pid, c, filters, f, after, lim, d),
+      startAfter: s => Query(pid, c, filters, order, s, lim, dir),
+      limit: n => Query(pid, c, filters, order, after, n, dir),
       get: async () => {
         let ids = Object.keys(col(pid, c));
         ids = ids.filter(id => filters.every(([f, op, v]) => {
@@ -39,7 +39,7 @@
         }));
         if(order){
           ids = ids.filter(id => col(pid, c)[id][order] !== undefined);
-          ids.sort((a, b) => col(pid, c)[a][order] - col(pid, c)[b][order] || (a < b ? -1 : 1));
+          ids.sort((a, b) => (col(pid, c)[a][order] - col(pid, c)[b][order]) * (dir === 'desc' ? -1 : 1) || (a < b ? -1 : 1));
         }
         if(after){ const i = ids.indexOf(after.id); ids = i >= 0 ? ids.slice(i + 1) : ids; }
         if(lim != null) ids = ids.slice(0, lim);
@@ -52,7 +52,7 @@
   }
   function makeFirestore(pid){
     const fs = {
-      collection: c => Object.assign(Query(pid, c, [], null, null, null), {
+      collection: c => Object.assign(Query(pid, c, [], null, null, null, null), {
         add: async d => { const id = 'auto' + Math.random().toString(36).slice(2, 10); col(pid, c)[id] = clone(d); return { id }; },
         doc: id => ({
           id,
