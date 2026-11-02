@@ -1454,7 +1454,8 @@ html{color-scheme:light}
     return snap.data();
   }
   function applyTeacherBank(d){
-    const rows = (Array.isArray(d.sentences) ? d.sentences : []).slice(0, 80)
+    const rows = (Array.isArray(d.sentences) ? d.sentences : []).slice(0, 300)   /* 一般老師最多 80 句；管理員帳號最多 300 句 */
+     
       .map((s, i) => Object.assign({ id: 'bank-' + i }, s))
       .filter(isValidSentence)
       .filter(s => { const n = countHan(s.trad); return n >= 1 && n <= MAX_BANK_CHARS; });
