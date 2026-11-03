@@ -62,6 +62,19 @@ const txt = (page, sel) => page.$eval(sel, e => e.innerText.replace(/\s+/g, ' ')
     ok(await page.$eval('#teacherLink', e => e.href) === 'https://wangchiapin.github.io/profesor/#/home', '老師管理中心按鈕連到中心');
     ok(!(await page.$('#langGroup')) && !(await page.$('#scriptGroup')) && !(await page.$('#pinyinToggle')), '開始畫面不再有字形／翻譯語言，標題列沒有拼音鈕');
     ok(await page.$eval('#gearFloat', e => getComputedStyle(e).display !== 'none'), '開始畫面右上角有 ⚙️');
+    ok(await page.$eval('#infoFloat', e => getComputedStyle(e).display !== 'none'), '開始畫面右上角有 ⓘ 說明鈕');
+    ok(await page.$eval('#infoFloat', e => e.getBoundingClientRect().right <= document.getElementById('gearFloat').getBoundingClientRect().left), 'ⓘ 在 ⚙️ 左邊');
+    ok(await page.$eval('#infoFloat', e => e.getBoundingClientRect().bottom < document.querySelector('#startOverlay h1').getBoundingClientRect().top), '兩顆圖示跟標題之間有空隙');
+    ok(!(await page.$('.subtitle')) && !(await page.$('.drag-hint')), '玩法說明不再直接寫在開始畫面');
+    await page.click('#infoFloat');
+    ok(await page.$eval('#infoModal', e => !e.classList.contains('hidden')), '按 ⓘ 跳出說明視窗');
+    ok((await page.$eval('#infoModal', e => e.innerText)).includes('照句子的順序'), '說明視窗有怎麼玩');
+    ok((await page.$eval('#infoModal', e => e.innerText)).includes('Cómo jugar'), '說明視窗有西文');
+    await page.click('#infoDone');
+    ok(await page.$eval('#infoModal', e => e.classList.contains('hidden')), '按完成關閉說明視窗');
+    await page.click('#infoFloat'); await page.click('#setModal', { position: { x: 2, y: 2 }, force: true }).catch(()=>{});
+    await page.$eval('#infoModal', e => e.click());
+    ok(await page.$eval('#infoModal', e => e.classList.contains('hidden')), '點視窗外面也能關閉');
     ok(errors.length === 0, '沒有程式錯誤', errors);
     await ctx.close(); }
   { const { page, ctx } = await open(browser, { ls: { correLang: 'en' } });
