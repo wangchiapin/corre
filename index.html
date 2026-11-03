@@ -615,7 +615,7 @@ html{color-scheme:light}
     <button class="primary-btn ghost" id="showLbBtn"><span class="ic">🏆</span><span data-i18n="viewLb">Ver clasificación</span></button>
     <a class="primary-btn ghost" id="teacherLink" href="https://wangchiapin.github.io/profesor/#/home"><span data-i18n="teacher">Centro para profesores</span></a>
     <a class="primary-btn ghost" id="homeLink" href="./" hidden><span data-i18n="goHome">Ir al juego normal</span></a>
-    <div class="ver">v5-3</div>
+    <div class="ver">v5-4</div>
     <div class="copy">© 2026 @cadadiaunosminutos_ben_chino ｜ 保留所有權利 / Todos los derechos reservados</div>
   </div>
 
@@ -708,6 +708,13 @@ html{color-scheme:light}
           <button class="toggle-btn" data-value="fast" data-i18n="fast">Rápida</button>
         </div>
       </div>
+      <div class="field">
+        <label data-i18n="sound">Música y efectos</label>
+        <div class="toggle-group" id="setSound">
+          <button class="toggle-btn" data-value="on" data-i18n="soundOn">Activado</button>
+          <button class="toggle-btn" data-value="off" data-i18n="soundOff">Silencio</button>
+        </div>
+      </div>
       <button class="primary-btn" id="setDone" data-i18n="done">Listo</button>
     </div>
   </div>
@@ -720,7 +727,7 @@ html{color-scheme:light}
 
 <script>
 
-/* ===== 一鍵靜音（只關音樂和音效，不影響念字的語音）— 每天一分鐘遊戲統一做法 ===== */
+/* ===== 靜音（只關音樂和音效，不影響念字的語音）— 開關放在 ⚙️ 設定裡 ===== */
 (function(){
   var KEY='hg.mute.corre', MOUNT='', muted=false, masters=[];
   try{ muted = localStorage.getItem(KEY)==='1'; }catch(e){}
@@ -745,21 +752,11 @@ html{color-scheme:light}
     HTMLMediaElement.prototype.play = function(){ this.muted = muted; return op.apply(this, arguments); };
   }catch(e){}
   function apply(){ masters.forEach(function(g){ try{ g.gain.setValueAtTime(muted?0:1, g.context.currentTime); }catch(e){ g.gain.value = muted?0:1; } }); }
-  function build(){
-    if(document.getElementById('hgMute')) return;
-    var st=document.createElement('style');
-    st.textContent='#hgMute{position:fixed;left:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147483000;width:40px;height:40px;border-radius:50%;border:1px solid rgba(0,0,0,.28);background:rgba(255,255,255,.88);color:#222;font-size:19px;line-height:1;padding:0;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);touch-action:manipulation;-webkit-tap-highlight-color:transparent}#hgMute:active{transform:scale(.94)}#hgMute.st{position:static;flex:0 0 40px;margin:0 0 0 8px}';
-    document.head.appendChild(st);
-    var b=document.createElement('button'); b.type='button'; b.id='hgMute';
-    function paint(){ b.textContent = muted?'🔇':'🔊'; b.setAttribute('aria-pressed', muted?'true':'false');
-      b.title = b.ariaLabel = muted ? '開啟音樂和音效 · Activar música y efectos' : '靜音（音樂和音效）· Silenciar música y efectos'; apply(); }
-    b.addEventListener('click',function(e){ e.stopPropagation(); muted=!muted; try{ localStorage.setItem(KEY, muted?'1':'0'); }catch(err){} paint(); });
-    b.addEventListener('pointerdown',function(e){ e.stopPropagation(); });
-    paint();
-    var anchor = MOUNT && document.querySelector(MOUNT);
-    if(anchor && anchor.parentNode){ b.className='st'; anchor.parentNode.insertBefore(b, anchor.nextSibling); } else document.body.appendChild(b);
-  }
-  if(document.body) build(); else document.addEventListener('DOMContentLoaded', build);
+  /* 不再有浮在畫面上的 🔊 鈕：靜音改成 ⚙️ 設定裡的「音樂與音效」開關，用這個介面讀寫 */
+  window.HGMute = {
+    get: function(){ return muted; },
+    set: function(v){ muted = !!v; try{ localStorage.setItem(KEY, muted?'1':'0'); }catch(err){} apply(); }
+  };
 })();
 /* ===== /一鍵靜音 ===== */
 
@@ -945,6 +942,8 @@ html{color-scheme:light}
     both:['兩個都顯示','两个都显示','Ambos','Both'], phOff:['關','关','Ocultar','Off'],
     rate:['語速','语速','Velocidad de voz','Speech speed'],
     slow:['慢','慢','Lenta','Slow'], rateNormal:['正常','正常','Normal','Normal'], fast:['快','快','Rápida','Fast'],
+    sound:['音樂與音效','音乐与音效','Música y efectos','Music and sound effects'],
+    soundOn:['開','开','Activado','On'], soundOff:['關','关','Silencio','Off'],
     lockedByTeacher:['老師已設定','老师已设定','Lo fijó tu profesor','Set by your teacher'],
     done:['完成','完成','Listo','Done'],
     // 結果畫面的評語（依完成句數）
@@ -2283,6 +2282,7 @@ html{color-scheme:light}
     markGroup('setLang', lang);
     markGroup('setPhon', phKind);
     markGroup('setRate', SETTINGS.rate);
+    markGroup('setSound', window.HGMute && HGMute.get() ? 'off' : 'on');
     document.querySelectorAll('#setScript .toggle-btn').forEach(b=>{ b.disabled = scriptLocked; });
     const lock = document.getElementById('scriptLock');
     lock.hidden = !scriptLocked;
@@ -2313,6 +2313,7 @@ html{color-scheme:light}
   wireToggleGroup(document.getElementById('setPhon'), v=>{
     phKind = v; SETTINGS.phon = v; writeSettings(SETTINGS); applySettings();
   });
+  wireToggleGroup(document.getElementById('setSound'), v=>{ if(window.HGMute) HGMute.set(v === 'off'); });
   wireToggleGroup(document.getElementById('setRate'), v=>{
     SETTINGS.rate = v; writeSettings(SETTINGS); applySettings();
   });

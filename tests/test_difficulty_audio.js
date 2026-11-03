@@ -144,31 +144,40 @@ const master = page => page.evaluate(() => (window.__masters || []).map(g => g.g
     ok((await squares(page)) >= 2, '?nomusic=1：手動打開之後有聲音');
     await ctx.close(); }
 
-  console.log('\n[5] 一鍵靜音（左下角 🔊／🔇）：總音量歸零、記住、不影響念字');
+  console.log('\n[5] 靜音（⚙️ 設定裡「音樂與音效」開／關）：總音量歸零、記住、不影響念字');
+  const snd = (page, v) => page.click('#setSound [data-value=' + v + ']');
   { const { page, ctx, errors } = await H.open(browser);
-    ok((await H.txt(page, '#hgMute')) === '🔊' && (await page.$eval('#hgMute', e => e.getAttribute('aria-pressed'))) === 'false', '一開始是 🔊（沒靜音）');
+    ok(!(await page.$('#hgMute')), '畫面上不再有浮動的 🔊 鈕');
+    await page.click('#gearFloat');
+    ok(await page.$eval('#setSound [data-value=on]', e => e.classList.contains('active')), '設定裡「音樂與音效」一開始是開');
+    await page.click('#setDone');
     await page.click('#diffGroup [data-value=facil]');
     await H.start(page);
     await H.settle(700);
     ok((await master(page))[0] === 1, '沒靜音：總音量是 1', await master(page));
-    await page.click('#hgMute');
-    ok((await H.txt(page, '#hgMute')) === '🔇' && (await page.$eval('#hgMute', e => e.getAttribute('aria-pressed'))) === 'true', '按下去 → 變 🔇、aria-pressed=true');
+    await page.click('#gearBtn');
+    ok(!(await page.$eval('#pauseOverlay', e => e.classList.contains('hidden'))), '遊戲中開 ⚙️ 會先暫停');
+    await snd(page, 'off');
+    ok(await page.$eval('#setSound [data-value=off]', e => e.classList.contains('active')), '按「關」→ 選項變成關');
     ok(await page.evaluate(() => localStorage.getItem('hg.mute.corre')) === '1', '靜音狀態存進 localStorage（hg.mute.corre=1）');
+    await page.click('#setDone');
     await page.waitForFunction(() => window.__masters && window.__masters.length && window.__masters.every(g => g.gain.value === 0), null, { timeout: 3000 }).catch(() => {});
     ok((await master(page)).every(v => v === 0), '靜音：所有聲音經過的總音量是 0', await master(page));
-    ok(await page.$eval('#pauseOverlay', e => e.classList.contains('hidden')), '按靜音鈕不會讓遊戲暫停或誤觸遊戲區');
+    ok(await page.$eval('#pauseOverlay', e => e.classList.contains('hidden')), '按完成後遊戲繼續');
     // 靜音只關音樂和音效，念字的語音要照常
     const n0 = await page.evaluate(() => window.__spoken.length);
     await H.botPlay(page, s => s.nSpoken > n0, { timeout: 45000, spd: 95 });
     ok((await page.evaluate(() => window.__spoken.length)) > n0, '靜音中吃到金幣，字還是照常念出來');
-    await page.click('#hgMute');
-    ok((await H.txt(page, '#hgMute')) === '🔊' && await page.evaluate(() => localStorage.getItem('hg.mute.corre')) === '0', '再按 → 回到 🔊、存成 0');
+    await page.click('#gearBtn'); await snd(page, 'on'); await page.click('#setDone');
+    ok(await page.evaluate(() => localStorage.getItem('hg.mute.corre')) === '0', '再選「開」→ 存成 0');
     await page.waitForFunction(() => window.__masters.every(g => g.gain.value === 1), null, { timeout: 3000 }).catch(() => {});
     ok((await master(page)).every(v => v === 1), '取消靜音：總音量回到 1', await master(page));
     // 記住：靜音後重新整理，新的一局音量一開始就是 0
-    await page.click('#hgMute');
+    await page.click('#gearBtn'); await snd(page, 'off'); await page.click('#setDone');
     await page.reload(); await page.waitForFunction(() => !document.getElementById('startBtn').disabled);
-    ok((await H.txt(page, '#hgMute')) === '🔇', '重新整理後按鈕還是 🔇（記住了）');
+    await page.click('#gearFloat');
+    ok(await page.$eval('#setSound [data-value=off]', e => e.classList.contains('active')), '重新整理後設定還是「關」（記住了）');
+    await page.click('#setDone');
     await H.start(page); await H.settle(700);
     ok((await master(page)).length > 0 && (await master(page)).every(v => v === 0), '重新整理後開新的一局：音量從頭就是 0', await master(page));
     ok(errors.length === 0, '沒有程式錯誤', errors);
