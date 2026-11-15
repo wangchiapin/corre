@@ -457,7 +457,7 @@
   // 所以這裡先放一份「台灣讀音例外表」。發現哪個詞讀錯了，把它加進這張表就好。
   // 做法：'詞': '拼音（每個字之間空一格，輕聲不標調）'
   const TW_PINYIN = {
-    '還是': 'hái shì', '還有': 'hái yǒu', '還要': 'hái yào', '還沒': 'hái méi', '還差': 'hái chà',
+    '還是': 'hái shì', '還有': 'hái yǒu', '還要': 'hái yào', '還沒': 'hái méi', '還差': 'hái chā',
     '嗎': 'ma', '誰': 'shéi', '幾': 'jǐ', '喔': 'ō', '唷': 'yō', '耶': 'ye', '啦': 'la', '囉': 'luo',
     '什麼': 'shén me', '謝謝': 'xiè xie', '麻煩': 'má fan', '我們': 'wǒ men', '你們': 'nǐ men',
     '東西': 'dōng xi', '朋友': 'péng yǒu', '覺得': 'jué de', '著': 'zhe', '只': 'zhǐ',
@@ -551,10 +551,10 @@
     });
   }
   // ===== GoodTeacher 多音字規則 =====
-  // 讀音表與規則來自 GoodTeacher 拼音字體（2026-10-13 版），檔案是同資料夾的 gt-readings.json。
+  // 讀音表與規則來自 GoodTeacher 拼音字體（2026-11-15 版），檔案是同資料夾的 gt-readings.json。
   // 這樣管理工具、字體、句庫三邊的多音字讀音是同一套。載入失敗時，退回上面的台灣讀音例外表。
-  // 下面這幾個詞 GoodTeacher 規則還沒涵蓋，維持上面例外表的讀音（東西 dōng xi、幾乎 jī hū、寧可 níng kě、動不動 bu、介詞「為」wèi、鑰匙 yào shi、當真 dāng zhēn）
-  const GT_EXC = new Set(['東西','幾乎','寧可','動不動','為','鑰匙','當真']);
+  // 下面這幾個詞 GoodTeacher 規則還沒涵蓋，維持上面例外表的讀音（東西 dōng xi、動不動 bu、介詞「為」wèi、當真 dāng zhēn）
+  const GT_EXC = new Set(['東西','動不動','為','當真']);
   const HANZI_RE = /[㐀-鿿]/;
   let GT = null;
   const GT_READY = fetch('gt-readings.json').then(r => r.ok ? r.json() : null).then(j => {
