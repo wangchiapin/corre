@@ -163,14 +163,7 @@ async function play(page, { name, earn = 0 } = {}){
     await ctx.close(); }
 
   console.log('\n[5] 網址指定等級／老師句庫：哪些會上公開排行榜');
-  { // ?level=A2：實際上會上傳（等級 A2）
-    const { page, ctx } = await H.open(browser, { qs: '?level=A2', seed: seed(SMALL) });
-    await play(page, { name: 'UrlA2' });
-    await waitRows(page, '#lbListOver', 2);
-    const d = (await pubDocs(page)).find(x => x.name === 'UrlA2');
-    ok(d && d.level === 'A2' && !(await page.$eval('#lbListOver', e => e.hidden)), '?level=A2：照樣上公開排行榜（level=A2），結果畫面有排行榜', d);
-    await ctx.close(); }
-  for(const [label, qs] of [['?level=B1', '?level=B1'], ['老師句庫 ?bank=', '?bank=' + BANK]]){
+  for(const [label, qs] of [['?level=A1', '?level=A1'], ['?level=A2', '?level=A2'], ['?level=B1', '?level=B1'], ['老師句庫 ?bank=', '?bank=' + BANK]]){
     const { page, ctx } = await H.open(browser, { qs, seed: seed(SMALL) });
     const before = (await pubDocs(page)).length;
     await play(page, { name: 'NoBoard' });

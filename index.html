@@ -2184,8 +2184,8 @@ html{color-scheme:light}
   // 隱藏參數：?level=B1（或 A1／A2）、?pack=題包代碼（可再加 &level= 只取該等級）。這時不顯示等級選項，成績也不上公開排行榜。
   const CLASS_SET = CLASS_MODE && !TEACHER_MODE;      // 班級連結（用新句庫）：等級／題包由網址決定，玩家不能換
   const HIDDEN_SET = !TEACHER_MODE && !CLASS_MODE && ( PACK_OK || LEVEL_OK );
-  const PRIVATE_SET = HIDDEN_SET && (PACK_OK || LEVEL_P === 'B1');
-  const FIXED_SET = HIDDEN_SET || CLASS_SET;   // B1、題包：不進公開排行榜
+  const PRIVATE_SET = HIDDEN_SET;   // 網址指定等級或題包：一律不進公開排行榜（只有玩家自己在首頁選的 A1／A2 才上公開榜）
+  const FIXED_SET = HIDDEN_SET || CLASS_SET;   // 網址指定等級／題包、班級連結：固定句庫，玩家不能換
   function boardLevel(){ return LEVELS.includes(bankLevel) ? bankLevel : ''; }
   let bankLevel = 'mix';       // 'mix' 只代表「正在用舊公開題庫（備用）」，玩家選不到
   const levelRows = {};        // 等級 → 讀進來的句子（每級一個檔：bank/A1.json 等）
