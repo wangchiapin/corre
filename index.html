@@ -920,6 +920,7 @@ html{color-scheme:light}
     noRecord:['這次成績不會上排行榜，可以下載圖片分享。','这次成绩不会上排行榜，可以下载图片分享。','Este resultado no se guarda en la clasificación. Descarga la imagen para compartirlo.','This result is not saved on the leaderboard. Download the image to share it.'],
     download:['下載圖片','下载图片','Descargar imagen','Download image'],
     maintStudent:['🔧 維修中，請稍後再來。','🔧 维修中，请稍后再来。','🔧 En mantenimiento; vuelve más tarde.','🔧 Under maintenance — please come back later.'],
+    packEmpty:['這個題包的句子還不夠（至少要 3 句），請聯絡老師。','这个题包的句子还不够（至少要 3 句），请联络老师。','Este paquete aún no tiene suficientes frases (mínimo 3). Habla con tu profesor.','This pack does not have enough sentences yet (at least 3). Please contact your teacher.'],
     linkUnavailable:['這個連結無法使用（可能已刪除，或老師的訂閱已到期）。','这个连结无法使用（可能已删除，或老师的订阅已到期）。',
       'Este enlace no está disponible (puede haber sido eliminado o la suscripción del profesor venció).',
       'This link is not available (it may have been removed, or the teacher\'s subscription has expired).'],
@@ -2262,6 +2263,11 @@ html{color-scheme:light}
       levelGroup.querySelectorAll('.toggle-btn').forEach(b=>{ b.disabled = false; });
     }catch(e){
       if(CLASS_SET) throw e;     // 班級連結：成績要記在對的句庫名下，讀不到就顯示錯誤，不退回舊題庫
+      if(FIXED_SET && PACK_OK && e && e.message === 'empty pack'){   // 題包存在但句子不到 3 句：明說，不悄悄改玩內建句子
+        console.warn('題包句子不夠。', e);
+        showBankErr('packEmpty');
+        return;
+      }
       console.warn('新句庫載入失敗，改用內建句子。', e);
       const lf = document.getElementById('levelField'); lf.hidden = true; lf.style.display = 'none';
       rebuildWordPools();

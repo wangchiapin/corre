@@ -60,19 +60,16 @@ const joined = x => x.trad.join('');
     }
   }
 
-  console.log('\n[4] 題包某等級句子少於 3 句：退回內建句子，仍能玩（目前的行為）');
-  { const thin = [];
-    for(const p of packs) for(const lv of ['A1', 'A2', 'B1']) if(rowsOf(p, lv).length < 3) thin.push([p.id, lv, rowsOf(p, lv).length]);
-    ok(thin.length > 0, '句庫裡確實有「題包＋等級」少於 3 句的組合（用來驗這個行為）', thin);
-    const DEFAULTS = ['我喜歡吃蘋果', '你叫什麼名字', '今天天氣很好', '這個顏色是紅色', '我喜歡學中文', '謝謝你的幫忙'];
-    for(const [id, lv, n] of thin){
-      const { page, ctx, errors } = await H.open(browser, { qs: '?pack=' + id + '&level=' + lv, seed: SEED });
-      await H.start(page);
-      const s = await H.sentenceText(page);
-      ok(DEFAULTS.includes(s), '?pack=' + id + '&level=' + lv + '（只有 ' + n + ' 句）→ 出的是內建句子，不是當成空題庫卡住', s);
-      ok(errors.length === 0, '沒有程式錯誤', errors);
-      await ctx.close();
-    } }
+  console.log('\n[4] 題包句子少於 3 句：明說句子不夠、不能開始（不再悄悄改玩內建句子）');
+  { // 目前句庫裡沒有這種題包，所以用假的題包檔（規則比對不到任何句子）來驗
+    const { page, ctx, errors } = await H.open(browser, { qs: '?pack=food', seed: SEED, noWait: true });
+    await page.route('**/bank/packs.json', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ packs: [{ id: 'food', rule: { tags: ['__none__'] } }] }) }));
+    await page.reload(); await page.waitForTimeout(1200);
+    const msg = await page.$eval('#bankErr', e => e.hidden ? '' : e.textContent.trim());
+    ok(msg.includes('句子還不夠') || msg.includes('句子还不够') || msg.includes('suficientes') || msg.includes('not have enough'), '題包只有 0 句 → 顯示「句子不夠」提示', msg);
+    ok(await page.$eval('#startBtn', e => e.hidden || getComputedStyle(e).display === 'none'), '開始按鈕不出現（不會悄悄玩到內建句子）');
+    ok(errors.length === 0, '沒有程式錯誤', errors);
+    await ctx.close(); }
 
   console.log('\n[5] 題包不上公開排行榜、可下載成績圖');
   for(const id of ['food', 'weather', 'people']){
