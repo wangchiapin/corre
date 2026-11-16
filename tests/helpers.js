@@ -39,6 +39,16 @@ const AUDIO = `
   })();
 `;
 
+
+// 紀錄程式（HGPlays）用的 modular Firebase 假模組：visits／plays 的寫入記在 window.__hg（opts.hgfake 才啟用）
+const HGFAKE = {
+  'firebase-app.js': 'export const initializeApp=()=>({});',
+  'firebase-auth.js': "export const getAuth=()=>({currentUser:{uid:'dev1'},authStateReady:async()=>{}}); export const signInAnonymously=async()=>{};",
+  'firebase-firestore.js': "const W=()=>((window.__hg ||= []));export const getFirestore=()=>({}); export const serverTimestamp=()=>'TS';" +
+    "export const doc=(db,col,id)=>({col,id}); export const collection=(db,col)=>({col});" +
+    "export const setDoc=async(r,d)=>{W().push([r.col,'set',d,r.id]);}; export const addDoc=async(c,d)=>{W().push([c.col,'add',d]);return {id:'p1'};}; export const updateDoc=async(r,d)=>{W().push([r.col,'upd',d]);};"
+};
+
 async function launch(){ return chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] }); }
 
 // opts: qs 網址參數、ls 先塞進 localStorage 的東西、seed 假資料庫種子、speech=false 就不裝語音、noFirebase 不裝假 Firebase、
@@ -52,6 +62,7 @@ async function open(browser, o = {}){
   await page.route('**/*', r => {
     const u = r.request().url();
     if(u.startsWith('http://localhost')) return r.continue();
+    if(o.hgfake){ const m = u.match(/gstatic\.com\/firebasejs\/[^/]+\/(firebase-(?:app|auth|firestore)\.js)$/); if(m) return r.fulfill({ status: 200, contentType: 'application/javascript', body: HGFAKE[m[1]] }); }   // 紀錄程式（HGPlays，modular SDK）用的假模組，寫入記在 window.__hg
     if(/\.js(\?|$)/.test(u) || u.includes('gstatic')) return r.fulfill({ status: 200, contentType: 'application/javascript', body: '' });
     return r.abort();
   });
